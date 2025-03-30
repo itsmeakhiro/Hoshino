@@ -1,5 +1,6 @@
-run = "cowsay Configure me!"
-entrypoint = "README.md"
+run = "nodemon index.js"
+entrypoint = "index.js"
+modules = ["nodejs-20"]
 
 [nix]
 channel = "stable-24_05"
