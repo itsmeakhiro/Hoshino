@@ -43,6 +43,31 @@ declare namespace HoshinoLia {
     args: string[];
     fonts: Fonts;
     styler: Styler;
-    hoshinoDB: import("./")
+    replies: Map<string, RepliesArg>;
+    hoshinoDB: import("../Hoshino/resources/database/utils");
+    LevelSystem: typeof import("../Hoshino/resources/level/utils");
+    BalanceHandler: typeof import("../Hoshino/resources/balance/utils");
+    BankHandler: typeof import("../Hoshino/resources/bank/utils");
+    Inventory: typeof import("../Hoshino/resources/inventory/utils");
+  };
+
+  export type CommandText = EntryObj;
+
+  export interface Styler {
+    (
+      type: string,
+      title: string,
+      content: string,
+      footer: string,
+      styles?: any
+    ): string;
+  };
+
+  export interface RepliesArg {
+    callback: (
+      entryObj: EntryObj & {
+        ReplyData: HoshinoLia.RepliesArg
+      }
+    ) => void [key: string]: any
   }
 }
