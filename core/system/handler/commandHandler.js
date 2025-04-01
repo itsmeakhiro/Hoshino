@@ -15,6 +15,7 @@ function getSubprefix(threadID) {
   }
 }
 // WARNING THIS IS UNUSED AND EVERYTHING IS IN LISTENER
+// now it is used again - Francis.
 module.exports = async function commandHandler({
   api,
   chat,
