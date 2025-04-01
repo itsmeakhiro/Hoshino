@@ -15,7 +15,7 @@ const command = {
     config: {
       developer: false,
       moderator: false,
-      admin: false
+      admin: false,
       privateOnly: false,
     }
    }
