@@ -1,4 +1,5 @@
-const utils = require("../utils")
+const utils = require("../utils");
+const login = require("./system/login")
 
 module.exports = async function cUI(){
  console.log("Starting hoshino.");
@@ -7,4 +8,6 @@ module.exports = async function cUI(){
  await utils.loadCommands();
  console.log("Deploy events");
  await utils.loadEvents();
+ console.log("Logging In");
+ await login()
 }
