@@ -6,7 +6,7 @@ declare namespace HoshinoLia {
     developer?: string;
     description: string;
     cooldown: number;
-    usage: string || string[];
+    usage: string;
     config: {
       prefix: boolean;
       admin: boolean;
@@ -69,5 +69,37 @@ declare namespace HoshinoLia {
         ReplyData: HoshinoLia.RepliesArg
       }
     ) => void [key: string]: any
+  }
+
+  export interface Event {
+    body: string;
+    senderID: string;
+    threadID: string;
+    messageID: string;
+    type: string
+    messagwReply?: {
+      messageID: string;
+      senderID: string
+    };
+    [key: string]: any;
+  }
+
+  export interface GlobalHoshino {
+    config {
+      prefix: string;
+      maintenance: boolean;
+      developer: string[];
+      moderator: string[];
+      admin: string[];
+    };
+     commands: Map<string, command>;
+     event: Map<string, any>;
+     cooldowns: Map<string, Record<string, number>>;
+     utils: any;
+  }
+
+  declare namespace globalThis {
+    var bot: import("events").EventEmitter;
+    var Hoshino: HoshinoLia.GlobalHoshino;
   }
 }
