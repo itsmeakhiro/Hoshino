@@ -87,6 +87,7 @@ module.exports = async function listener({ api, event }) {
     LevelSystem,
     BalanceHandler,
     Inventory,
+    BankHandler
   };
 
   global.bot.emit("message", entryObj);
