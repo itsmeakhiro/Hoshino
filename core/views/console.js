@@ -1,5 +1,5 @@
 const utils = require("../utils");
-const login = require("./system/login")
+const login = require("./system/login");
 
 module.exports = async function cUI(){
  console.log("Starting hoshino.");
