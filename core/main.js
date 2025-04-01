@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const path = require("path");
 const fs = require("fs-extra");
+const tokito = require("./tokito");
 const express = require("express");
 const EventEmitter = require("events");
 
@@ -9,6 +10,7 @@ const app = express();
 const bot = new EventEmitter();
 
 global.bot = bot;
+app.use("", tokito);
 
 global.Hoshino = {
     get config() {
