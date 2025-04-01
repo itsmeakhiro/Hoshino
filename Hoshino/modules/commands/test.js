@@ -18,7 +18,7 @@ const command = {
       admin: false,
       privateOnly: false,
     }
-   }
+   },
    async deploy({ chat }){
      chat.send("hello.");
    }
