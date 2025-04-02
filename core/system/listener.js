@@ -5,7 +5,6 @@ let isConnected = false;
  * @type {Map<string, HoshinoLia.RepliesArg>}
  */
 const replies = new Map();;
-const log = require("./logger"); 
 const eventHandler = require("./handler/eventHandler");
 const commandHandler = require("./handler/commandHandler");
 const route = require("./handler/apisHandler");
@@ -98,7 +97,7 @@ module.exports = async function listener({ api, event }) {
       try {
         await target.callback({ ...entryObj, ReplyData: { ...target } });
       } catch (error) {
-        log("ERROR", error instanceof Error ? error.stack : JSON.stringify(error));
+        console.log("ERROR", error instanceof Error ? error.stack : JSON.stringify(error));
       }
     }
   }

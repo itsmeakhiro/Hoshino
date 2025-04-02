@@ -26,17 +26,26 @@ module.exports = {
         continue;
       }
 
+      if (!manifest.name) {
+        console.log(`[ERROR] Manifest missing 'name' for the command: ${file}`);
+        continue;
+      }
+
       if (typeof deploy !== "function") {
         console.log(`[ERROR] Invalid 'deploy' function for the command: ${file}`);
         continue;
       }
 
       try {
-        if (manifest.name) {
-          console.log(`[COMMAND] Deployed ${manifest.name} successfully`);
-          global.Hoshino.commands.set(manifest.name, command);
-        } else {
-          console.log(`[ERROR] Manifest missing 'name' for the command: ${file}`);
+        console.log(`[COMMAND] Deployed ${manifest.name} successfully`);
+        global.Hoshino.commands.set(manifest.name, command);
+
+        
+        if (Array.isArray(manifest.aliases)) {
+          for (const alias of manifest.aliases) {
+            global.Hoshino.commands.set(alias, command);
+            console.log(`[COMMAND] Alias "${alias}" registered for command "${manifest.name}"`);
+          }
         }
       } catch (error) {
         console.log(`[ERROR] Failed to deploy ${manifest.name}: ${error.stack}`);
@@ -65,18 +74,19 @@ module.exports = {
         continue;
       }
 
+      if (!manifest.name) {
+        console.log(`[ERROR] Manifest missing 'name' for the event: ${file}`);
+        continue;
+      }
+
       if (typeof onEvent !== "function") {
         console.log(`[ERROR] Missing 'onEvent' function for the event: ${file}`);
         continue;
       }
 
       try {
-        if (manifest.name) {
-          console.log(`[EVENT] Deployed ${manifest.name} successfully.`);
-          global.Hoshino.events.set(manifest.name, event);
-        } else {
-          console.log(`[ERROR] Manifest missing 'name' for the event: ${file}`);
-        }
+        console.log(`[EVENT] Deployed ${manifest.name} successfully`);
+        global.Hoshino.events.set(manifest.name, event);
       } catch (error) {
         console.log(`[ERROR] Failed to deploy ${file}: ${error.stack}`);
       }
