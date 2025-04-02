@@ -4,13 +4,14 @@ let isConnected = false;
 /**
  * @type {Map<string, HoshinoLia.RepliesArg>}
  */
+
 const replies = new Map();;
 const eventHandler = require("./handler/eventHandler");
 const commandHandler = require("./handler/commandHandler");
 const route = require("./handler/apisHandler");
 const HoshinoDB = require("../Hoshino/resources/database/utils");
 const hoshinoDB = new HoshinoDB();
-const subprefixes = require("./handler/data/subprefixes.json");
+const subprefixes = require("./handler/plugins/data/subprefixes.json");
 const LevelSystem = require("../Hoshino/resources/plugins/level/utils");
 const BalanceHandler = require("../Hoshino/resources/plugins/balance/utils");
 const Inventory = require("../Hoshino/resources/plugins/inventory/utils");
