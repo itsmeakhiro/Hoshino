@@ -1,6 +1,6 @@
 const fs = require("fs-extra");
 const path = require("path");
-const fonts = require("../Hoshino/resources/styler/fonts");
+const fonts = require("../../../resources/styler/fonts");
 const route = require("./apisHandler");
 
 const subprefixFile = path.join(__dirname, "./data/subprefixes.json");
@@ -14,8 +14,7 @@ function getSubprefix(threadID) {
     return null;
   }
 }
-// WARNING THIS IS UNUSED AND EVERYTHING IS IN LISTENER
-// now it is used again - Francis.
+
 module.exports = async function commandHandler({
   api,
   chat,
