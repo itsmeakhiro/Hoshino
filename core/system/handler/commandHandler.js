@@ -1,6 +1,6 @@
 const fs = require("fs-extra");
 const path = require("path");
-const fonts = require("../../../resources/styler/fonts");
+const fonts = require("../../../../Hoshino/resources/styler/fonts");
 const route = require("./apisHandler");
 
 const subprefixFile = path.join(__dirname, "./data/subprefixes.json");
