@@ -3,7 +3,7 @@ const path = require("path");
 
 module.exports = {
   async loadCommands() {
-    const filePath = path.resolve(process.cwd(), "./Tokito/modules/commands");
+    const filePath = path.resolve(process.cwd(), "../Hoshino/modules/commands");
     const loadfiles = fs
       .readdirSync(filePath)
       .filter((file) => file.endsWith(".js"));
@@ -45,7 +45,7 @@ module.exports = {
   },
 
   async loadEvents() {
-    const filePath = path.resolve(process.cwd(), "./Tokito/modules/events");
+    const filePath = path.resolve(process.cwd(), "../Hoshino/modules/events");
     const loadfiles = fs
       .readdirSync(filePath)
       .filter((file) => file.endsWith(".js"));
