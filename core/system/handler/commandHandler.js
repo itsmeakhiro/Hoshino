@@ -1,6 +1,6 @@
 const fs = require("fs-extra");
 const path = require("path");
-const fonts = require("./styler/createFonts");
+const fonts = require("../Hoshino/resources/styler/fonts");
 const route = require("./apisHandler");
 
 const subprefixFile = path.join(__dirname, "./data/subprefixes.json");
@@ -27,7 +27,7 @@ module.exports = async function commandHandler({
 
   const isGroup = event.threadID !== event.senderID;
   const threadSubprefix = isGroup ? getSubprefix(event.threadID) : null;
-  const mainPrefix = global.Tokito.prefix;
+  const mainPrefix = global.Hoshino.prefix;
   const usedPrefix = isGroup ? threadSubprefix || mainPrefix : mainPrefix;
 
   if (!event.body.startsWith(usedPrefix)) {
@@ -54,7 +54,7 @@ module.exports = async function commandHandler({
     .trim()
     .split(/\s+/);
 
-  const commands = global.Tokito.commands;
+  const commands = global.Hoshino.commands;
   const command =
     commands.get(commandNameOrAlias) ||
     [...commands.values()].find((cmd) =>
@@ -76,7 +76,7 @@ module.exports = async function commandHandler({
   }
 
   const senderID = event.senderID;
-  const cooldowns = global.Tokito.cooldowns;
+  const cooldowns = global.Hoshino.cooldowns;
   const userCooldowns = cooldowns.get(senderID) ?? {};
 
   const lastUsed = userCooldowns[commandNameOrAlias] ?? null;
@@ -94,16 +94,6 @@ module.exports = async function commandHandler({
       );
     }
   }
-
-  if (!global.Tokito.popularCommands) global.Tokito.popularCommands = new Map();
-  if (!global.Tokito.recentCommands) global.Tokito.recentCommands = [];
-
-  global.Tokito.recentCommands.unshift(commandNameOrAlias);
-  if (global.Tokito.recentCommands.length > 10)
-    global.Tokito.recentCommands.pop();
-
-  const count = global.Tokito.popularCommands.get(commandNameOrAlias) || 0;
-  global.Tokito.popularCommands.set(commandNameOrAlias, count + 1);
 
   try {
     await command.deploy({
