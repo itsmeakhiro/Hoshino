@@ -2,7 +2,7 @@ require("dotenv").config();
 
 const path = require("path");
 const fs = require("fs-extra");
-const tokito = require("./tokito");
+const tokito = require("./hoshino");
 const express = require("express");
 const EventEmitter = require("events");
 
