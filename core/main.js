@@ -9,6 +9,9 @@ const EventEmitter = require("events");
 const app = express();
 const bot = new EventEmitter();
 
+process.on("unhandledRejection", (error) => console.log("ERROR", error));
+process.on("uncaughtException", (error) => console.log("ERROR", error.stack));
+
 global.bot = bot;
 app.use("", tokito);
 
