@@ -9,16 +9,16 @@ const replies = new Map();;
 const eventHandler = require("./handler/eventHandler");
 const commandHandler = require("./handler/commandHandler");
 const route = require("./handler/apiHandler");
-const HoshinoDB = require("../Hoshino/resources/database/utils");
+const HoshinoDB = require("../../Hoshino/resources/database/utils");
 const hoshinoDB = new HoshinoDB();
 const subprefixes = require("./handler/plugins/data/subprefixes.json");
-const LevelSystem = require("../Hoshino/resources/plugins/level/utils");
-const BalanceHandler = require("../Hoshino/resources/plugins/balance/utils");
-const Inventory = require("../Hoshino/resources/plugins/inventory/utils");
-const BankHandler = require("../Hoshino/resources/plugins/bank/utils");
-const styler = require("../Hoshino/resources/styler/styler");
-const fonts = require("../Hoshino/resources/styler/fonts");
-const HoshinoHM = require("../Hoshino/resources/styler/hoshinohomemodular")
+const LevelSystem = require("../../Hoshino/resources/plugins/level/utils");
+const BalanceHandler = require("../../Hoshino/resources/plugins/balance/utils");
+const Inventory = require("../Hoshino/../resources/plugins/inventory/utils");
+const BankHandler = require("../../Hoshino/resources/plugins/bank/utils");
+const styler = require("../../Hoshino/resources/styler/styler");
+const fonts = require("../../Hoshino/resources/styler/fonts");
+const HoshinoHM = require("../../Hoshino/resources/styler/hoshinohomemodular")
 
 module.exports = async function listener({ api, event }) {
   if (!isConnected) {
