@@ -31,7 +31,6 @@ global.Hoshino = {
     },
     commands: new Map(),
     events: new Map(),
-    replies: new Map(),
     reacts: new Map(),
     cooldown: new Map(),
 };
