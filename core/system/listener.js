@@ -152,16 +152,6 @@ module.exports = async function listener({ api, event }) {
     return;
   }
 
-  if (!hasPrefix) return;
-
-  await chat.reply(
-    fonts.sans(
-      global.Hoshino.commands.has("help")
-        ? `"${commandName}" is not a valid command.\nUse "${usedPrefix}help" to see available commands.`
-        : "Oh, you're doomed fam! I don't have a help command yet."
-    )
-  );
-
   switch (event.type) {
     case "message":
       commandHandler({ ...entryObj });
