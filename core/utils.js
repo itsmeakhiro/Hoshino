@@ -3,7 +3,8 @@ const path = require("path");
 
 module.exports = {
   async loadCommands() {
-    const filePath = path.resolve(process.cwd(), "../Hoshino/modules/commands");
+    const filePath = path.resolve(__dirname, "../Hoshino/modules/commands"); 
+    console.log(`[DEBUG] Command file path: ${filePath}`);
     const loadfiles = fs
       .readdirSync(filePath)
       .filter((file) => file.endsWith(".js"));
@@ -40,7 +41,6 @@ module.exports = {
         console.log(`[COMMAND] Deployed ${manifest.name} successfully`);
         global.Hoshino.commands.set(manifest.name, command);
 
-        
         if (Array.isArray(manifest.aliases)) {
           for (const alias of manifest.aliases) {
             global.Hoshino.commands.set(alias, command);
@@ -54,7 +54,8 @@ module.exports = {
   },
 
   async loadEvents() {
-    const filePath = path.resolve(process.cwd(), "../Hoshino/modules/events");
+    const filePath = path.resolve(__dirname, "../Hoshino/modules/events"); 
+    console.log(`[DEBUG] Event file path: ${filePath}`); 
     const loadfiles = fs
       .readdirSync(filePath)
       .filter((file) => file.endsWith(".js"));
