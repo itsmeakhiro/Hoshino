@@ -12,7 +12,6 @@ const command = {
     cooldown: 0,
     usage: "help [command]",
     config: {
-      developer: false,
       moderator: false,
       admin: false,
       privateOnly: false,

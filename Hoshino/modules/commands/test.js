@@ -13,7 +13,6 @@ const command = {
     cooldown: 0,
     usage: "test",
     config: {
-      developer: false,
       moderator: false,
       admin: false,
       privateOnly: false,

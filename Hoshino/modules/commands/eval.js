@@ -14,7 +14,6 @@ const command = {
     cooldown: 0,
     usage: "eval <code> or eval <file>",
     config: {
-      developer: true,
       moderator: false,
       admin: false,
       privateOnly: false,
