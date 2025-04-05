@@ -9,20 +9,28 @@ try {
     execSync("npm install fca-priyansh", { stdio: "inherit" });
 }
 
-const login = require("fca-priyansh");
+const fcaLogin = require("fca-priyansh");
 
-module.exports = async function login() {
+module.exports = async function initializeBot() {
     const appStatePath = path.join(__dirname, "..", "..", "appstate.json");
-    login({ appState: JSON.parse(fs.readFileSync(appStatePath, 'utf8')) }, (err, api) => {
+    fcaLogin({ appState: JSON.parse(fs.readFileSync(appStatePath, 'utf8')) }, (err, api) => {
         if (err) {
             return console.error('Login error:', err);
         }
-        
-        api.listen((err, message) => {
+        let botId;
+        api.getCurrentUserID((err, id) => {
             if (err) {
-                return console.error('Listener error:', err);
+                return console.error('Failed to get bot ID:', err);
             }
-            api.sendMessage(message.body, message.threadID);
+            botId = id;
+            api.listen((err, message) => {
+                if (err) {
+                    return console.error('Listener error:', err);
+                }
+                if (message.senderID !== botId) {
+                    api.sendMessage(message.body, message.threadID);
+                }
+            });
         });
     });
 }
