@@ -1,12 +1,7 @@
 const fs = require("fs-extra");
 const path = require("path");
-<<<<<<< HEAD
-const fonts = require("../Hoshino/resources/styler/fonts");
-const route = require("./apisHandler");
-=======
 const fonts = require("../../../Hoshino/resources/styler/fonts");
 const route = require("./apiHandler");
->>>>>>> a79a435f81563900673b050ca18b3303dc6a5541
 
 const subprefixFile = path.join(__dirname, "./data/subprefixes.json");
 const attachmentPath = path.join(__dirname, "./data/attachment/prefix.gif");
