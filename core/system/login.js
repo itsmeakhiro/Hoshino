@@ -1,5 +1,6 @@
 const fs = require("fs-extra");
 const { execSync } = require("child_process");
+const path = require("path");
 
 try {
     require.resolve("fca-priyansh");
@@ -11,7 +12,8 @@ try {
 const login = require("fca-priyansh");
 
 module.exports = async function login() {
-    login({ appState: JSON.parse(fs.readFileSync('appstate.json', 'utf8')) }, (err, api) => {
+    const appStatePath = path.join(__dirname, "..", "..", "appstate.json");
+    login({ appState: JSON.parse(fs.readFileSync(appStatePath, 'utf8')) }, (err, api) => {
         if (err) {
             return console.error('Login error:', err);
         }
