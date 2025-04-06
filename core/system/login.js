@@ -3,13 +3,13 @@ const { execSync } = require("child_process");
 const path = require("path");
 
 try {
-    require.resolve("fca-priyansh");
+    require.resolve("fca-chatbox-remake");
 } catch (e) {
-    console.log("fca-priyansh not found, installing...");
-    execSync("npm install fca-priyansh", { stdio: "inherit" });
+    console.log("fca-chatbox-remake not found, installing...");
+    execSync("npm install fca-chatbox-remake", { stdio: "inherit" });
 }
 
-const fcaLogin = require("fca-priyansh");
+const fcaLogin = require("fca-chatbox-remake");
 
 module.exports = async function initializeBot() {
     const appStatePath = path.join(__dirname, "..", "..", "appstate.json");
