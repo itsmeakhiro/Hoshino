@@ -21,7 +21,7 @@ module.exports = async function initializeBot() {
       appState: JSON.parse(fs.readFileSync(appStatePath, "utf8")),
     });
     // let botId = api.getCurrentUserID();
-    api.listen((err, event) => {
+    api.listenMqtt((err, event) => {
       if (err) {
         return console.error("Listener error:", err);
       }
