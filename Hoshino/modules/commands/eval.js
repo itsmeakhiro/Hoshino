@@ -1,101 +1,205 @@
+/**
+ * @type {HoshinoLia.Command}
+ */
 const vm = require("vm");
 const fs = require("fs-extra");
 const path = require("path");
 const ts = require("typescript");
+const util = require("util");
+const { exec } = require("child_process");
 
-/**
- * @type {HoshinoLia.Command}
- */
 const command = {
   manifest: {
     name: "eval",
-    aliases: ["e", "run"],
+    aliases: ["e", "run", "evaluate", "exec"],
     version: "1.0.0",
     developer: "Francis Loyd Raval",
-    description: "Evaluate JavaScript or TypeScript code",
+    description: "Evaluate code in various programming languages",
     category: "developer",
-    cooldown: 0,
+    cooldown: 5,
     usage: "eval <code> or eval <file>",
     config: {
+      developer: true,
       moderator: false,
       admin: false,
       privateOnly: false,
-    },
+    }
   },
-  async deploy(ctx) {
-    const { chat, args, event } = ctx;
-    const { attachments } = event;
+  async deploy({ chat, args, attachments, fonts }) {
     if (args.length === 0 && (!attachments || attachments.length === 0)) {
-      return chat.send(
-        "Usage: eval <code> or eval <file> (supports .js, .cjs, .ts)"
-      );
+      return chat.send(fonts.sans("Please provide code to evaluate or a file (supports .js, .cjs, .ts, .py, .cpp, .c, .java, .rb, .go)"));
     }
 
     let code = "";
     let isFile = false;
     let fileExt = "";
+    let filePath = "";
 
     if (attachments && attachments.length > 0) {
-      const filePath = attachments[0].path || attachments[0];
+      filePath = attachments[0].path || attachments[0];
       fileExt = path.extname(filePath).toLowerCase();
-
-      if (fileExt === ".py") {
-        return chat.send("Python (.py) files are not supported.");
-      }
-
-      if (![".js", ".cjs", ".ts"].includes(fileExt)) {
-        return chat.send("Only .js, .cjs, and .ts files are supported.");
-      }
-
       code = await fs.readFile(filePath, "utf8");
       isFile = true;
     } else {
       code = args.join(" ");
     }
 
-    try {
-      let result;
-      const sandbox = {
-        ...ctx,
-        ...Object.fromEntries(
-          Reflect.ownKeys(globalThis).map((i) => [i, globalThis[i]])
-        ),
-        console,
-        require,
-        process,
-        Buffer,
-        setTimeout,
-        setInterval,
-        global,
-      };
+    const installPackage = async (manager, packageName) => {
+      return new Promise((resolve, reject) => {
+        exec(`${manager} install ${packageName}`, (error, stdout, stderr) => {
+          if (error) return reject(stderr || error.message);
+          resolve(stdout || stderr);
+        });
+      });
+    };
 
-      const context = vm.createContext(sandbox);
+    const executeCode = async () => {
+      if (!isFile || fileExt === ".js" || fileExt === ".cjs") {
+        const sandbox = { console, require, process, Buffer, setTimeout, setInterval };
+        const context = vm.createContext(sandbox);
+        return vm.runInContext(code, context);
+      }
 
-      if (
-        fileExt === ".ts" ||
-        (!isFile && code.includes("let ")) ||
-        code.includes("const ") ||
-        code.includes("type ")
-      ) {
+      if (fileExt === ".ts") {
         const compiledCode = ts.transpileModule(code, {
           compilerOptions: {
             module: ts.ModuleKind.CommonJS,
             target: ts.ScriptTarget.ESNext,
-          },
+          }
         }).outputText;
-        result = vm.runInContext(compiledCode, context);
-      } else {
-        result = vm.runInContext(code, context);
+        const sandbox = { console, require, process, Buffer, setTimeout, setInterval };
+        const context = vm.createContext(sandbox);
+        return vm.runInContext(compiledCode, context);
       }
 
-      const output =
-        typeof result === "undefined" ? "No output" : String(result);
-      return chat.send(`Result: ${output.slice(0, 1000)}`);
+      if (fileExt === ".py") {
+        const tempFile = path.join(__dirname, "../../temp", `eval-${Date.now()}.py`);
+        await fs.ensureDir(path.dirname(tempFile));
+        await fs.writeFile(tempFile, code);
+        return new Promise((resolve, reject) => {
+          exec(`python3 ${tempFile}`, (error, stdout, stderr) => {
+            fs.remove(tempFile);
+            if (error) return reject(stderr || error.message);
+            resolve(stdout || stderr);
+          });
+        });
+      }
+
+      if (fileExt === ".cpp") {
+        const tempFile = path.join(__dirname, "../../temp", `eval-${Date.now()}.cpp`);
+        const outFile = tempFile.replace(".cpp", "");
+        await fs.ensureDir(path.dirname(tempFile));
+        await fs.writeFile(tempFile, code);
+        return new Promise((resolve, reject) => {
+          exec(`g++ ${tempFile} -o ${outFile} && ${outFile}`, (error, stdout, stderr) => {
+            fs.remove(tempFile);
+            fs.remove(outFile);
+            if (error) return reject(stderr || error.message);
+            resolve(stdout || stderr);
+          });
+        });
+      }
+
+      if (fileExt === ".c") {
+        const tempFile = path.join(__dirname, "../../temp", `eval-${Date.now()}.c`);
+        const outFile = tempFile.replace(".c", "");
+        await fs.ensureDir(path.dirname(tempFile));
+        await fs.writeFile(tempFile, code);
+        return new Promise((resolve, reject) => {
+          exec(`gcc ${tempFile} -o ${outFile} && ${outFile}`, (error, stdout, stderr) => {
+            fs.remove(tempFile);
+            fs.remove(outFile);
+            if (error) return reject(stderr || error.message);
+            resolve(stdout || stderr);
+          });
+        });
+      }
+
+      if (fileExt === ".java") {
+        const classNameMatch = code.match(/public\s+class\s+(\w+)/);
+        const className = classNameMatch ? classNameMatch[1] : "EvalTemp";
+        const tempDir = path.join(__dirname, "../../temp");
+        const tempFile = path.join(tempDir, `${className}.java`);
+        await fs.ensureDir(tempDir);
+        await fs.writeFile(tempFile, code);
+        return new Promise((resolve, reject) => {
+          exec(`javac ${tempFile} && java -cp ${tempDir} ${className}`, (error, stdout, stderr) => {
+            fs.remove(tempFile);
+            fs.remove(tempFile.replace(".java", ".class"));
+            if (error) return reject(stderr || error.message);
+            resolve(stdout || stderr);
+          });
+        });
+      }
+
+      if (fileExt === ".rb") {
+        const tempFile = path.join(__dirname, "../../temp", `eval-${Date.now()}.rb`);
+        await fs.ensureDir(path.dirname(tempFile));
+        await fs.writeFile(tempFile, code);
+        return new Promise((resolve, reject) => {
+          exec(`ruby ${tempFile}`, (error, stdout, stderr) => {
+            fs.remove(tempFile);
+            if (error) return reject(stderr || error.message);
+            resolve(stdout || stderr);
+          });
+        });
+      }
+
+      if (fileExt === ".go") {
+        const tempFile = path.join(__dirname, "../../temp", `eval-${Date.now()}.go`);
+        await fs.ensureDir(path.dirname(tempFile));
+        await fs.writeFile(tempFile, code);
+        return new Promise((resolve, reject) => {
+          exec(`go run ${tempFile}`, (error, stdout, stderr) => {
+            fs.remove(tempFile);
+            if (error) return reject(stderr || error.message);
+            resolve(stdout || stderr);
+          });
+        });
+      }
+
+      throw new Error(`Unsupported file type: ${fileExt}`);
+    };
+
+    try {
+      let result = await executeCode();
+      if (typeof result !== "string") {
+        result = util.inspect(result);
+      }
+      return chat.send(fonts.monospace("Output:\n") + fonts.monospace(result.slice(0, 2000)));
     } catch (error) {
-      if (!(error instanceof Error)) return;
-      return chat.send(`Error: ${error.message}`);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+
+      if ((fileExt === ".js" || fileExt === ".cjs" || fileExt === ".ts" || !isFile) && errorMsg.includes("Cannot find module")) {
+        const packageName = errorMsg.split("'")[1];
+        chat.send(fonts.sans(`Installing missing package: ${packageName}...`));
+        try {
+          await installPackage("npm", packageName);
+          let result = await executeCode();
+          if (typeof result !== "string") {
+            result = util.inspect(result);
+          }
+          return chat.send(fonts.monospace("Output:\n") + fonts.monospace(result.slice(0, 2000)));
+        } catch (installError) {
+          return chat.send(fonts.bold("Install Error:\n") + fonts.bold(installError));
+        }
+      }
+
+      if (fileExt === ".py" && errorMsg.includes("No module named")) {
+        const packageName = errorMsg.split("'")[1];
+        chat.send(fonts.sans(`Installing missing package: ${packageName}...`));
+        try {
+          await installPackage("pip3", packageName);
+          let result = await executeCode();
+          return chat.send(fonts.monospace("Output:\n") + fonts.monospace(result.slice(0, 2000)));
+        } catch (installError) {
+          return chat.send(fonts.bold("Install Error:\n") + fonts.bold(installError));
+        }
+      }
+
+      return chat.send(fonts.bold("Error:\n") + fonts.bold(errorMsg));
     }
-  },
+  }
 };
 
 module.exports = command;
