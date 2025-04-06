@@ -7,7 +7,7 @@ const command = {
     aliases: ["prof", "me"],
     author: "Liane Cagara",
     description: "View your profile and balance information",
-    usage: ["!profile <subcommand>", "e.g., !profile view or !profile balance"],
+    usage: ["!profile <subcommand>", "e.g., !profile view or !profile balance"].join("\n"),
     cooldown: 3,
     config: {
       admin: false,

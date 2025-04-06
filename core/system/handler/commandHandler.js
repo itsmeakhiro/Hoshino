@@ -15,6 +15,11 @@ function getSubprefix(threadID) {
   }
 }
 
+/**
+ *
+ * @param {HoshinoLia.CommandContext} param0
+ * @returns
+ */
 module.exports = async function commandHandler({
   api,
   chat,
@@ -96,13 +101,13 @@ module.exports = async function commandHandler({
 
   try {
     await command.deploy({
+      ...extra,
       api,
       chat,
       event,
       args: commandArgs,
       fonts,
       route,
-      ...extra,
     });
 
     userCooldowns[commandNameOrAlias] = Date.now();

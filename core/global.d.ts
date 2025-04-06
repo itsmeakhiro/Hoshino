@@ -2,10 +2,11 @@ declare namespace HoshinoLia {
   export interface CommandManifest {
     name: string;
     aliases?: string[];
-    version: string;
+    version?: string;
+    author?: string;
     developer?: string;
     description: string;
-    category: string;
+    category?: string;
     cooldown?: number;
     usage?: string;
     config?: {
@@ -31,9 +32,28 @@ declare namespace HoshinoLia {
       footer?: string | string[];
     };
   }
+
+  export interface Mention {
+    id: string;
+    fromIndex?: number;
+    tag: string;
+  }
+
+  export interface StrictMessageForm {
+    body?: string;
+    attachment?: any[] | any;
+    location?: {
+      latitude: number;
+      longitude: number;
+    };
+    mentions?: Mention[];
+    [key: string]: any;
+  }
+
+  export type MessageForm = string | StrictMessageForm;
   export interface Chat {
-    send(message: string, goal?: string, noStyle?: boolean): Promise<any>;
-    reply(message: string, goal?: string): Promise<any>;
+    send(message: MessageForm, goal?: string, noStyle?: boolean): Promise<any>;
+    reply(message: MessageForm, goal?: string): Promise<any>;
   }
 
   export interface EntryObj {
@@ -45,7 +65,7 @@ declare namespace HoshinoLia {
     styler: Styler;
     route: Route;
     replies: Map<string, RepliesArg>;
-    HoshitoHM: typeof import("../Hoshino/resources/styler/hoshinohomemodular");
+    HoshinoHM: typeof import("../Hoshino/resources/styler/hoshinohomemodular");
     hoshinoDB: import("../Hoshino/resources/plugins/database/utils");
     LevelSystem: typeof import("../Hoshino/resources/plugins/level/utils");
     BalanceHandler: typeof import("../Hoshino/resources/plugins/balance/utils");
@@ -71,7 +91,7 @@ declare namespace HoshinoLia {
   }
 
   export interface Route {
-    chatbotMarin(message: string): Promise<string>;
+    // chatbotMarin(message: string): Promise<string>;
   }
 
   export interface RepliesArg {
