@@ -1,19 +1,19 @@
 declare namespace HoshinoLia {
   export interface CommandManifest {
     name: string;
-    aliases: string[];
+    aliases?: string[];
     version: string;
     developer?: string;
     description: string;
     category: string;
-    cooldown: number;
-    usage: string;
-    config: {
-      prefix: boolean;
-      admin: boolean;
-      moderator: boolean;
-      developer: boolean;
-      privateOnly: boolean;
+    cooldown?: number;
+    usage?: string;
+    config?: {
+      prefix?: boolean;
+      admin?: boolean;
+      moderator?: boolean;
+      developer?: boolean;
+      privateOnly?: boolean;
     };
   }
 
