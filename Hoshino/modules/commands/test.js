@@ -1,9 +1,8 @@
-/* 
+/**
  * @type {HoshinoLia.Command}
-*/
-
+ */
 const command = {
-   manifest: {
+  manifest: {
     name: "test",
     aliases: ["t"],
     version: "1.0.0",
@@ -16,11 +15,11 @@ const command = {
       moderator: false,
       admin: false,
       privateOnly: false,
-    }
-   },
-   async deploy({ chat }){
-     chat.send("hello.");
-   }
-}
+    },
+  },
+  async deploy({ chat }) {
+    chat.send("hello.");
+  },
+};
 
 module.exports = command;

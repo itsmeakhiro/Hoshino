@@ -1,6 +1,6 @@
-/* 
+/**
  * @type {HoshinoLia.Command}
-*/
+ */
 const command = {
   manifest: {
     name: "help",
@@ -15,7 +15,7 @@ const command = {
       moderator: false,
       admin: false,
       privateOnly: false,
-    }
+    },
   },
   async deploy({ chat, args }) {
     if (args.length > 0) {
@@ -23,7 +23,9 @@ const command = {
       const command = global.Hoshino.commands.get(commandName);
 
       if (!command || !command.manifest) {
-        return chat.send(`No command found with the name "${commandName}". Use "help" to see all commands.`);
+        return chat.send(
+          `No command found with the name "${commandName}". Use "help" to see all commands.`
+        );
       }
 
       const { name, description, usage, aliases } = command.manifest;
@@ -32,7 +34,9 @@ const command = {
         `Description: ${description || "No description available"}`,
         `Usage: ${usage || name}`,
         aliases && aliases.length > 0 ? `Aliases: ${aliases.join(", ")}` : "",
-      ].filter(Boolean).join("\n");
+      ]
+        .filter(Boolean)
+        .join("\n");
 
       return chat.send(helpText);
     }
@@ -47,7 +51,9 @@ const command = {
     const commandList = Array.from(uniqueCommands.entries())
       .map(([name, cmd]) => {
         const { description, aliases } = cmd.manifest;
-        return `${name}${aliases && aliases.length > 0 ? ` (${aliases.join(", ")})` : ""} - ${description || "No description"}`;
+        return `${name}${
+          aliases && aliases.length > 0 ? ` (${aliases.join(", ")})` : ""
+        } - ${description || "No description"}`;
       })
       .sort()
       .join("\n");
@@ -55,11 +61,11 @@ const command = {
     const helpText = [
       "Available Commands:",
       commandList || "No commands loaded yet.",
-      "Use `help <command>` for more details on a specific command."
+      "Use `help <command>` for more details on a specific command.",
     ].join("\n");
 
     return chat.send(helpText);
-  }
+  },
 };
 
 module.exports = command;
