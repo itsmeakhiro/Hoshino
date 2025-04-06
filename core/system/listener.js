@@ -18,6 +18,7 @@ const BankHandler = require("../../Hoshino/resources/plugins/bank/utils");
 const styler = require("../../Hoshino/resources/styler/styler");
 const fonts = require("../../Hoshino/resources/styler/fonts");
 const HoshinoHM = require("../../Hoshino/resources/styler/hoshinohomemodular");
+const { Chat } = require("./handler/chat");
 
 module.exports = async function listener({ api, event }) {
   if (!isConnected) {
@@ -40,45 +41,15 @@ module.exports = async function listener({ api, event }) {
   }
 
   const command = global.Hoshino.commands.get(commandName);
-  const chat = {
-    send: (message, goal, noStyle = false) => {
-      return new Promise(async (res, rej) => {
-        if (!noStyle && command && command.style && command.font) {
-          const { type, title, footer } = command.style;
-          message = await styler(type, title, message, footer, command.font);
-        }
-        api.sendMessage(message, goal || event.threadID, (err, info) => {
-          if (err) {
-            rej(err);
-          } else {
-            res(info);
-          }
-        });
-      });
-    },
-    reply: async (message, goal) => {
-      return new Promise((res, rej) => {
-        api.sendMessage(
-          message,
-          goal || event.threadID,
-          (err, info) => {
-            if (err) {
-              rej(err);
-            } else {
-              res(info);
-            }
-          },
-          event.messageID
-        );
-      });
-    },
-  };
+  const chat = new Chat({ api, event, command });
 
   /**
    * @type {HoshinoLia.CommandContext}
+   * DO NOT REMOVE
    */
   const entryObj = {
     api,
+    Chat,
     chat,
     event,
     args,
@@ -168,7 +139,7 @@ module.exports = async function listener({ api, event }) {
       await command.deploy(entryObj);
     } catch (err) {
       console.error(`Error executing command "${commandName}":`, err);
-      err instanceof Error ? await chat.reply(err?.stack) : null;
+      err instanceof Error ? await chat.reply(err?.stack ?? err.message) : null;
     }
     return;
   }

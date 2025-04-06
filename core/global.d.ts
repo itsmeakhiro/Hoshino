@@ -1,3 +1,5 @@
+import chat = require("./system/handler/chat");
+
 declare global {
   var bot: import("events").EventEmitter;
   var Hoshino: HoshinoLia.GlobalHoshino;
@@ -55,19 +57,16 @@ declare global {
     }
 
     export type MessageForm = string | StrictMessageForm;
-    export interface Chat {
-      send(
-        message: MessageForm,
-        goal?: string,
-        noStyle?: boolean
-      ): Promise<any>;
-      reply(message: MessageForm, goal?: string): Promise<any>;
-    }
+    export interface ChatInstance extends chat.Chat {}
+    type CC = typeof chat.Chat;
+
+    export interface ChatConstructor extends CC {}
 
     export interface EntryObj {
       api: any;
-      chat: Chat;
+      chat: ChatInstance;
       event: Event;
+      Chat: ChatConstructor;
       args: string[];
       fonts: Fonts;
       styler: Styler;
