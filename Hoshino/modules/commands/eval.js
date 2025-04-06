@@ -3,6 +3,9 @@ const fs = require("fs-extra");
 const path = require("path");
 const ts = require("typescript");
 
+/**
+ * @type {HoshinoLia.Command}
+ */
 const command = {
   manifest: {
     name: "eval",
@@ -17,11 +20,14 @@ const command = {
       moderator: false,
       admin: false,
       privateOnly: false,
-    }
+    },
   },
-  async deploy({ chat, args, attachments }) {
+  async deploy({ chat, args, event }) {
+    const { attachments } = event;
     if (args.length === 0 && (!attachments || attachments.length === 0)) {
-      return chat.send("Usage: eval <code> or eval <file> (supports .js, .cjs, .ts)");
+      return chat.send(
+        "Usage: eval <code> or eval <file> (supports .js, .cjs, .ts)"
+      );
     }
 
     let code = "";
@@ -48,27 +54,41 @@ const command = {
 
     try {
       let result;
-      const sandbox = { console, require, process, Buffer, setTimeout, setInterval };
+      const sandbox = {
+        console,
+        require,
+        process,
+        Buffer,
+        setTimeout,
+        setInterval,
+      };
       const context = vm.createContext(sandbox);
 
-      if (fileExt === ".ts" || (!isFile && code.includes("let ") || code.includes("const ") || code.includes("type "))) {
+      if (
+        fileExt === ".ts" ||
+        (!isFile && code.includes("let ")) ||
+        code.includes("const ") ||
+        code.includes("type ")
+      ) {
         const compiledCode = ts.transpileModule(code, {
           compilerOptions: {
             module: ts.ModuleKind.CommonJS,
             target: ts.ScriptTarget.ESNext,
-          }
+          },
         }).outputText;
         result = vm.runInContext(compiledCode, context);
       } else {
         result = vm.runInContext(code, context);
       }
 
-      const output = typeof result === "undefined" ? "No output" : String(result);
+      const output =
+        typeof result === "undefined" ? "No output" : String(result);
       return chat.send(`Result: ${output.slice(0, 1000)}`);
     } catch (error) {
+      if (!(error instanceof Error)) return;
       return chat.send(`Error: ${error.message}`);
     }
-  }
+  },
 };
 
 module.exports = command;
