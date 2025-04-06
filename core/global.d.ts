@@ -114,14 +114,15 @@ declare namespace HoshinoLia {
     [key: string]: any;
   }
 
-  export interface GlobalTokito {
-    config: {
-      prefix: string;
-      maintenance: boolean;
-      developer: string[];
-      moderator: string[];
-      admin: string[];
-    };
+  export interface GlobalHoshino {
+    // config: {
+    //   prefix: string;
+    //   maintenance: boolean;
+    //   developer: string[];
+    //   moderator: string[];
+    //   admin: string[];
+    // };
+    config: typeof import("../settings.json");
     commands: Map<string, Command>;
     events: Map<string, any>;
     cooldowns: Map<string, Record<string, number>>;

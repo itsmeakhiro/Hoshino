@@ -5,7 +5,7 @@ let isConnected = false;
  * @type {Map<string, HoshinoLia.RepliesArg>}
  */
 
-const replies = new Map();;
+const replies = new Map();
 const eventHandler = require("./handler/eventHandler");
 const commandHandler = require("./handler/commandHandler");
 const route = require("./handler/apiHandler");
@@ -18,7 +18,7 @@ const Inventory = require("../../Hoshino/resources/plugins/inventory/utils");
 const BankHandler = require("../../Hoshino/resources/plugins/bank/utils");
 const styler = require("../../Hoshino/resources/styler/styler");
 const fonts = require("../../Hoshino/resources/styler/fonts");
-const HoshinoHM = require("../../Hoshino/resources/styler/hoshinohomemodular")
+const HoshinoHM = require("../../Hoshino/resources/styler/hoshinohomemodular");
 
 module.exports = async function listener({ api, event }) {
   if (!isConnected) {
@@ -26,7 +26,7 @@ module.exports = async function listener({ api, event }) {
     await hoshinoDB.connect();
   }
 
-  const { prefix, developers } = global.Hoshino.config;
+  const { prefix, developer } = global.Hoshino.config;
   if (!event.body) return;
 
   const isGroup = event.threadID !== event.senderID;
@@ -59,13 +59,18 @@ module.exports = async function listener({ api, event }) {
     },
     reply: async (message, goal) => {
       return new Promise((res, rej) => {
-        api.sendMessage(message, goal || event.threadID, (err, info) => {
-          if (err) {
-            rej(err);
-          } else {
-            res(info);
-          }
-        }, event.messageID);
+        api.sendMessage(
+          message,
+          goal || event.threadID,
+          (err, info) => {
+            if (err) {
+              rej(err);
+            } else {
+              res(info);
+            }
+          },
+          event.messageID
+        );
       });
     },
   };
@@ -87,18 +92,25 @@ module.exports = async function listener({ api, event }) {
     LevelSystem,
     BalanceHandler,
     Inventory,
-    BankHandler
+    BankHandler,
   };
 
   global.bot.emit("message", entryObj);
 
-  if (event.type === "message_reply" && event.messageReply && replies.has(event.messageReply.messageID)) {
+  if (
+    event.type === "message_reply" &&
+    event.messageReply &&
+    replies.has(event.messageReply.messageID)
+  ) {
     const target = replies.get(event.messageReply.messageID);
     if (target) {
       try {
         await target.callback({ ...entryObj, ReplyData: { ...target } });
       } catch (error) {
-        console.log("ERROR", error instanceof Error ? error.stack : JSON.stringify(error));
+        console.log(
+          "ERROR",
+          error instanceof Error ? error.stack : JSON.stringify(error)
+        );
       }
     }
   }
@@ -111,15 +123,17 @@ module.exports = async function listener({ api, event }) {
   }
 
   if (antiNSFW(commandName)) {
-    await chat.reply(fonts.sans("Warning: NSFW content is not allowed on Hoshino."));
+    await chat.reply(
+      fonts.sans("Warning: NSFW content is not allowed on Hoshino.")
+    );
     return;
   }
 
   if (command) {
     const { config } = command.manifest;
 
-    const admins = global.Hoshino.config.admins  || [];
-    const moderators = global.Hoshino.config.moderators || [];
+    const admins = global.Hoshino.config.admin || [];
+    const moderators = global.Hoshino.config.moderator || [];
 
     function hasPermission(type) {
       return (
@@ -134,12 +148,20 @@ module.exports = async function listener({ api, event }) {
     const isModerator = hasPermission("moderator");
 
     if (config?.admin && !isAdmin) {
-      await chat.reply(fonts.sans("Access denied, you don't have rights to use this admin-only command."));
+      await chat.reply(
+        fonts.sans(
+          "Access denied, you don't have rights to use this admin-only command."
+        )
+      );
       return;
     }
 
     if (config?.moderator && !isModerator && !isAdmin) {
-      await chat.reply(fonts.sans("Access denied, you don't have rights to use this moderator-only command."));
+      await chat.reply(
+        fonts.sans(
+          "Access denied, you don't have rights to use this moderator-only command."
+        )
+      );
       return;
     }
 

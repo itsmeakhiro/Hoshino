@@ -31,7 +31,7 @@ module.exports = async function commandHandler({
 
   const isGroup = event.threadID !== event.senderID;
   const threadSubprefix = isGroup ? getSubprefix(event.threadID) : null;
-  const mainPrefix = global.Hoshino.prefix;
+  const mainPrefix = global.Hoshino.config.prefix;
   const usedPrefix = isGroup ? threadSubprefix || mainPrefix : mainPrefix;
 
   if (!event.body.startsWith(usedPrefix)) {
@@ -84,7 +84,7 @@ module.exports = async function commandHandler({
   const userCooldowns = cooldowns.get(senderID) ?? {};
 
   const lastUsed = userCooldowns[commandNameOrAlias] ?? null;
-  if (lastUsed !== null) {
+  if (lastUsed !== null && command.manifest.cooldown) {
     const elapsed = Date.now() - lastUsed;
     if (elapsed < command.manifest.cooldown * 1000) {
       const remaining = (
