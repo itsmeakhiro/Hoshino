@@ -22,7 +22,8 @@ const command = {
       privateOnly: false,
     },
   },
-  async deploy({ chat, args, event }) {
+  async deploy(ctx) {
+    const { chat, args, event } = ctx;
     const { attachments } = event;
     if (args.length === 0 && (!attachments || attachments.length === 0)) {
       return chat.send(
@@ -55,13 +56,19 @@ const command = {
     try {
       let result;
       const sandbox = {
+        ...ctx,
+        ...Object.fromEntries(
+          Reflect.ownKeys(globalThis).map((i) => [i, globalThis[i]])
+        ),
         console,
         require,
         process,
         Buffer,
         setTimeout,
         setInterval,
+        global,
       };
+
       const context = vm.createContext(sandbox);
 
       if (
