@@ -10,7 +10,7 @@
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
+    "skipLibCheck": false,
     "types": ["node"],
     "lib": ["ESNext"],
     "isolatedModules": true,

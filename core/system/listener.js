@@ -4,7 +4,6 @@ let isConnected = false;
 /**
  * @type {Map<string, HoshinoLia.RepliesArg>}
  */
-
 const replies = new Map();
 const eventHandler = require("./handler/eventHandler");
 const commandHandler = require("./handler/commandHandler");
@@ -137,7 +136,7 @@ module.exports = async function listener({ api, event }) {
 
     function hasPermission(type) {
       return (
-        developers?.includes(senderID) ||
+        developer?.includes(senderID) ||
         (type === "admin"
           ? admins.includes(senderID)
           : moderators.includes(senderID) || admins.includes(senderID))

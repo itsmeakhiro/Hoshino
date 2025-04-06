@@ -19,7 +19,7 @@ router.get("/postWReply", async (req, res) => {
   const event = new Event(req.query ?? {});
   event.messageID = `id_${crypto.randomUUID()}`;
 
-  const botResponse = await new Promise(async (resolve, reject) => {
+  const botResponse = await new Promise(async (resolve) => {
     allResolve.set(event.messageID, resolve);
     const apiFake = new Proxy(
       {
@@ -51,7 +51,7 @@ router.get("/postWReply", async (req, res) => {
           return (...args) => {
             console.log(
               `Warn: 
-    api.${key}(${args
+    api.${String(prop)}(${args
                 .map((i) => `[ ${typeof i} ${i?.constructor?.name || ""} ]`)
                 .join(",")}) has no effect!`
             );
@@ -86,6 +86,8 @@ function formatIP(ip) {
 
 class Event {
   constructor({ ...info } = {}) {
+    this.messageID = undefined;
+
     let defaults = {
       body: "",
       senderID: "0",
@@ -115,6 +117,7 @@ class Event {
 
       this.messageReply.senderID = formatIP(this.messageReply.senderID);
     }
+    this.participantIDs ??= [];
     if (Array.isArray(this.participantIDs)) {
       this.participantIDs = this.participantIDs.map((id) => formatIP(id));
     }
@@ -138,6 +141,7 @@ function normalizeMessageForm(form) {
     }
 
     if (typeof form === "string") {
+      // @ts-ignore
       r = {
         body: form,
       };
