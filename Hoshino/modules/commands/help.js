@@ -17,16 +17,6 @@ const command = {
       privateOnly: false,
     },
   },
-  style: {
-    type: "Hdesign",
-    title: "📚 Custom Commands",
-    footer: `🛠️ Total Commands: ${commands.size}\n\nℹ️ This is a beta test botfile developed by Francis Loyd Raval. More updates will come up soon. Stay tuned!!`,
-  },
-  font: {
-    title: ["bold", "Sans"],
-    content: "sans",
-    footer: "sans",
-  },
   async deploy({ chat, args }) {
     if (args.length > 0) {
       const commandName = args[0].toLowerCase();
