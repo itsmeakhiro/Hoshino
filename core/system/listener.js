@@ -18,7 +18,7 @@ const BankHandler = require("../../Hoshino/resources/plugins/bank/utils");
 const styler = require("../../Hoshino/resources/styler/styler");
 const fonts = require("../../Hoshino/resources/styler/fonts");
 const HoshinoHM = require("../../Hoshino/resources/styler/hoshinohomemodular");
-const { Chat, ChatContextor } = require("./handler/chat");
+const { ChatContextor } = require("./handler/chat");
 
 module.exports = async function listener({ api, event }) {
   if (!isConnected) {
@@ -49,7 +49,6 @@ module.exports = async function listener({ api, event }) {
    */
   const entryObj = {
     api,
-    Chat,
     ChatContextor,
     chat,
     event,
