@@ -3,7 +3,7 @@ class HoshinoHM {
      * @typedef {Object} Command
      * @property {string} subcommand - The subcommand name.
      * @property {string} description - The description of the subcommand.
-     * @property {(ctx: TokitoLia.EntryObj) => Promise<any>} deploy - The function to execute the subcommand.
+     * @property {(ctx: HoshinoLia.EntryObj) => Promise<any>} deploy - The function to execute the subcommand.
      */
   
     /**
@@ -19,7 +19,7 @@ class HoshinoHM {
     }
   
     /**
-     * @param {TokitoLia.EntryObj} ctx
+     * @param {HoshinoLia.EntryObj} ctx
      */
     async runInContext(ctx) {
       const { args, chat } = ctx;
