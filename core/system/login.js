@@ -28,6 +28,6 @@ module.exports = async function initializeBot() {
       listener({ api, event });
     });
   } catch (error) {
-    return console.error("Login error:", error);
+    return console.error("Login error:", error.stack);
   }
 };
