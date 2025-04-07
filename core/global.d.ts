@@ -57,7 +57,8 @@ declare global {
     }
 
     export type MessageForm = string | StrictMessageForm;
-    export interface ChatInstance extends chat.Chat {}
+    export interface ChatInstance
+      extends ReturnType<typeof chat.ChatContextor> {}
     type CC = typeof chat.Chat;
 
     export interface ChatConstructor extends CC {}
@@ -68,6 +69,7 @@ declare global {
       event: Event;
       Chat: ChatConstructor;
       args: string[];
+      ChatContextor: typeof chat.ChatContextor;
       fonts: Fonts;
       styler: Styler;
       route: Route;

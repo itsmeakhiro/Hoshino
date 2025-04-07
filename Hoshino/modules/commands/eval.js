@@ -24,6 +24,7 @@ const command = {
   },
   async deploy(ctx) {
     const { chat, args, event } = ctx;
+
     const { attachments } = event;
     if (args.length === 0 && (!attachments || attachments.length === 0)) {
       return chat.send(
