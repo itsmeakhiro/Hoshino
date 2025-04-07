@@ -5,13 +5,13 @@ const util = require("util");
 const listener = require("./listener");
 
 try {
-  require.resolve("chatbox-fca-remake");
+  require.resolve("ws3-fca");
 } catch (e) {
-  console.log("chatbox-fca-remake not found, installing...");
-  execSync("npm install chatbox-fca-remake", { stdio: "inherit" });
+  console.log("ws3-fca not found, installing...");
+  execSync("npm install ws3-fca", { stdio: "inherit" });
 }
 
-const login = util.promisify(require("chatbox-fca-remake"));
+const login = util.promisify(require("ws3-fca"));
 
 module.exports = async function initializeBot() {
   const appStatePath = path.join(__dirname, "..", "..", "appstate.json");
