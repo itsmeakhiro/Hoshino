@@ -20,6 +20,10 @@ module.exports = async function initializeBot() {
     api = await login({
       appState: JSON.parse(fs.readFileSync(appStatePath, "utf8")),
     });
+    const conf = global.Hoshino.config["api-options"];
+    if (conf) {
+      api.setOptions(conf);
+    }
     // let botId = api.getCurrentUserID();
     api.listenMqtt((err, event) => {
       if (err) {

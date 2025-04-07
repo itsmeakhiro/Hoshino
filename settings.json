@@ -3,5 +3,16 @@
   "maintenance": false,
   "developer": [""],
   "moderator": [""],
-  "admin": [""]
+  "admin": [""],
+  "api-options": {
+    "forceLogin": true,
+    "listenEvents": true,
+    "updatePresence": true,
+    "selfListen": false,
+    "userAgent": "facebookexternalhit/1.1",
+    "online": true,
+    "autoMarkDelivery": false,
+    "autoMarkRead": false,
+    "region": "PRN"
+  }
 }
