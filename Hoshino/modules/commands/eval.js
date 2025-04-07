@@ -60,14 +60,7 @@ const command = {
 
     const executeCode = async () => {
       if (!isFile || fileExt === ".js" || fileExt === ".cjs") {
-        const sandbox = {
-          console,
-          require,
-          process,
-          Buffer,
-          setTimeout,
-          setInterval,
-        };
+        const sandbox = {};
         const context = vm.createContext(sandbox);
         return vm.runInContext(code, context);
       }
@@ -79,14 +72,7 @@ const command = {
             target: ts.ScriptTarget.ESNext,
           },
         }).outputText;
-        const sandbox = {
-          console,
-          require,
-          process,
-          Buffer,
-          setTimeout,
-          setInterval,
-        };
+        const sandbox = {};
         const context = vm.createContext(sandbox);
         return vm.runInContext(compiledCode, context);
       }
