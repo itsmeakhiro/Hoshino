@@ -19,6 +19,16 @@ const command = {
         privateOnly: false,
      }
     },
+    style: {
+        type: "lines1",
+        title: "☄︎ ARIA AI",
+        footer: `Developed by: Francis Loyd Raval`,
+      },
+      font: {
+        title: "bold",
+        content: "sans",
+        footer: "sans",
+      },
     async deploy({ chat, args, fonts }){
         const q = args.join(" ");
         if (!q){
