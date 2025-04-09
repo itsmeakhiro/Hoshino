@@ -1,6 +1,7 @@
-// Disclaimer: This code is related to CassidyRedux(https://github.com/lianecagara/CassidyRedux) developed by: Liane Cagara, do not intend to change this code
-
 const LiaMongo = require("lia-mongo");
+const fs = require('fs'); 
+const fsPromises = require('fs').promises; 
+const path = require('path');
 
 class UserStatsManager {
   /**
@@ -14,18 +15,48 @@ class UserStatsManager {
     };
     this.mongo = null;
     this.#uri = uri ?? process.env.MONGO_URI;
+    this.isJsonMode = false;
+    this.jsonFilePath = path.join(__dirname, 'userStats.json');
+    
     if (!this.#uri) {
-      throw new Error("Missing MongoDB URI");
+      console.warn("No MongoDB URI provided, falling back to JSON mode");
+      this.isJsonMode = true;
+      this.cache = this.loadJsonDataSync();
+    } else {
+      this.mongo = new LiaMongo({
+        uri: this.#uri,
+        collection: "tokitoDB",
+      });
+      this.cache = {};
     }
-    this.mongo = new LiaMongo({
-      uri: this.#uri,
-      collection: "tokitoDB",
-    });
-    this.cache = {};
+  }
+
+  loadJsonDataSync() {
+    try {
+      if (fs.existsSync(this.jsonFilePath)) { 
+        const data = fs.readFileSync(this.jsonFilePath, 'utf8');
+        return JSON.parse(data) || {};
+      }
+      return {};
+    } catch (error) {
+      console.error("Error loading JSON data:", error);
+      return {};
+    }
+  }
+
+  async saveJsonData(data) {
+    try {
+      await fsPromises.writeFile(this.jsonFilePath, JSON.stringify(data, null, 2));
+    } catch (error) {
+      console.error("Error saving JSON data:", error);
+    }
   }
 
   updateCache(key, value) {
     this.cache[key] = value;
+    if (this.isJsonMode) {
+      this.saveJsonData(this.cache);
+    }
   }
 
   process(data) {
@@ -41,6 +72,9 @@ class UserStatsManager {
   }
 
   async connect() {
+    if (this.isJsonMode) {
+      return; 
+    }
     try {
       await this.mongo.start();
       await this.mongo.put("test", this.defaults);
@@ -58,17 +92,30 @@ class UserStatsManager {
   }
 
   async get(key) {
-    const data = await this.process(
-      (await this.mongo.get(key)) || {
+    let data;
+    if (this.isJsonMode) {
+      data = this.process(this.cache[key] || {
         ...this.defaults,
         lastModified: Date.now(),
-      }
-    );
+      });
+    } else {
+      data = await this.process(
+        (await this.mongo.get(key)) || {
+          ...this.defaults,
+          lastModified: Date.now(),
+        }
+      );
+    }
     this.updateCache(key, data);
     return data;
   }
 
   async deleteUser(key) {
+    if (this.isJsonMode) {
+      delete this.cache[key];
+      await this.saveJsonData(this.cache);
+      return this.getAll();
+    }
     await this.mongo.remove(key);
     return this.getAll();
   }
@@ -77,6 +124,10 @@ class UserStatsManager {
     const user = await this.get(key);
     for (const item of removedProperties) {
       delete user[item];
+    }
+    if (this.isJsonMode) {
+      this.updateCache(key, user);
+      return this.getAll();
     }
     await this.mongo.put(key, user);
     this.updateCache(key, user);
@@ -90,11 +141,18 @@ class UserStatsManager {
       ...updatedProperties,
       lastModified: Date.now(),
     };
-    await this.mongo.bulkPut({ [key]: updatedUser });
-    this.updateCache(key, updatedUser);
+    if (this.isJsonMode) {
+      this.updateCache(key, updatedUser);
+    } else {
+      await this.mongo.bulkPut({ [key]: updatedUser });
+      this.updateCache(key, updatedUser);
+    }
   }
 
   async getAllOld() {
+    if (this.isJsonMode) {
+      return { ...this.cache };
+    }
     return await this.mongo.toObject();
   }
 
@@ -109,6 +167,9 @@ class UserStatsManager {
   }
 
   async toLeanObject() {
+    if (this.isJsonMode) {
+      return { ...this.cache };
+    }
     try {
       const results = await this.mongo.KeyValue.find({}, "key value").lean();
       const resultObj = {};
@@ -125,6 +186,6 @@ class UserStatsManager {
       }
     }
   }
-}
+};
 
 module.exports = UserStatsManager;
