@@ -80,9 +80,8 @@ const ChatContextor = MethodContextor(
               this.event?.messageID
           );
       });
-  }
-  
-     /**
+    },  
+    /**
      * @param {Object} config
      * @param {any} config.api - The API object for sending messages
      * @param {Record<string, any>} config.event - Contains event details like threadID and messageID

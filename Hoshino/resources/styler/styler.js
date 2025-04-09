@@ -2,7 +2,6 @@ const fs = require("fs-extra");
 const path = require("path");
 const fonts = require("./fonts");
 
-// Path to the designs JSON file
 const DESIGNS_FILE = path.join(__dirname, "../designs.json");
 
 /**
@@ -24,7 +23,7 @@ function loadDesigns() {
         return JSON.parse(fs.readFileSync(DESIGNS_FILE, "utf-8"));
     } catch (error) {
         console.error("Error loading designs:", error);
-        return {}; // Return empty object on error
+        return {}; 
     }
 }
 
