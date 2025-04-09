@@ -8,6 +8,7 @@ module.exports = async function cUI(){
  await utils.loadCommands();
  console.log("Deploy events");
  await utils.loadEvents();
+ console.log("Uploading Hoshino API.")
  console.log("Logging In");
- await login()
+ await login();
 }
