@@ -46,20 +46,29 @@ function saveDesign(name, template) {
 }
 
 /**
- * Applies font styling to text
+ * Applies font styling to text, including autobold for **text**
  * @param {string} text - Text to style
  * @param {string|string[]} style - Font style(s) to apply
  * @returns {string} Styled text
  */
 function applyFont(text, style) {
-    if (!style) return text;
-    if (Array.isArray(style)) {
-        return style.reduce(
-            (formattedText, font) => fonts[font]?.(formattedText) || formattedText,
-            text
-        );
+    if (!text) return "";
+
+    let styledText = text.replace(/\*\*(.*?)\*\*/g, (match, p1) => {
+        return fonts.bold ? fonts.bold(p1) : `**${p1}**`; 
+    });
+
+    if (style) {
+        if (Array.isArray(style)) {
+            return style.reduce(
+                (formattedText, font) => fonts[font]?.(formattedText) || formattedText,
+                styledText
+            );
+        }
+        return fonts[style]?.(styledText) || styledText;
     }
-    return fonts[style]?.(text) || text;
+
+    return styledText;
 }
 
 /**
@@ -84,7 +93,6 @@ module.exports = function styler(type, title, content, footer, styles = {}) {
         return `${title}\n${content}${footer ? `\n${footer}` : ""}`.trim();
     }
 
-    // Replace placeholders with actual content
     return template
         .replace("{title}", title)
         .replace("{content}", content)
