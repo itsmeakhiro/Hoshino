@@ -10,7 +10,6 @@ const commandHandler = require("./handler/commandHandler");
 const route = require("./handler/apiHandler");
 const HoshinoDB = require("../../Hoshino/resources/plugins/database/utils");
 const hoshinoDB = new HoshinoDB();
-const subprefixes = require("./handler/plugins/data/subprefixes.json");
 const LevelSystem = require("../../Hoshino/resources/plugins/level/utils");
 const BalanceHandler = require("../../Hoshino/resources/plugins/balance/utils");
 const Inventory = require("../../Hoshino/resources/plugins/inventory/utils");
@@ -29,15 +28,14 @@ module.exports = async function listener({ api, event }) {
   const { prefix, developer } = global.Hoshino.config;
   if (!event.body) return;
 
-  const isGroup = event.threadID !== event.senderID;
-  const groupSubprefix = isGroup ? subprefixes[event.threadID] : null;
-  const usedPrefix = groupSubprefix || prefix;
-  let hasPrefix = event.body.startsWith(usedPrefix);
+  let hasPrefix = event.body.startsWith(prefix);
   let [commandName, ...args] = event.body.split(" ");
   commandName = commandName.toLowerCase();
 
+  if (!hasPrefix) return;
+
   if (hasPrefix) {
-    commandName = commandName.slice(usedPrefix.length);
+    commandName = commandName.slice(prefix.length);
   }
 
   const command = global.Hoshino.commands.get(commandName);
