@@ -16,7 +16,7 @@ async function animateTaskWithProgress(message, task) {
 
     const originalConsoleLog = console.log;
     console.log = (...args) => {
-        const msg = args.join(' ');
+        const msg = args.join('\n');
         if (msg.includes('[COMMAND] Deployed') || msg.includes('[EVENT] Deployed')) {
             currentStep++;
             progress = Math.min((currentStep / totalSteps) * 100, 100);
@@ -58,7 +58,6 @@ module.exports = async function cUI() {
 
     console.log(`${colors.primary}${styleText('[SYSTEM] Initializing Hoshino System...', colors)}${reset}`);
     console.log(`${colors.dim}Port: 8080${reset}`);
-    console.log();
 
     await animateTaskWithProgress('[COMMANDS] Deploying commands...', async () => {
         await utils.loadCommands();
