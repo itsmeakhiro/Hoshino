@@ -19,15 +19,15 @@ const command = {
         privateOnly: false,
      }
     },
-    async deploy({ chat, args }){
+    async deploy({ chat, args, fonts }){
         const q = args.join(" ");
         if (!q){
-            return chat.send(fonts.sans("Provide a query."));
+            return chat.reply(fonts.sans("Provide a query."));
         }
         try {
          const aria = await axios.get(`https://haji-mix.up.railway.app/api/aria?ask=${encodeURIComponent(q)}&stream=false`);
          const r = aria.data.answer;
-         chat.reply(r)
+         chat.reply(r);
         } catch (error) {
             chat.reply(error.message)
         }

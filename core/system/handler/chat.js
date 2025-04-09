@@ -65,19 +65,24 @@ const ChatContextor = MethodContextor(
      * @returns {Promise<any>} - Message reply info or error
      */
     async reply(message, goal) {
+      if (this.command && this.command.style && this.command.font && this.styler) {
+          const { type, title, footer } = this.command.style;
+          message = await this.styler(type, title, message, footer, this.command.font);
+      }
       return new Promise((res, rej) => {
-        this.api.sendMessage(
-          message,
-          goal || this.event?.threadID,
-          (err, info) => {
-            if (err) rej(err);
-            else res(info);
-          },
-          this.event?.messageID
-        );
+          this.api.sendMessage(
+              message,
+              goal || this.event?.threadID,
+              (err, info) => {
+                  if (err) rej(err);
+                  else res(info);
+              },
+              this.event?.messageID
+          );
       });
-    },
-    /**
+  }
+  
+     /**
      * @param {Object} config
      * @param {any} config.api - The API object for sending messages
      * @param {Record<string, any>} config.event - Contains event details like threadID and messageID
