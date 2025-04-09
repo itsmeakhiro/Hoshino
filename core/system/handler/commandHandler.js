@@ -1,19 +1,5 @@
-const fs = require("fs-extra");
-const path = require("path");
 const fonts = require("../../../Hoshino/resources/styler/fonts");
 const route = require("./apiHandler");
-
-const subprefixFile = path.join(__dirname, "./data/subprefixes.json");
-const attachmentPath = path.join(__dirname, "./data/attachment/prefix.gif");
-
-function getSubprefix(threadID) {
-  try {
-    const subprefixes = JSON.parse(fs.readFileSync(subprefixFile, "utf-8"));
-    return subprefixes[threadID] || null;
-  } catch {
-    return null;
-  }
-}
 
 /**
  *
@@ -29,30 +15,9 @@ module.exports = async function commandHandler({
 }) {
   if (!event.body) return;
 
-  const isGroup = event.threadID !== event.senderID;
-  const threadSubprefix = isGroup ? getSubprefix(event.threadID) : null;
   const mainPrefix = global.Hoshino.config.prefix;
-  const usedPrefix = isGroup ? threadSubprefix || mainPrefix : mainPrefix;
-
-  if (!event.body.startsWith(usedPrefix)) {
-    const loweredBody = event.body.trim().toLowerCase();
-
-    if (loweredBody === "prefix") {
-      let response = fonts.monospace(
-        `▀█▀ █▀█ █▄▀ █ ▀█▀ █▀█\n░█░ █▄█ █░█ █ ░█░ █▄█`
-      );
-
-      response += `\nSYSTEM PREFIX: ${mainPrefix}`;
-      if (threadSubprefix) response += `\nYOUR GC PREFIX: ${threadSubprefix}`;
-
-      return await chat.send({
-        body: response,
-        attachment: fs.createReadStream(attachmentPath),
-      });
-    }
-    return;
-  }
-
+  const usedPrefix = mainPrefix; 
+  
   const [commandNameOrAlias, ...commandArgs] = event.body
     .slice(usedPrefix.length)
     .trim()
@@ -76,7 +41,7 @@ module.exports = async function commandHandler({
       ? `Unknown command: "${commandNameOrAlias}". Use "${usedPrefix}help" to view available commands.`
       : `Unknown command: "${commandNameOrAlias}".`;
 
-    return await chat.send(fonts.sans(message));
+    return await chat.reply(fonts.sans(message));
   }
 
   const senderID = event.senderID;
