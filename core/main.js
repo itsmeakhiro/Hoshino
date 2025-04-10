@@ -60,11 +60,12 @@ Object.assign(global.Hoshino, {
   },
 });
 
-async function start() {
-  app.listen("8080");
+const cUI = require("./views/console");
 
-  const cUI = require("./views/console");
-  await cUI();
+async function start() {
+  app.use(express.static(path.join(__dirname, "views", "web")));
+
+  app.listen("8080", cUI);
 }
 
 start();

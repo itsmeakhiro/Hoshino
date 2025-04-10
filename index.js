@@ -1,48 +1,4 @@
 const { spawn } = require("child_process");
-const express = require("express");
-const app = express();
-const path = require("path");
-const net = require("net");
-const fs = require("fs");
-const cors = require("cors");
-
-const generateRandomPort = () =>
-  Math.floor(Math.random() * (65535 - 1024) + 1024);
-let activePort = generateRandomPort();
-
-app.use(cors());
-
-app.use(express.static(path.join(__dirname, "views")));
-
-async function isPortInUse(port) {
-  return new Promise((resolve) => {
-    const tester = net
-      .createServer()
-      .once("error", () => resolve(false))
-      .once("listening", () => {
-        tester.once("close", () => resolve(true)).close();
-      })
-      .listen(port, "127.0.0.1");
-  });
-}
-
-async function initializeServer(port) {
-  try {
-    const isAvailable = await isPortInUse(port);
-    if (!isAvailable) {
-      const newPort = generateRandomPort();
-      console.log(`Port ${port} is in use. Switching to port ${newPort}`);
-      activePort = newPort;
-      return initializeServer(newPort);
-    }
-
-    app.listen(port, () => {
-
-    });
-  } catch (error) {
-    console.error(`Failed to start the server: ${error}`);
-  }
-}
 
 function launchProcess(instanceIndex) {
   const childProcess = spawn(
@@ -73,7 +29,6 @@ function launchProcess(instanceIndex) {
 }
 
 async function startApp() {
-  await initializeServer(activePort);
   launchProcess(1);
 }
 
