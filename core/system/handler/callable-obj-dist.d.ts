@@ -32,5 +32,4 @@ export declare namespace MethodContextor {
       : M[K];
   } & ((...args: Parameters<I>) => M);
 }
-export declare namespace example {}
 export {};
