@@ -85,15 +85,7 @@ declare global {
 
     export type Fonts = typeof FontSys;
 
-    export interface Styler {
-      (
-        type: string,
-        title: string,
-        content: string,
-        footer: string,
-        styles?: any
-      ): string;
-    }
+    export type Styler = typeof import("../Hoshino/resources/styler/styler");
 
     export interface Route {
       // chatbotMarin(message: string): Promise<string>;

@@ -8,9 +8,9 @@ const DESIGNS_FILE = path.join(__dirname, "./plugin/designs.json");
  * Ensures the designs file exists (empty by default)
  */
 function initializeDesignsFile() {
-    if (!fs.existsSync(DESIGNS_FILE)) {
-        fs.writeFileSync(DESIGNS_FILE, JSON.stringify({}, null, 2));
-    }
+  if (!fs.existsSync(DESIGNS_FILE)) {
+    fs.writeFileSync(DESIGNS_FILE, JSON.stringify({}, null, 2));
+  }
 }
 
 /**
@@ -18,13 +18,13 @@ function initializeDesignsFile() {
  * @returns {Object} Designs object
  */
 function loadDesigns() {
-    initializeDesignsFile();
-    try {
-        return JSON.parse(fs.readFileSync(DESIGNS_FILE, "utf-8"));
-    } catch (error) {
-        console.error("Error loading designs:", error);
-        return {}; 
-    }
+  initializeDesignsFile();
+  try {
+    return JSON.parse(fs.readFileSync(DESIGNS_FILE, "utf-8"));
+  } catch (error) {
+    console.error("Error loading designs:", error);
+    return {};
+  }
 }
 
 /**
@@ -34,15 +34,15 @@ function loadDesigns() {
  * @returns {boolean} Success status
  */
 function saveDesign(name, template) {
-    const designs = loadDesigns();
-    designs[name] = template;
-    try {
-        fs.writeFileSync(DESIGNS_FILE, JSON.stringify(designs, null, 2));
-        return true;
-    } catch (error) {
-        console.error("Error saving design:", error);
-        return false;
-    }
+  const designs = loadDesigns();
+  designs[name] = template;
+  try {
+    fs.writeFileSync(DESIGNS_FILE, JSON.stringify(designs, null, 2));
+    return true;
+  } catch (error) {
+    console.error("Error saving design:", error);
+    return false;
+  }
 }
 
 /**
@@ -52,23 +52,23 @@ function saveDesign(name, template) {
  * @returns {string} Styled text
  */
 function applyFont(text, style) {
-    if (!text) return "";
+  if (!text) return "";
 
-    let styledText = text.replace(/\*\*(.*?)\*\*/g, (match, p1) => {
-        return fonts.bold ? fonts.bold(p1) : `**${p1}**`; 
-    });
+  let styledText = text.replace(/\*\*(.*?)\*\*/g, (match, p1) => {
+    return fonts.bold ? fonts.bold(p1) : `**${p1}**`;
+  });
 
-    if (style) {
-        if (Array.isArray(style)) {
-            return style.reduce(
-                (formattedText, font) => fonts[font]?.(formattedText) || formattedText,
-                styledText
-            );
-        }
-        return fonts[style]?.(styledText) || styledText;
+  if (style) {
+    if (Array.isArray(style)) {
+      return style.reduce(
+        (formattedText, font) => fonts[font]?.(formattedText) || formattedText,
+        styledText
+      );
     }
+    return fonts[style]?.(styledText) || styledText;
+  }
 
-    return styledText;
+  return styledText;
 }
 
 /**
@@ -81,23 +81,23 @@ function applyFont(text, style) {
  * @returns {string} Formatted text
  */
 module.exports = function styler(type, title, content, footer, styles = {}) {
-    title = applyFont(title || "", styles.title);
-    content = applyFont(content || "", styles.content);
-    footer = applyFont(footer || "", styles.footer);
+  title = applyFont(title || "", styles.title);
+  content = applyFont(content || "", styles.content);
+  footer = applyFont(footer || "", styles.footer);
 
-    const designs = loadDesigns();
+  const designs = loadDesigns();
 
-    const template = designs[type];
+  const template = designs[type];
 
-    if (!template) {
-        return `${title}\n${content}${footer ? `\n${footer}` : ""}`.trim();
-    }
+  if (!template) {
+    return `${title}\n${content}${footer ? `\n${footer}` : ""}`.trim();
+  }
 
-    return template
-        .replace("{title}", title)
-        .replace("{content}", content)
-        .replace("{footer}", footer)
-        .trim();
+  return template
+    .replace("{title}", title)
+    .replace("{content}", content)
+    .replace("{footer}", footer)
+    .trim();
 };
 
 /**
@@ -107,11 +107,13 @@ module.exports = function styler(type, title, content, footer, styles = {}) {
  * @returns {boolean} Success status
  */
 module.exports.addDesign = function (name, template) {
-    if (!name || !template || typeof template !== "string") {
-        throw new Error("Name and template must be valid strings");
-    }
-    if (!template.includes("{title}") || !template.includes("{content}")) {
-        throw new Error("Template must include {title} and {content} placeholders");
-    }
-    return saveDesign(name, template);
+  if (!name || !template || typeof template !== "string") {
+    throw new Error("Name and template must be valid strings");
+  }
+  if (!template.includes("{title}") || !template.includes("{content}")) {
+    throw new Error("Template must include {title} and {content} placeholders");
+  }
+  return saveDesign(name, template);
 };
+
+module.exports.applyFont = applyFont;
