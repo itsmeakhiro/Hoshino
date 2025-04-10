@@ -2,7 +2,6 @@ require("dotenv").config();
 
 const path = require("path");
 const fs = require("fs-extra");
-const tokito = require("./hoshino");
 const express = require("express");
 const EventEmitter = require("events");
 const utils = require("./utils");
@@ -14,7 +13,6 @@ process.on("unhandledRejection", (error) => console.log("ERROR", error));
 process.on("uncaughtException", (error) => console.log("ERROR", error.stack));
 
 global.bot = bot;
-app.use("", tokito);
 
 global.Hoshino = {
   utils,
