@@ -26,26 +26,9 @@ const ChatContextor = MethodContextor(
      */
     async send(message, goal, noStyle = false) {
       try {
-        if (
-          !noStyle &&
-          this.command &&
-          this.command.style &&
-          this.command.font &&
-          this.styler
-        ) {
-          const { type, title, footer } = this.command.style;
-          message = await this.styler(
-            type,
-            title,
-            message,
-            footer,
-            this.command.font
-          );
-        }
-
         return await new Promise((res, rej) => {
           this.api.sendMessage(
-            message,
+            noStyle ? message : this.processStyle(message),
             goal || this.event?.threadID,
             (err, info) => {
               if (err) rej(err);
@@ -62,25 +45,23 @@ const ChatContextor = MethodContextor(
      * Replies to a specific message in the thread.
      * @param {HoshinoLia.MessageForm} message - Reply content
      * @param {string} [goal] - Thread ID (defaults to current thread)
+     * @param {boolean} [noStyle=false] - If true, skip styling
+
      * @returns {Promise<any>} - Message reply info or error
      */
-    async reply(message, goal) {
-      if (this.command && this.command.style && this.command.font && this.styler) {
-          const { type, title, footer } = this.command.style;
-          message = await this.styler(type, title, message, footer, this.command.font);
-      }
+    async reply(message, goal, noStyle = false) {
       return new Promise((res, rej) => {
-          this.api.sendMessage(
-              message,
-              goal || this.event?.threadID,
-              (err, info) => {
-                  if (err) rej(err);
-                  else res(info);
-              },
-              this.event?.messageID
-          );
+        this.api.sendMessage(
+          noStyle ? message : this.processStyle(message),
+          goal || this.event?.threadID,
+          (err, info) => {
+            if (err) rej(err);
+            else res(info);
+          },
+          this.event?.messageID
+        );
       });
-    },  
+    },
     /**
      * @param {Object} config
      * @param {any} config.api - The API object for sending messages
@@ -89,6 +70,29 @@ const ChatContextor = MethodContextor(
      */
     create({ api, event, command }) {
       return ChatContextor({ api, event, command });
+    },
+
+    /**
+     * Adds style, lmao.
+     * @param {HoshinoLia.MessageForm} message - Reply content
+     * */
+    processStyle(message) {
+      if (
+        this.command &&
+        this.command.style &&
+        this.command.font &&
+        this.styler
+      ) {
+        const { type, title, footer } = this.command.style;
+        return this.styler(
+          type,
+          title,
+          typeof message === "string" ? message : message.body ?? "",
+          footer,
+          this.command.font
+        );
+      }
+      return message;
     },
   },
   function ({ api, event, command = null }) {

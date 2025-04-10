@@ -1,4 +1,5 @@
 import chat = require("./system/handler/chat");
+import FontSys = require("../Hoshino/resources/styler/fonts");
 
 declare global {
   var bot: import("events").EventEmitter;
@@ -82,11 +83,7 @@ declare global {
     }
     export type CommandContext = EntryObj;
 
-    export interface Fonts {
-      sans(text: string): string;
-      bold(text: string): string;
-      monospace(text: string): string;
-    }
+    export type Fonts = typeof FontSys;
 
     export interface Styler {
       (
