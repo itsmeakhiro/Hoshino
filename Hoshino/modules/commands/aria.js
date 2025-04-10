@@ -29,18 +29,19 @@ const command = {
     footer: "sans",
   },
   async deploy({ chat, args, fonts }) {
-    const q = args.join(" ");
-    if (!q) {
+    const ask = args.join(" ");
+    if (!ask) {
       return chat.reply(fonts.sans("Provide a query."));
     }
     try {
-      const aria = await axios.get(
-        `https://haji-mix.up.railway.app/api/aria?ask=${encodeURIComponent(
-          q
-        )}&stream=false`
+      const { answer } = await chat.req(
+        "https://haji-mix.up.railway.app/api/aria",
+        {
+          ask,
+          stream: "false",
+        }
       );
-      const r = aria.data.answer;
-      chat.reply(r);
+      chat.reply(answer);
     } catch (error) {
       chat.reply(error instanceof Error ? String(error.stack) : String(error));
     }
