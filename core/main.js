@@ -2,11 +2,9 @@ require("dotenv").config();
 
 const path = require("path");
 const fs = require("fs-extra");
-const express = require("express");
 const EventEmitter = require("events");
 const utils = require("./utils");
 
-const app = express();
 const bot = new EventEmitter();
 
 process.on("unhandledRejection", (error) => console.log("ERROR", error));
