@@ -4,7 +4,7 @@
 const command = {
   manifest: {
     name: "help",
-    aliases: ["h", "?"],
+    aliases: ["h", "?", "menu"],
     version: "1.0.0",
     developer: "Francis Loyd Raval",
     description: "Displays a list of available commands",
@@ -17,6 +17,16 @@ const command = {
       privateOnly: false,
     },
   },
+  style: {
+    type: "help1",
+    title: "HELP COMMAND",
+    footer: `Developed by: Francis Loyd Raval`,
+  },
+  font: {
+    title: "bold",
+    content: "sans",
+    footer: "sans",
+  },
   async deploy({ chat, args }) {
     if (args.length > 0) {
       const commandName = args[0].toLowerCase();
@@ -24,16 +34,16 @@ const command = {
 
       if (!command || !command.manifest) {
         return chat.send(
-          `No command found with the name "${commandName}". Use "help" to see all commands.`
+          `No command found with the name "${co0mmandName}". Use "help" to see all commands.`
         );
       }
 
       const { name, description, usage, aliases } = command.manifest;
       const helpText = [
-        `Command: ${name}`,
-        `Description: ${description || "No description available"}`,
-        `Usage: ${usage || name}`,
-        aliases && aliases.length > 0 ? `Aliases: ${aliases.join(", ")}` : "",
+        `|| Command: ${name}`,
+        `|| Description: ${description || "No description available"}`,
+        `|| Usage: ${usage || name}`,
+        aliases && aliases.length > 0 ? `|| Aliases: ${aliases.join(", ")}` : "",
       ]
         .filter(Boolean)
         .join("\n");
