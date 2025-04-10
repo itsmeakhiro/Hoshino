@@ -34,7 +34,7 @@ const command = {
 
       if (!command || !command.manifest) {
         return chat.send(
-          `No command found with the name "${co0mmandName}". Use "help" to see all commands.`
+          `No command found with the name "${commandName}". Use "help" to see all commands.`
         );
       }
 
