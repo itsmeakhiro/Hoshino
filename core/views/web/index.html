@@ -4,11 +4,478 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hoshino</title>
+  <title>Hoshino Industries: Innovating for the future</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background-color: #f4f4f9;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    nav {
+      background-color: #34495e;
+      padding: 1rem;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      position: sticky;
+      top: 0;
+      z-index: 9;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+    }
+
+    nav ul li a {
+      color: white;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .nav-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #3498db;
+      border-radius: 50%;
+      color: white;
+      text-decoration: none;
+      font-size: 0;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      width: 44px;
+      height: 44px;
+    }
+
+    .nav-button svg {
+      width: 24px;
+      height: 24px;
+      fill: white;
+    }
+
+    .nav-button:hover {
+      background-color: #2980b9;
+      transform: scale(1.1);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .hero {
+      position: relative;
+      height: 100vh;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: white;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1%, transparent 10%);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero h1 {
+      font-size: 4.5rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #3498db, #e94584);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    .hero h2 {
+      font-size: 2rem;
+      font-weight: 400;
+      background: linear-gradient(90deg, #3498db, #e94584);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero p {
+      font-size: 1.5rem;
+      font-weight: 300;
+      color: #d1d1d1;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 3rem auto;
+      padding: 0 2rem;
+    }
+
+    .welcome {
+      background-color: white;
+      padding: 3rem;
+      border-radius: 12px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+      margin-bottom: 3rem;
+      transition: transform 0.3s ease;
+    }
+
+    .welcome:hover {
+      transform: translateY(-10px);
+    }
+
+    .welcome h2 {
+      color: #2c3e50;
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .welcome p {
+      color: #7f8c8d;
+      font-size: 1.1rem;
+      line-height: 1.8;
+    }
+
+    .services {
+      margin-bottom: 3rem;
+    }
+
+    .services h2 {
+      text-align: center;
+      color: #2c3e50;
+      font-size: 2.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+
+    .service-card {
+      background-color: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .service-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .service-card i {
+      font-size: 2.5rem;
+      color: #3498db;
+      margin-bottom: 1rem;
+    }
+
+    .service-card h3 {
+      color: #2c3e50;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .service-card p {
+      color: #7f8c8d;
+      font-size: 1rem;
+    }
+
+    .contact {
+      background-color: #34495e;
+      color: white;
+      padding: 3rem;
+      border-radius: 12px;
+      margin-bottom: 3rem;
+      text-align: center;
+    }
+
+    .contact h2 {
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .contact form {
+      max-width: 600px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .contact input,
+    .contact textarea {
+      padding: 1rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      background-color: #f4f4f9;
+      color: #2c3e50;
+    }
+
+    .contact textarea {
+      resize: vertical;
+      min-height: 150px;
+    }
+
+    .contact button {
+      padding: 1rem;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .contact button:hover {
+      background-color: #2980b9;
+      transform: scale(1.02);
+    }
+
+    footer {
+      background-color: #2c3e50;
+      color: white;
+      text-align: center;
+      padding: 1.5rem;
+      width: 100%;
+    }
+
+    footer p {
+      font-size: 1rem;
+      font-weight: 300;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .welcome,
+    .services,
+    .contact {
+      animation: fadeInUp 0.8s ease-out forwards;
+    }
+
+    @media (max-width: 1024px) {
+      .hero h1 {
+        font-size: 3.5rem;
+      }
+
+      .hero h2 {
+        font-size: 1.8rem;
+      }
+
+      .hero p {
+        font-size: 1.2rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      nav ul {
+        gap: 1.5rem;
+      }
+
+      .nav-button {
+        width: 40px;
+        height: 40px;
+      }
+
+      .nav-button svg {
+        width: 22px;
+        height: 22px;
+      }
+
+      .hero {
+        height: 80vh;
+      }
+
+      .hero h1 {
+        font-size: 3rem;
+      }
+
+      .hero h2 {
+        font-size: 1.5rem;
+      }
+
+      .hero p {
+        font-size: 1rem;
+      }
+
+      .welcome h2,
+      .services h2,
+      .contact h2 {
+        font-size: 2rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero {
+        height: 70vh;
+      }
+
+      .hero h1 {
+        font-size: 2.5rem;
+      }
+
+      .hero h2 {
+        font-size: 1.2rem;
+      }
+
+      .hero p {
+        font-size: 0.9rem;
+      }
+
+      nav ul {
+        gap: 1rem;
+      }
+
+      .nav-button {
+        width: 36px;
+        height: 36px;
+      }
+
+      .nav-button svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      .container {
+        padding: 0 1rem;
+      }
+    }
+  </style>
 </head>
 
 <body>
-  <h1>Hoshino Shet</h1>
+  <nav>
+    <ul>
+      <li>
+        <a href="#home" class="nav-button" aria-label="Home" title="Home">
+          <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z"/></svg>
+        </a>
+      </li>
+      <li>
+        <a href="#about" class="nav-button" aria-label="About" title="About">
+          <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M440-280h80v-240h-80v240Zm40-320q17 0 28.5-11.5T520-640q0-17-11.5-28.5T480-680q17 0 28.5 11.5T520-640q0 17-11.5 28.5T480-600Zm0 520q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>
+        </a>
+      </li>
+      <li>
+        <a href="#services" class="nav-button" aria-label="Services" title="Services">
+          <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="m204-80-12-12 160-160q-17-17-27-39t-10-45q0-23 8-44.5t24-37.5l84 84 28-28-84-84q16-16 37-24t44-8q23 0 45 10t39 27l160-160-12-12 76-76 84 84-80 80 12 12-160 160q17 17 27 39t10 45q0 23-8 44.5T648-260l-84-84-28 28 84 84q-16 16-37 24t-44 8q-23 0-45-10t-39-27L204-80Zm276-480q-33 0-56.5-23.5T400-640q0-33 23.5-56.5T480-720q33 0 56.5 23.5T560-640q0 33-23.5 56.5T480-560Z"/></svg>
+        </a>
+      </li>
+      <li>
+        <a href="#contact" class="nav-button" aria-label="Contact" title="Contact">
+          <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm320-280 320-200v-80L480-520 160-720v80l320 200Z"/></svg>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <section class="hero" id="home">
+    <div class="hero-content">
+      <h1>Hoshino Industries</h1>
+      <h2>Innovate. Create. Celebrate.</h2>
+      <p>Join us in shaping the future with cutting-edge solutions.</p>
+    </div>
+  </section>
+
+  <div class="container">
+    <div class="welcome" id="about">
+      <h2>Welcome to Hoshino Industries</h2>
+      <p>
+        At Hoshino Industries, we are committed to pushing the boundaries of innovation and delivering exceptional solutions to our clients. Our team of experts works tirelessly to create products and services that inspire and transform industries. Explore our offerings and discover how we can help you achieve your goals.
+      </p>
+    </div>
+
+    <section class="services" id="services">
+      <h2>Our Services</h2>
+      <div class="services-grid">
+        <div class="service-card">
+          <i class="fas fa-rocket"></i>
+          <h3>Technology Solutions</h3>
+          <p>Advanced software and hardware solutions tailored to your needs.</p>
+        </div>
+        <div class="service-card">
+          <i class="fas fa-cogs"></i>
+          <h3>Engineering Services</h3>
+          <p>Precision engineering for innovative and reliable products.</p>
+        </div>
+        <div class="service-card">
+          <i class="fas fa-lightbulb"></i>
+          <h3>Consulting</h3>
+          <p>Expert guidance to drive your business forward.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="contact" id="contact">
+      <h2>Contact Us</h2>
+      <form>
+        <input type="text" placeholder="Your Name" required>
+        <input type="email" placeholder="Your Email" required>
+        <textarea placeholder="Your Message" required></textarea>
+        <button type="submit">Send Message</button>
+      </form>
+    </section>
+  </div>
+
+  <footer>
+    <p>© 2025 Hoshino Industries. All rights reserved.</p>
+  </footer>
+
+  <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+  <script>
+    document.querySelectorAll('nav a').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const targetId = this.getAttribute('href').substring(1);
+        const targetElement = document.getElementById(targetId);
+        window.scrollTo({
+          top: targetElement.offsetTop - 80,
+          behavior: 'smooth'
+        });
+      });
+    });
+
+    document.querySelector('.contact form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      alert('Thank you for your message! We will get back to you soon.');
+      this.reset();
+    });
+  </script>
 </body>
 
 </html>
