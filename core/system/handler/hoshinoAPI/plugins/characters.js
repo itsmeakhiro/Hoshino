@@ -1,24 +1,21 @@
 const express = require('express');
-const router = express.Router();
 const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
+const router = express.Router();
 
-router.get('/tate', async (req, res) => {
-  const { senderID, query } = req.query;
-  if (!senderID || !query) return res.status(400).json({ error: 'Missing senderID or query' });
-
-  const convoPath = path.join(__dirname, `../plugins/${senderID}convo.json`);
-  let context = [];
-
-  if (fs.existsSync(convoPath)) {
-    context = JSON.parse(fs.readFileSync(convoPath, 'utf8'));
-  }
-
-  context.push({ message: query, turn: 'user', media_id: null });
-
+router.get("/botify", async (req, res) => {
   let data = JSON.stringify({
-    context: context,
+    context: [
+      {
+        message: `"Yo, what's up? I'm a 5-time world champ, living life on my own terms. You wanna know how I escaped the Matrix and found success? Let me tell ya..." What's one thing holding you back from living your best life right now? Spill the beans!`,
+        turn: "bot",
+        media_id: "eyJhdmF0YXJfdXJsIjogImh0dHBzOi8vdWdjLWlkbGUuczMtdXMtd2VzdC0yLmFtYXpvbmF3cy5jb20vNTdkY2U0ZmY5YTU4ZTVhN2U2MzcwNzYwNmY1MzM2ZDEuanBnIiwgInByb21wdCI6ICI1LXRpbWUga2lja2JveGluZyB3b3JsZCBjaGFtcGlvbiBBbmRyZXcgVGF0ZSwgbXVzY3VsYXIgYW5kIGNvbmZpZGVudCwgaW4gYSBoaWdoLXRlY2ggdHJhaW5pbmcgcm9vbSwgcHVuY2hpbmcgYmFnIHN3YXlpbmcgYWZ0ZXIgYSBmaWVyY2UgYmxvdywgbmVvbiBsaWdodHMgZmxhc2hpbmcuIiwgImdlbmRlciI6ICJtYW4iLCAic3R5bGUiOiBudWxsLCAiYm90X2lkIjogIjkzMjc4OSIsICJ1c2VyX2lkIjogIkhlOWsxczJxN3JWSWZSYVFPQVNONjcxZ3hRVTIiLCAiaXNfcHJlZGVmaW5lZF9wcm9tcHQiOiBmYWxzZSwgInJlc3BvbnNlX21vZGUiOiAiaW1tZWRpYXRlIiwgIm1lZGlhX2lkIjogbnVsbCwgInNhZmV0eV9tb2RlIjogImZpbHRlciIsICJ0ZXh0X2J1YmJsZSI6IG51bGwsICJlbmFibGVfaXBfYWRhcHRlciI6IGZhbHNlLCAiZm9yY2Vfc2NlbmVfaW1hZ2UiOiBmYWxzZSwgImNvaG9ydCI6IG51bGwsICJwaG90b19tb2RlbF9pZCI6ICJiYXNpYyJ9"
+      },
+      {
+        message: "Introduce yourself ",
+        turn: "user",
+        media_id: null
+      }
+    ],
     strapi_bot_id: "932789",
     output_audio: false,
     enable_proactive_photos: true
@@ -31,8 +28,8 @@ router.get('/tate', async (req, res) => {
       'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
       'Accept-Encoding': 'gzip, deflate, br, zstd',
       'Content-Type': 'application/json',
-      'x-auth-token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjMGRkYzY3NS01NmU3LTQ3ZGItYmJkOS01YWVjM2Q3OWI2YjMiLCJmaXJlYmFzZV91c2VyX2lkIjoiSGU5azFzMnE3clZJZlJhUU9BU042NzFneFFVMiIsImRldmljZV9pZCI6bnVsbCwidXNlciI6IkhlOWsxczJxN3JWSWZSYVFPQVNONjcxZ3hRVTIiLCJhY2Nlc3NfbGV2ZWwiOiJiYXNpYyIsInBsYXRmb3JtIjoid2ViIiwiZXhwIjoxNzQ0ODk0MzQ4fQ.0iqzd2dzxqZq-ooUwZad9Vwg-GnLLkCy4vxs-b-r5ro',
-      'authorization': 'Bearer eyJhbGciOiJIUzUxMiJ9.eyJ1c2VybmFtZSI6ImJvdGlmeS13ZWItdjMifQ.O-w89I5aX2OE_i4k6jdHZJEDWECSUfOb1lr9UdVH4oTPMkFGUNm9BNzoQjcXOu8NEiIXq64-481hnenHdUrXfg',
+      'x-auth-token': 'YOUR_X_AUTH_TOKEN_HERE',
+      'authorization': 'Bearer YOUR_BEARER_TOKEN_HERE',
       'sec-ch-ua-platform': '"Linux"',
       'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
       'sec-ch-ua-mobile': '?0',
@@ -49,12 +46,9 @@ router.get('/tate', async (req, res) => {
 
   try {
     const response = await axios.request(config);
-    const botMessage = response.data?.response?.message || "No response";
-    context.push({ message: botMessage, turn: 'bot', media_id: null });
-    fs.writeFileSync(convoPath, JSON.stringify(context, null, 2));
-    res.json({ reply: botMessage });
+    res.json(response.data);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to get bot response' });
+    res.status(500).json({ error: error.message || "Something went wrong" });
   }
 });
 
