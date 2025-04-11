@@ -1,138 +1,61 @@
 const express = require('express');
+const router = express.Router();
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
-const router = express.Router();
 
-function getFilePath(route) {
-  const directoryPath = path.join(__dirname, 'conversations', route);
-  if (!fs.existsSync(directoryPath)) {
-    fs.mkdirSync(directoryPath, { recursive: true });
+router.get('/tate', async (req, res) => {
+  const { senderID, query } = req.query;
+  if (!senderID || !query) return res.status(400).json({ error: 'Missing senderID or query' });
+
+  const convoPath = path.join(__dirname, `../plugins/${senderID}convo.json`);
+  let context = [];
+
+  if (fs.existsSync(convoPath)) {
+    context = JSON.parse(fs.readFileSync(convoPath, 'utf8'));
   }
-  return path.join(directoryPath, `${route}_Data.json`);
-}
 
-function loadConversations(route) {
-  const filePath = getFilePath(route);
+  context.push({ message: query, turn: 'user', media_id: null });
+
+  let data = JSON.stringify({
+    context: context,
+    strapi_bot_id: "932789",
+    output_audio: false,
+    enable_proactive_photos: true
+  });
+
+  let config = {
+    method: 'POST',
+    url: 'https://api.exh.ai/chatbot/v4/botify/response',
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+      'Accept-Encoding': 'gzip, deflate, br, zstd',
+      'Content-Type': 'application/json',
+      'x-auth-token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjMGRkYzY3NS01NmU3LTQ3ZGItYmJkOS01YWVjM2Q3OWI2YjMiLCJmaXJlYmFzZV91c2VyX2lkIjoiSGU5azFzMnE3clZJZlJhUU9BU042NzFneFFVMiIsImRldmljZV9pZCI6bnVsbCwidXNlciI6IkhlOWsxczJxN3JWSWZSYVFPQVNONjcxZ3hRVTIiLCJhY2Nlc3NfbGV2ZWwiOiJiYXNpYyIsInBsYXRmb3JtIjoid2ViIiwiZXhwIjoxNzQ0ODk0MzQ4fQ.0iqzd2dzxqZq-ooUwZad9Vwg-GnLLkCy4vxs-b-r5ro',
+      'authorization': 'Bearer eyJhbGciOiJIUzUxMiJ9.eyJ1c2VybmFtZSI6ImJvdGlmeS13ZWItdjMifQ.O-w89I5aX2OE_i4k6jdHZJEDWECSUfOb1lr9UdVH4oTPMkFGUNm9BNzoQjcXOu8NEiIXq64-481hnenHdUrXfg',
+      'sec-ch-ua-platform': '"Linux"',
+      'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+      'sec-ch-ua-mobile': '?0',
+      'origin': 'https://botify.ai',
+      'sec-fetch-site': 'cross-site',
+      'sec-fetch-mode': 'cors',
+      'sec-fetch-dest': 'empty',
+      'referer': 'https://botify.ai/',
+      'accept-language': 'en-US,en;q=0.9',
+      'priority': 'u=1, i'
+    },
+    data: data
+  };
+
   try {
-    if (!fs.existsSync(filePath)) {
-      return {};
-    }
-    const data = fs.readFileSync(filePath, 'utf-8');
-    return JSON.parse(data);
-  } catch {
-    return {};
-  }
-}
-
-function saveConversations(route, data) {
-  const filePath = getFilePath(route);
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
-}
-
-async function handleRoute(req, res, botId, route) {
-  const userId = req.query.userid || 'defaultUser';
-  const userQuery = req.query.q;
-
-  if (!userQuery) {
-    return res.status(400).json({ error: "Missing query parameter 'q'." });
-  }
-
-  const conversations = loadConversations(route);
-  const userConversation = conversations[userId] || [];
-
-  try {
-    userConversation.push({ turn: 'user', message: userQuery });
-
-    const data = JSON.stringify({
-      context: userConversation.map(conv => ({
-        message: conv.message,
-        turn: conv.turn,
-        media_id: conv.media_id || null
-      })),
-      strapi_bot_id: botId,
-      output_audio: false,
-      enable_proactive_photos: true
-    });
-
-    const config = {
-      method: 'POST',
-      url: 'https://api.exh.ai/chatbot/v4/botify/response',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-        'Accept-Encoding': 'gzip, deflate, br, zstd',
-        'Content-Type': 'application/json',
-        'x-auth-token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjMGRkYzY3NS01NmU3LTQ3ZGItYmJkOS01YWVjM2Q3OWI2YjMiLCJmaXJlYmFzZV91c2VyX2lkIjoiSGU5azFzMnE3clZJZlJhUU9BU042NzFneFFVMiIsImRldmljZV9pZCI6bnVsbCwidXNlci craftingI6IkhlOWsxczJxN3JWSWZSYVFPQVNONjcxZ3hRVTIiLCJhY2Nlc3NfbGV2ZWwiOiJiYXNpYyIsInBsYXRmb3JtIjoid2ViIiwiZXhwIjoxNzM3MTY5NjY2fQ.S-fPM-PsWKeTOoxX8kNZhPtdV7AHxNuMNc9ViOgnuK0',
-        'authorization': 'Bearer eyJhbGciOiJIUzUxMiJ9.eyJ1c2VybmFtZSI6ImJvdGlmeS13ZWItdjMifQ.O-w89I5aX2OE_i4k6jdHZJEDWECSUfOb1lr9UdVH4oTPMkFGUNm9BNzoQjcXOu8NEiIXq64-481hnenHdUrXfg',
-      },
-      data
-    };
-
     const response = await axios.request(config);
-    const botMessage = response.data.responses[0].response;
-
-    userConversation.push({ turn: 'bot', message: botMessage });
-    conversations[userId] = userConversation;
-    saveConversations(route, conversations);
-
-    res.json({
-      message: botMessage,
-      author: "Francis Loyd Raval"
-    });
+    const botMessage = response.data?.response?.message || "No response";
+    context.push({ message: botMessage, turn: 'bot', media_id: null });
+    fs.writeFileSync(convoPath, JSON.stringify(context, null, 2));
+    res.json({ reply: botMessage });
   } catch (error) {
-    res.status(500).json({
-      status: false,
-      error: error.message || "An error occurred"
-    });
+    res.status(500).json({ error: 'Failed to get bot response' });
   }
-}
-
-router.get('/wednesday', (req, res) => {
-  handleRoute(req, res, "229115", "wednesday");
 });
-
-router.get('/karai', (req, res) => {
-  handleRoute(req, res, "268799", "karai");
-});
-
-router.get('/martin', (req, res) => {
-  handleRoute(req, res, "286682", "martin");
-});
-
-router.get("/harley", (req, res) => {
-  handleRoute(req, res, "268789", "harley");
-});
-
-router.get("/kioto", (req, res) => {
-  handleRoute(req, res, "1364119", "kioto");
-});
-
-router.get("/ivan", (req, res) => {
-  handleRoute(req, res, "1816847", "ivan");
-});
-
-router.get("/marko", (req, res) => {
-  handleRoute(req, res, "454833", "marko");
-});
-
-router.get("/kurousagi", (req, res) => {
-  handleRoute(req, res, "268782", "kurousagi");
-});
-
-router.get("/sanemi", (req, res) => {
-  handleRoute(req, res, "235858", "sanemi");
-});
-
-router.get("/dazai", (req, res) => {
-  handleRoute(req, res, "897042", "dazai");
-});
-
-router.get("/sukuna", (req, res) => {
-  handleRoute(req, res, "345747", "sukuna");
-});
-
-router.get("/yuji", (req, res) => {
-  handleRoute(req, res, "505771", "yuji");
-})
 
 module.exports = router;
