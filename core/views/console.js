@@ -1,6 +1,5 @@
 const utils = require("../utils");
 const login = require("../system/login");
-const routers = require("../system/handler/hoshinoAPI/hoshinoApi");
 const { getTheme, styleText } = require("./custom");
 
 const currentTheme = 'hacker';
@@ -71,7 +70,6 @@ module.exports = async function cUI() {
     });
 
     await animateTaskWithProgress('[API] Uploading Hoshino API...', async () => {
-        await routers();
         await new Promise(resolve => setTimeout(resolve, 500));
     });
 

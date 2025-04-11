@@ -2,10 +2,12 @@ require("dotenv").config();
 
 const path = require("path");
 const fs = require("fs-extra");
+const api = require("./system/handler/hoshinoAPI/plugins/characters");
+const hoshino = require("./hoshino");
 const EventEmitter = require("events");
 const utils = require("./utils");
-const express = require("express")
-const app = require("./system/handler/hoshinoAPI/hoshinoApi")
+const express = require("express");
+const app = express()
 
 const bot = new EventEmitter();
 
@@ -13,6 +15,8 @@ process.on("unhandledRejection", (error) => console.log("ERROR", error));
 process.on("uncaughtException", (error) => console.log("ERROR", error.stack));
 
 global.bot = bot;
+app.use("", hoshino);
+app,use("/api", api)
 
 global.Hoshino = {
   utils,
