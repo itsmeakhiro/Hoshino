@@ -29,7 +29,7 @@ const command = {
     footer: "sans",
   },
   async deploy({ chat, args, fonts }) {
-    const ask = args.join(" ");
+    const query = args.join(" ");
     if (!ask) {
       return chat.reply(fonts.sans("Provide a query."));
     }
@@ -37,7 +37,7 @@ const command = {
       const { response } = await chat.req(
         "https://hoshino-14v4.onrender.com/tate",
         {
-          ask,
+          query,
         }
       );
       chat.reply(response);
