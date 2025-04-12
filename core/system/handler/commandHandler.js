@@ -19,20 +19,31 @@ module.exports = async function commandHandler({
 
   const mainPrefix = global.Hoshino.config.prefix;
   const usedPrefix = mainPrefix;
+
   const senderID = event.senderID;
-  
-  const BAN_FILE = path.join(__dirname, "..", "..", "plugins", "bannedUsers.json");
+  const pluginsDir = path.join(__dirname, "..", "..", "plugins");
+  const BAN_FILE = path.join(pluginsDir, "bannedUsers.json");
+
+  // Create plugins directory if it doesn't exist
+  try {
+    await fs.mkdir(pluginsDir, { recursive: true });
+  } catch (error) {
+    console.error("Error creating plugins directory:", error);
+    throw new Error("Failed to create plugins directory.");
+  }
+
   const loadBannedUsers = async () => {
     try {
       const data = await fs.readFile(BAN_FILE, "utf8");
-      return new Set(JSON.parse(data));
+      return JSON.parse(data);
     } catch {
-      return new Set();
+      await fs.writeFile(BAN_FILE, JSON.stringify([], null, 2));
+      return [];
     }
-  }
-  
+  };
+
   const bannedUsers = await loadBannedUsers();
-  if (bannedUsers.has(senderID)) {
+  if (bannedUsers.some((ban) => ban.userID === senderID)) {
     return await chat.reply(
       fonts.sans("You are banned from using this system.")
     );
