@@ -30,7 +30,7 @@ const command = {
   },
   async deploy({ chat, args, fonts }) {
     const query = args.join(" ");
-    if (!ask) {
+    if (!query) {
       return chat.reply(fonts.sans("Provide a query."));
     }
     try {
