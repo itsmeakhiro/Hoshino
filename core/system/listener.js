@@ -102,7 +102,8 @@ module.exports = async function listener({ api, event }) {
       await command.deploy(entryObj);
     } catch (err) {
       console.error(`Error executing command "${commandName}":`, err);
-      err instanceof Error ? await chat.reply(err?.    }
+      err instanceof Error ? await chat.reply(err?.stack ?? err.message) : null;
+    }
     return;
   }
 
