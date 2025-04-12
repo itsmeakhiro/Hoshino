@@ -2,7 +2,15 @@ const express = require('express');
 const axios = require('axios');
 const router = express.Router();
 
-router.get("/botify", async (req, res) => {
+router.get("/tate", async (req, res) => {
+  const userQuery = req.query.query;
+  if (!userQuery) {
+    return res.json({
+      response: "Provide a question, use 'query' parameters.",
+      developer: "Francis Loyd Raval"
+    })
+  }
+
   let data = JSON.stringify({
     context: [
       {
@@ -11,7 +19,7 @@ router.get("/botify", async (req, res) => {
         media_id: "eyJhdmF0YXJfdXJsIjogImh0dHBzOi8vdWdjLWlkbGUuczMtdXMtd2VzdC0yLmFtYXpvbmF3cy5jb20vNTdkY2U0ZmY5YTU4ZTVhN2U2MzcwNzYwNmY1MzM2ZDEuanBnIiwgInByb21wdCI6ICI1LXRpbWUga2lja2JveGluZyB3b3JsZCBjaGFtcGlvbiBBbmRyZXcgVGF0ZSwgbXVzY3VsYXIgYW5kIGNvbmZpZGVudCwgaW4gYSBoaWdoLXRlY2ggdHJhaW5pbmcgcm9vbSwgcHVuY2hpbmcgYmFnIHN3YXlpbmcgYWZ0ZXIgYSBmaWVyY2UgYmxvdywgbmVvbiBsaWdodHMgZmxhc2hpbmcuIiwgImdlbmRlciI6ICJtYW4iLCAic3R5bGUiOiBudWxsLCAiYm90X2lkIjogIjkzMjc4OSIsICJ1c2VyX2lkIjogIkhlOWsxczJxN3JWSWZSYVFPQVNONjcxZ3hRVTIiLCAiaXNfcHJlZGVmaW5lZF9wcm9tcHQiOiBmYWxzZSwgInJlc3BvbnNlX21vZGUiOiAiaW1tZWRpYXRlIiwgIm1lZGlhX2lkIjogbnVsbCwgInNhZmV0eV9tb2RlIjogImZpbHRlciIsICJ0ZXh0X2J1YmJsZSI6IG51bGwsICJlbmFibGVfaXBfYWRhcHRlciI6IGZhbHNlLCAiZm9yY2Vfc2NlbmVfaW1hZ2UiOiBmYWxzZSwgImNvaG9ydCI6IG51bGwsICJwaG90b19tb2RlbF9pZCI6ICJiYXNpYyJ9"
       },
       {
-        message: "Introduce yourself ",
+        message: userQuery,
         turn: "user",
         media_id: null
       }
@@ -29,7 +37,8 @@ router.get("/botify", async (req, res) => {
       'Accept-Encoding': 'gzip, deflate, br, zstd',
       'Content-Type': 'application/json',
       'x-auth-token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxOGQ1NjRmNy02YTIwLTRkNzEtYjA3Ni00YzU1YThmNjVlNTgiLCJmaXJlYmFzZV91c2VyX2lkIjoib2hTUVZMTjBzUmI5RTdqZEhVYmFoUkVBUWJTMiIsImRldmljZV9pZCI6bnVsbCwidXNlciI6Im9oU1FWTE4wc1JiOUU3amRIVWJhaFJFQVFiUzIiLCJhY2Nlc3NfbGV2ZWwiOiJiYXNpYyIsInBsYXRmb3JtIjoid2ViIiwiZXhwIjoxNzQ0OTQ4MTAxfQ.5uFqC75hwDX23z5iEpnf2uIPSBdB7C3x7Iu6GsdMmCk',
-      'authorization': 'Bearer eyJhbGciOiJIUzUxMiJ9.eyJ1c2VybmFtZSI6ImJvdGlmeS13ZWItdjMifQ.O-w89I5aX2OE_i4k6jdHZJEDWECSUfOb1lr9UdVH4oTPMkFGUNm9BNzoQjcXOu8NEiIXq64-481hnenHdUrXfg','sec-ch-ua-platform': '"Linux"',
+      'authorization': 'Bearer eyJhbGciOiJIUzUxMiJ9.eyJ1c2VybmFtZSI6ImJvdGlmeS13ZWItdjMifQ.O-w89I5aX2OE_i4k6jdHZJEDWECSUfOb1lr9UdVH4oTPMkFGUNm9BNzoQjcXOu8NEiIXq64-481hnenHdUrXfg',
+      'sec-ch-ua-platform': '"Linux"',
       'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
       'sec-ch-ua-mobile': '?0',
       'origin': 'https://botify.ai',
@@ -45,7 +54,10 @@ router.get("/botify", async (req, res) => {
 
   try {
     const response = await axios.request(config);
-    res.json(response.data);
+    res.json({ 
+      response: response.data.responses?.[0]?.response || "No response found, contact Francis Loyd Raval for info.", 
+      developer: "Francis Loyd Raval"
+    });
   } catch (error) {
     res.status(500).json({ error: error.message || "Something went wrong" });
   }
