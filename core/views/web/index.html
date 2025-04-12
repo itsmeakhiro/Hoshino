@@ -197,40 +197,46 @@
     .chat-footer {
       padding: 1rem 1.5rem;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
-      display: flex;
-      gap: 0.8rem;
       background: rgba(255, 255, 255, 0.05);
       border-radius: 0 0 16px 16px;
+    }
+
+    .chat-input-container {
+      display: flex;
       align-items: center;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 0.3rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     .chat-footer input {
       flex-grow: 1;
       padding: 0.7rem 1rem;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: none;
       border-radius: 20px;
       font-size: 0.95rem;
       transition: all 0.3s ease;
-      background: rgba(255, 255, 255, 0.05);
+      background: transparent;
       color: white;
     }
 
     .chat-footer input:focus {
       outline: none;
-      border-color: #3498db;
-      box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
     }
 
     .chat-footer button {
-      padding: 0.7rem 1.5rem;
       background: linear-gradient(135deg, #3498db, #2980b9);
       color: white;
       border: none;
       border-radius: 20px;
       cursor: pointer;
       transition: all 0.3s ease;
-      font-size: 0.95rem;
-      font-weight: 500;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
     }
 
@@ -238,6 +244,12 @@
       background: linear-gradient(135deg, #2980b9, #1b6ca8);
       transform: translateY(-2px);
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    }
+
+    .chat-footer button svg {
+      width: 20px;
+      height: 20px;
+      fill: white;
     }
 
     .intro {
@@ -537,6 +549,16 @@
       .container {
         padding: 0 1rem;
       }
+
+      .chat-footer button {
+        width: 36px;
+        height: 36px;
+      }
+
+      .chat-footer button svg {
+        width: 18px;
+        height: 18px;
+      }
     }
   </style>
 </head>
@@ -600,8 +622,12 @@
     </div>
     <div class="chat-body" id="chatBody"></div>
     <div class="chat-footer">
-      <input type="text" id="chatInput" placeholder="Type your message...">
-      <button id="chatSend">Send</button>
+      <div class="chat-input-container">
+        <input type="text" id="chatInput" placeholder="Type your message...">
+        <button id="chatSend">
+          <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M120-160v-240l320-80-320-80v-240l760 320-760 320Z"/></svg>
+        </button>
+      </div>
     </div>
   </div>
 
