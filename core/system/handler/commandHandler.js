@@ -1,3 +1,5 @@
+const fs = require("fs").promises;
+const path = require("path");
 const fonts = require("../../../Hoshino/resources/styler/fonts");
 const route = require("./apiHandler");
 
@@ -16,8 +18,26 @@ module.exports = async function commandHandler({
   if (!event.body) return;
 
   const mainPrefix = global.Hoshino.config.prefix;
-  const usedPrefix = mainPrefix; 
+  const usedPrefix = mainPrefix;
+  const senderID = event.senderID;
   
+  const BAN_FILE = path.join(__dirname, "..", "..", "plugins", "bannedUsers.json");
+  const loadBannedUsers = async () => {
+    try {
+      const data = await fs.readFile(BAN_FILE, "utf8");
+      return new Set(JSON.parse(data));
+    } catch {
+      return new Set();
+    }
+  }
+  
+  const bannedUsers = await loadBannedUsers();
+  if (bannedUsers.has(senderID)) {
+    return await chat.reply(
+      fonts.sans("You are banned from using this system.")
+    );
+  }
+
   const [commandNameOrAlias, ...commandArgs] = event.body
     .slice(usedPrefix.length)
     .trim()
@@ -44,7 +64,23 @@ module.exports = async function commandHandler({
     return await chat.reply(fonts.sans(message));
   }
 
-  const senderID = event.senderID;
+  if (command.manifest.config.privateOnly && event.threadID !== event.senderID) {
+    return await chat.reply(
+      fonts.sans("This command can only be used in private chats.")
+    );
+  }
+
+  if (command.manifest.config.admin && !extra.isAdmin) {
+    return await chat.reply(
+      fonts.sans("This command is restricted to administrators.")
+    );
+  }
+  if (command.manifest.config.moderator && !extra.isModerator) {
+    return await chat.reply(
+      fonts.sans("This command is restricted to moderators.")
+    );
+  }
+
   const cooldowns = global.Hoshino.cooldowns;
   const userCooldowns = cooldowns.get(senderID) ?? {};
 
@@ -56,7 +92,7 @@ module.exports = async function commandHandler({
         (command.manifest.cooldown * 1000 - elapsed) /
         1000
       ).toFixed(1);
-      return await chat.send(
+      return await chat.reply(
         fonts.sans(
           `Please wait ${remaining} seconds before using "${commandNameOrAlias}" again.`
         )
@@ -79,10 +115,12 @@ module.exports = async function commandHandler({
     cooldowns.set(senderID, userCooldowns);
   } catch (error) {
     console.error(`Error executing command "${commandNameOrAlias}":`, error);
-    await chat.send(
-      `An error occurred while executing the command: ${
-        error instanceof Error ? error.message : JSON.stringify(error)
-      }`
+    await chat.reply(
+      fonts.sans(
+        `An error occurred while executing the command: ${
+          error instanceof Error ? error.message : JSON.stringify(error)
+        }`
+      )
     );
   }
 };
