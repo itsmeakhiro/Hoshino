@@ -23,15 +23,13 @@ module.exports = async function commandHandler({
   const senderID = event.senderID;
   const pluginsDir = path.join(__dirname, "..", "..", "plugins");
   const BAN_FILE = path.join(pluginsDir, "bannedUsers.json");
-
-  // Create plugins directory if it doesn't exist
+  
   try {
     await fs.mkdir(pluginsDir, { recursive: true });
   } catch (error) {
     console.error("Error creating plugins directory:", error);
     throw new Error("Failed to create plugins directory.");
   }
-
   const loadBannedUsers = async () => {
     try {
       const data = await fs.readFile(BAN_FILE, "utf8");
@@ -81,12 +79,29 @@ module.exports = async function commandHandler({
     );
   }
 
-  if (command.manifest.config.admin && !extra.isAdmin) {
+  const admins = global.Hoshino.config.admin || [];
+  const moderators = global.Hoshino.config.moderator || [];
+  const { developer } = global.Hoshino.config;
+
+  function hasPermission(type) {
+    return (
+      developer?.includes(senderID) ||
+      (type === "admin"
+        ? admins.includes(senderID)
+        : moderators.includes(senderID) || admins.includes(senderID))
+    );
+  }
+
+  const isAdmin = hasPermission("admin");
+  const isModerator = hasPermission("moderator");
+
+  if (command.manifest.config.admin && !isAdmin) {
     return await chat.reply(
       fonts.sans("This command is restricted to administrators.")
     );
   }
-  if (command.manifest.config.moderator && !extra.isModerator) {
+
+  if (command.manifest.config.moderator && !isModerator) {
     return await chat.reply(
       fonts.sans("This command is restricted to moderators.")
     );
@@ -134,4 +149,4 @@ module.exports = async function commandHandler({
       )
     );
   }
-};
+}
