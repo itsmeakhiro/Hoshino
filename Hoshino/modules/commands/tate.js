@@ -34,13 +34,13 @@ const command = {
       return chat.reply(fonts.sans("Provide a query."));
     }
     try {
-      const { answer } = await chat.req(
+      const { response } = await chat.req(
         "https://hoshino-14v4.onrender.com/tate",
         {
           ask,
         }
       );
-      chat.reply(answer);
+      chat.reply(response);
     } catch (error) {
       chat.reply(error instanceof Error ? String(error.stack) : String(error));
     }
