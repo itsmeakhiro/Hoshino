@@ -29,7 +29,7 @@ class HoshinoHM {
         const list = [...this.commands.values()]
           .map((cmd) => `${this.icon} ${cmd.subcommand} → ${cmd.description}`)
           .join("\n");
-        return chat.send(`Available subcommands:\n\n${list}`);
+        return chat.send(`\n\n${list}`);
       }
   
       return this.commands.get(subcommand)?.deploy(ctx);
