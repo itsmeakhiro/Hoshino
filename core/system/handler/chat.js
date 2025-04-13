@@ -1,8 +1,6 @@
 const axios = require("axios").default;
 const styler = require("../../../Hoshino/resources/styler/styler");
 const { MethodContextor } = require("./callable-obj-dist");
-const fs = require("fs").promises;
-const path = require("path");
 
 const ChatContextor = MethodContextor(
   {
@@ -49,6 +47,7 @@ const ChatContextor = MethodContextor(
      * @param {HoshinoLia.MessageForm} message - Reply content
      * @param {string} [goal] - Thread ID (defaults to current thread)
      * @param {boolean} [noStyle=false] - If true, skip styling
+
      * @returns {Promise<any>} - Message reply info or error
      */
     async reply(message, goal, noStyle = false) {
@@ -64,65 +63,6 @@ const ChatContextor = MethodContextor(
         );
       });
     },
-
-    /**
-     * Bans a user by adding their ID to bannedUsers.json.
-     * @param {string} userID - The user ID to ban
-     * @param {string} [reason] - Optional reason for the ban
-     * @returns {Promise<void>}
-     */
-    async userBan(userID, reason = "") {
-      const BAN_FILE = path.join(__dirname, "..", "..", "plugins", "bannedUsers.json");
-      const bannedUsers = await this.loadBannedUsers(BAN_FILE);
-      if (!bannedUsers.some((ban) => ban.userID === userID)) {
-        bannedUsers.push({ userID, reason });
-        await this.saveBannedUsers(BAN_FILE, bannedUsers);
-      }
-    },
-
-    /**
-     * Unbans a user by removing their ID from bannedUsers.json.
-     * @param {string} userID - The user ID to unban
-     * @returns {Promise<void>}
-     */
-    async userUnban(userID) {
-      const BAN_FILE = path.join(__dirname, "..", "..", "plugins", "bannedUsers.json");
-      const bannedUsers = await this.loadBannedUsers(BAN_FILE);
-      const updatedBans = bannedUsers.filter((ban) => ban.userID !== userID);
-      if (updatedBans.length !== bannedUsers.length) {
-        await this.saveBannedUsers(BAN_FILE, updatedBans);
-      }
-    },
-
-    /**
-     * Loads banned users from JSON file.
-     * @param {string} filePath - Path to bannedUsers.json
-     * @returns {Promise<Array<{userID: string, reason: string}>>}
-     */
-    async loadBannedUsers(filePath) {
-      try {
-        const data = await fs.readFile(filePath, "utf8");
-        return JSON.parse(data);
-      } catch {
-        return [];
-      }
-    },
-
-    /**
-     * Saves banned users to JSON file.
-     * @param {string} filePath - Path to bannedUsers.json
-     * @param {Array<{userID: string, reason: string}>} bannedUsers - Array of banned user objects
-     * @returns {Promise<void>}
-     */
-    async saveBannedUsers(filePath, bannedUsers) {
-      try {
-        await fs.writeFile(filePath, JSON.stringify(bannedUsers, null, 2));
-      } catch (error) {
-        console.error("Error saving banned users:", error);
-        throw new Error("Failed to save ban list.");
-      }
-    },
-
     /**
      * @param {Object} config
      * @param {any} config.api - The API object for sending messages
@@ -136,7 +76,7 @@ const ChatContextor = MethodContextor(
     /**
      * Adds style, lmao.
      * @param {HoshinoLia.MessageForm} message - Reply content
-     */
+     * */
     processStyle(message) {
       if (
         this.command &&
@@ -183,6 +123,7 @@ const ChatContextor = MethodContextor(
      *
      * @throws {Error} If the request fails, throws a formatted error with message
      */
+
     async req(url, params = {}, configOrMethod = "GET") {
       let finalUrl = url;
 
