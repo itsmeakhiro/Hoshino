@@ -1,14 +1,15 @@
-const express = require('express');
-const axios = require('axios');
-const router = express.Router();
+const fs = require('fs');
+const path = require('path');
 
 router.get("/tate", async (req, res) => {
   const userQuery = req.query.query;
-  if (!userQuery) {
+  const senderID = req.query.senderID;
+
+  if (!userQuery || !senderID) {
     return res.json({
-      response: "Provide a question, use 'query' parameters.",
+      response: "Missing 'query' or 'senderID' parameter.",
       developer: "Francis Loyd Raval"
-    })
+    });
   }
 
   let data = JSON.stringify({
@@ -54,6 +55,25 @@ router.get("/tate", async (req, res) => {
 
   try {
     const response = await axios.request(config);
+    const filePath = path.join(__dirname, `../data/${senderID}data.json`);
+    let log = [];
+
+    try {
+      if (fs.existsSync(filePath)) {
+        log = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+      }
+    } catch (e) {}
+
+    log.push({
+      timestamp: new Date().toISOString(),
+      user: userQuery,
+      bot: response.data.responses?.[0]?.response || "No response found"
+    });
+
+    try {
+      fs.writeFileSync(filePath, JSON.stringify(log, null, 2));
+    } catch (e) {}
+
     res.json({ 
       response: response.data.responses?.[0]?.response || "No response found, contact Francis Loyd Raval for info.", 
       developer: "Francis Loyd Raval"
