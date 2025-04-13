@@ -40,9 +40,9 @@ const command = {
 
       const { name, description, usage, aliases } = command.manifest;
       const helpText = [
-        `|| Command: ${name}`,
-        `|| Description: ${description || "No description available"}`,
-        `|| Usage: ${usage || name}`,
+        `│ Command: ${name}`,
+        `│ Description: ${description || "No description available"}`,
+        `│ Usage: ${usage || name}`,
         aliases && aliases.length > 0 ? `|| Aliases: ${aliases.join(", ")}` : "",
       ]
         .filter(Boolean)
@@ -61,7 +61,7 @@ const command = {
     const commandList = Array.from(uniqueCommands.entries())
       .map(([name, cmd]) => {
         const { description, aliases } = cmd.manifest;
-        return `${name}${
+        return `│ ${name}${
           aliases && aliases.length > 0 ? ` (${aliases.join(", ")})` : ""
         } - ${description || "No description"}`;
       })
@@ -69,8 +69,7 @@ const command = {
       .join("\n");
 
     const helpText = [
-      commandList || "No commands loaded yet.",
-      "Use `help <command>` for more details on a specific command.",
+      commandList || "No commands loaded yet."
     ].join("\n");
 
     return chat.send(helpText);
