@@ -18,14 +18,6 @@ const command = {
     },
   },
 
-  /**
-   * @param {Object} context
-   * @param {Object} context.chat - Chat instance
-   * @param {Object} context.fonts - Font utilities
-   * @param {Object} context.event - Event data
-   * @param {string[]} context.args - Command arguments
-   * @returns {Promise<void>}
-   */
   async deploy({ chat, fonts, event, args }) {
     const commandName = event.body.split(/\s+/)[0].toLowerCase();
     const isUnban = commandName.includes("unban");
@@ -40,9 +32,7 @@ const command = {
     const senderID = event.senderID;
 
     if (!isUnban && targetID === senderID) {
-      return await chat.reply(
-        fonts.sans("You cannot ban yourself.")
-      );
+      return await chat.reply(fonts.sans("You cannot ban yourself."));
     }
 
     if (isUnban) {

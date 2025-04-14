@@ -1,5 +1,3 @@
-const axios = require("axios").default;
-
 /**
  * @type {HoshinoLia.Command}
  */
@@ -9,7 +7,8 @@ const command = {
     aliases: ["topG"],
     version: "1.0.0",
     developer: "Francis Loyd Raval",
-    description: "Meet Andrew Tate or CobraTate, the top G AI bot ver developed by Francis Loyd Raval..",
+    description:
+      "Meet Andrew Tate or CobraTate, the top G AI bot ver developed by Francis Loyd Raval..",
     category: "character",
     cooldown: 0,
     config: {

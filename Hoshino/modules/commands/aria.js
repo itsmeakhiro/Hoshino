@@ -1,5 +1,3 @@
-const axios = require("axios").default;
-
 /**
  * @type {HoshinoLia.Command}
  */
