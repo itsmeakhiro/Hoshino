@@ -55,10 +55,10 @@ function applyFont(text, style) {
   if (!text) return "";
 
   let styledText = text
-    .replace(/\*\*(.*?)\*\*/g, (match, p1) => {
+    .replace(/\*\*(.*?)\*\*/g, (_, p1) => {
     return fonts.bold ? fonts.bold(p1) : `**${p1}**`
   })
-    .replace(/\*(.*?)\*/g, (match, p1) => {
+    .replace(/\*(.*?)\*/g, (_, p1) => {
       return fonts.italic ? fonts.italic(p1) : `*${p1}*`;
   });
 

@@ -73,7 +73,7 @@ module.exports = async function commandHandler({
     return await chat.reply(fonts.sans(message));
   }
 
-  if (command.manifest.config.privateOnly && event.threadID !== event.senderID) {
+  if (command.manifest?.config?.privateOnly && event.threadID !== event.senderID) {
     return await chat.reply(
       fonts.sans("This command can only be used in private chats.")
     );
@@ -95,13 +95,13 @@ module.exports = async function commandHandler({
   const isAdmin = hasPermission("admin");
   const isModerator = hasPermission("moderator");
 
-  if (command.manifest.config.admin && !isAdmin) {
+  if (command.manifest.config?.admin && !isAdmin) {
     return await chat.reply(
       fonts.sans("This command is restricted to administrators.")
     );
   }
 
-  if (command.manifest.config.moderator && !isModerator) {
+  if (command.manifest.config?.moderator && !isModerator) {
     return await chat.reply(
       fonts.sans("This command is restricted to moderators.")
     );
