@@ -20,7 +20,7 @@ const command = {
   style: {
     type: "help1",
     title: "📚 **HOSHINO** COMMAND",
-    footer: `There are a total of **${global.Hoshino.commands.size}** commands.\n\nYou may use the command help [ command name ] to view the details \n\n**Developed by**: Francis Loyd Raval`,
+    footer: `You may use the command help [ command name ] to view the details \n\n**Developed by**: Francis Loyd Raval`,
   },
   font: {
     title: "Sans",
@@ -62,7 +62,7 @@ const command = {
 
     const commandList = Array.from(uniqueCommands.entries())
       .map(([name], index) => {
-        return `││ 〘  ${index + 1}  〙 ${name}`;
+        return `││  〘 ${index + 1}  〙 ${name}`;
       })
       .sort()
       .join("\n");
