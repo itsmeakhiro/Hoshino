@@ -20,33 +20,6 @@ module.exports = async function commandHandler({
   const mainPrefix = global.Hoshino.config.prefix;
   const usedPrefix = mainPrefix;
 
-  const senderID = event.senderID;
-  const pluginsDir = path.join(__dirname, "..", "..", "plugins");
-  const BAN_FILE = path.join(pluginsDir, "bannedUsers.json");
-  
-  try {
-    await fs.mkdir(pluginsDir, { recursive: true });
-  } catch (error) {
-    console.error("Error creating plugins directory:", error);
-    throw new Error("Failed to create plugins directory.");
-  }
-  const loadBannedUsers = async () => {
-    try {
-      const data = await fs.readFile(BAN_FILE, "utf8");
-      return JSON.parse(data);
-    } catch {
-      await fs.writeFile(BAN_FILE, JSON.stringify([], null, 2));
-      return [];
-    }
-  };
-
-  const bannedUsers = await loadBannedUsers();
-  if (bannedUsers.some((ban) => ban.userID === senderID)) {
-    return await chat.reply(
-      fonts.sans("You are banned from using this system.")
-    );
-  }
-
   const [commandNameOrAlias, ...commandArgs] = event.body
     .slice(usedPrefix.length)
     .trim()
@@ -76,34 +49,6 @@ module.exports = async function commandHandler({
   if (command.manifest?.config?.privateOnly && event.threadID !== event.senderID) {
     return await chat.reply(
       fonts.sans("This command can only be used in private chats.")
-    );
-  }
-
-  const admins = global.Hoshino.config.admin || [];
-  const moderators = global.Hoshino.config.moderator || [];
-  const { developer } = global.Hoshino.config;
-
-  function hasPermission(type) {
-    return (
-      developer?.includes(senderID) ||
-      (type === "admin"
-        ? admins.includes(senderID)
-        : moderators.includes(senderID) || admins.includes(senderID))
-    );
-  }
-
-  const isAdmin = hasPermission("admin");
-  const isModerator = hasPermission("moderator");
-
-  if (command.manifest.config?.admin && !isAdmin) {
-    return await chat.reply(
-      fonts.sans("This command is restricted to administrators.")
-    );
-  }
-
-  if (command.manifest.config?.moderator && !isModerator) {
-    return await chat.reply(
-      fonts.sans("This command is restricted to moderators.")
     );
   }
 

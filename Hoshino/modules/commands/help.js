@@ -59,11 +59,8 @@ const command = {
     }
 
     const commandList = Array.from(uniqueCommands.entries())
-      .map(([name, cmd]) => {
-        const { description, aliases } = cmd.manifest;
-        return `│ ${name}${
-          aliases && aliases.length > 0 ? ` (${aliases.join(", ")})` : ""
-        } - ${description || "No description"}`;
+      .map(([name]) => {
+        return `│ ${name}`;
       })
       .sort()
       .join("\n");

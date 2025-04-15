@@ -85,6 +85,23 @@ module.exports = async function listener({ api, event }) {
 
   const senderID = event.senderID;
 
+  // Permission checking logic
+  const admins = global.Hoshino.config.admin || [];
+  const moderators = global.Hoshino.config.moderator || [];
+
+
+  function hasPermission(type) {
+    return (
+      developer?.includes(senderID) ||
+      (type === "admin"
+        ? admins.includes(senderID)
+        : moderators.includes(senderID) || admins.includes(senderID))
+    );
+  }
+
+  const isAdmin = hasPermission("admin");
+  const isModerator = hasPermission("moderator");
+
   function antiNSFW(name) {
     const nsfwKeywords = ["18+", "nsfw", "porn", "hentai", "lewd"];
     return nsfwKeywords.some((word) => name.includes(word));
@@ -98,6 +115,19 @@ module.exports = async function listener({ api, event }) {
   }
 
   if (command) {
+    // Check command permissions before execution
+    if (command.manifest.config?.admin && !isAdmin) {
+      return await chat.reply(
+        fonts.sans("This command is restricted to administrators.")
+      );
+    }
+
+    if (command.manifest.config?.moderator && !isModerator) {
+      return await chat.reply(
+        fonts.sans("This command is restricted to moderators.")
+      );
+    }
+
     try {
       await command.deploy(entryObj);
     } catch (err) {

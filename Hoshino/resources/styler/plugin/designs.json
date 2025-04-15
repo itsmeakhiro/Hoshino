@@ -1,4 +1,4 @@
 {
     "lines1": "{title}\n━━━━━━━━━━━━━━━━\n{content}\n━━━━━━━━━━━━━━━━\n{footer}",
-    "help1": "{title}\n\n╭────────────\n\n{content}\n\n╰────────────\n\n{footer}"
+    "help1": "{title}\n\n╭────────────\n{content}\n╰────────────\n\n{footer}"
 }
