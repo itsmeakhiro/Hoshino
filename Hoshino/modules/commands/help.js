@@ -62,7 +62,7 @@ const command = {
 
     const commandList = Array.from(uniqueCommands.entries())
       .map(([name], index) => {
-        return `││  〘 ${index + 1}  〙 ${name}`;
+        return `││ 〘  ${index + 1}  〙 ${name}`;
       })
       .sort()
       .join("\n");
