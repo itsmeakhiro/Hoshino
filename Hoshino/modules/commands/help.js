@@ -19,11 +19,11 @@ const command = {
   },
   style: {
     type: "help1",
-    title: "HELP COMMAND",
-    footer: `Developed by: Francis Loyd Raval`,
+    title: "📚 **HOSHINO** COMMAND",
+    footer: `There are a total of **${global.Hoshino.commands.size}** commands.\n\nYou may use the command help [ command name ] to view the details \n\n**Developed by**: Francis Loyd Raval`,
   },
   font: {
-    title: "bold",
+    title: "Sans",
     content: "sans",
     footer: "sans",
   },
@@ -38,12 +38,14 @@ const command = {
         );
       }
 
-      const { name, description, usage, aliases } = command.manifest;
+      const { name, description, usage, aliases, version, developer } = command.manifest;
       const helpText = [
-        `│ Command: ${name}`,
-        `│ Description: ${description || "No description available"}`,
-        `│ Usage: ${usage || name}`,
-        aliases && aliases.length > 0 ? `|| Aliases: ${aliases.join(", ")}` : "",
+        `││  **Command**: ${name}`,
+        `││  **Version**: ${version}`,
+        `││  **Developer**: ${developer || "Unknown"}`,
+        `││  **Description**: ${description || "No description available"}`,
+        `││  **Usage**: ${usage || name}`,
+        aliases && aliases.length > 0 ? `││  **Aliases**: ${aliases.join(", ")}` : "",
       ]
         .filter(Boolean)
         .join("\n");
@@ -59,8 +61,8 @@ const command = {
     }
 
     const commandList = Array.from(uniqueCommands.entries())
-      .map(([name]) => {
-        return `│ ${name}`;
+      .map(([name], index) => {
+        return `││ 〘  ${index + 1}  〙 ${name}`;
       })
       .sort()
       .join("\n");
@@ -69,7 +71,7 @@ const command = {
       commandList || "No commands loaded yet."
     ].join("\n");
 
-    return chat.send(helpText);
+    return chat.reply(helpText);
   },
 };
 
