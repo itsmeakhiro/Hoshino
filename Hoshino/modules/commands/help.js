@@ -40,12 +40,12 @@ const command = {
 
       const { name, description, usage, aliases, version, developer } = command.manifest;
       const helpText = [
-        `││  **Command**: ${name}`,
-        `││  **Version**: ${version}`,
-        `││  **Developer**: ${developer || "Unknown"}`,
-        `││  **Description**: ${description || "No description available"}`,
-        `││  **Usage**: ${usage || name}`,
-        aliases && aliases.length > 0 ? `││  **Aliases**: ${aliases.join(", ")}` : "",
+        `**Command**: ${name}`,
+        `**Version**: ${version}`,
+        `**Developer**: ${developer || "Unknown"}`,
+        `**Description**: ${description || "No description available"}`,
+        `**Usage**: ${usage || name}`,
+        aliases && aliases.length > 0 ? `**Aliases**: ${aliases.join(", ")}` : "",
       ]
         .filter(Boolean)
         .join("\n");
@@ -62,7 +62,7 @@ const command = {
 
     const commandList = Array.from(uniqueCommands.entries())
       .map(([name], index) => {
-        return `││ 〘  ${index + 1}  〙 ${name}`;
+        return `〘  ${index + 1}  〙 ${name}`;
       })
       .sort()
       .join("\n");
