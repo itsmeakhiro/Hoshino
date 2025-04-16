@@ -85,7 +85,6 @@ module.exports = async function listener({ api, event }) {
 
   const senderID = event.senderID;
 
-  // Permission checking logic
   const admins = global.Hoshino.config.admin || [];
   const moderators = global.Hoshino.config.moderator || [];
 
@@ -116,6 +115,12 @@ module.exports = async function listener({ api, event }) {
 
   if (command) {
     // Check command permissions before execution
+    if (command.manifest?.config?.privateOnly && event.threadID !== event.senderID) {
+      return await chat.reply(
+        fonts.sans("This command can only be used in private chats.")
+      );
+    }
+    
     if (command.manifest.config?.admin && !isAdmin) {
       return await chat.reply(
         fonts.sans("This command is restricted to administrators.")

@@ -27,7 +27,7 @@ const command = {
       content: "sans",
       footer: "sans",
     },
-    async deploy({ chat, fonts, args, api }) {
+    async deploy({ chat, fonts, args, api, evwnt }) {
       if (!args.length) {
         return chat.send(
           fonts.sans("Please provide JavaScript code to evaluate.")
