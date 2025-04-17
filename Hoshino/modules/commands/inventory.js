@@ -5,7 +5,7 @@ const command = {
     manifest: {
       name: "inventory",
       aliases: ["inv", "items"],
-      version: "1.0.0"
+      version: "1.0.0",
       developer: "Liane Cagara",
       description: "Manage your inventory",
       category: "simulator",
@@ -27,7 +27,7 @@ const command = {
           subcommand: "view",
           description: "View your inventory (e.g., !inventory view [page])",
           deploy: async function (/** @type {TokitoLia.CommandContext} */ ctx) {
-            const { chat, event, args, styler, tokitoDB, Inventory } = ctx;
+            const { chat, event, args, styler, hoshinoDB: tokitoDB, Inventory } = ctx;
             const userData = await tokitoDB.get(event.senderID);
             const inventory = new Inventory(
               userData.inventory || [],
