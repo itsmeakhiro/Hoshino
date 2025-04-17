@@ -1,5 +1,3 @@
-const fs = require("fs").promises;
-const path = require("path");
 const fonts = require("../../../Hoshino/resources/styler/fonts");
 const route = require("./apiHandler");
 
