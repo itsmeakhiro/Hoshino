@@ -46,12 +46,6 @@ module.exports = async function commandHandler({
     return await chat.reply(fonts.sans(message));
   }
 
-  if (command.manifest?.config?.privateOnly && event.threadID !== event.senderID) {
-    return await chat.reply(
-      fonts.sans("This command can only be used in private chats.")
-    );
-  }
-
   const cooldowns = global.Hoshino.cooldowns;
   const userCooldowns = cooldowns.get(senderID) ?? {};
 
