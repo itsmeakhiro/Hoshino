@@ -6,10 +6,10 @@ const command = {
       name: "inventory",
       aliases: ["inv", "items"],
       version: "1.0.0"
-      developer: "Liane Cagara",,
+      developer: "Liane Cagara",
       description: "Manage your inventory",
       category: "simulator",
-      cooldown: 3
+      cooldown: 3,
       usage: "!inventory <subcommand> [args]",
       config: {
         admin: false,
