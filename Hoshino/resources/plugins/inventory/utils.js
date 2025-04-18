@@ -13,7 +13,7 @@ class Inventory {
     limit = Infinity,
     levelingSystem,
   } = {}) {
-    if (!levelingSystem || !(levelingSystem instanceof require('./LevelingSystem'))) {
+    if (!levelingSystem || !(levelingSystem instanceof require('../level/utils'))) {
       throw new Error('A valid LevelingSystem instance is required.');
     }
     inventory ??= [];
