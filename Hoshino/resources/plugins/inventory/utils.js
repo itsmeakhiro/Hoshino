@@ -13,7 +13,7 @@ class Inventory {
     limit = Infinity,
     levelingSystem,
   } = {}) {
-    if (!levelingSystem || !(levelingSystem instanceof require('./LevelingSystem'))) {
+    if (!levelingSystem || !(levelingSystem instanceof require('../Hoshino/resources/plugins/level/utils'))) {
       throw new Error('A valid LevelingSystem instance is required.');
     }
     inventory ??= [];
@@ -72,7 +72,7 @@ class Inventory {
   }
 
   /**
-   * Checks if the user is registered in the LevelingSystem.
+   * Checks if the user is registered in the LevelingSystem and loads their inventory.
    * @throws {Error} If no user is registered or not found in LevelingSystem.
    */
   async checkRegistered() {
@@ -114,7 +114,8 @@ class Inventory {
    */
   async get(key) {
     await this.checkRegistered();
-    return this.inv.filter((item) => item.key === key || item.key === (await this.keyAt(key)));
+    const keyAt = await this.keyAt(key);
+    return this.inv.filter((item) => item.key === key || (keyAt && item.key === keyAt));
   }
 
   /**
@@ -184,20 +185,6 @@ class Inventory {
   }
 
   /**
-   * Clones the inventory.
-   * @returns {Inventory} New inventory instance.
-   */
-  async clone() {
-    await this.checkRegistered();
-    return new Inventory({
-      username: this.username,
-      inventory: this.inv,
-      limit: this.limit,
-      levelingSystem: this.levelingSystem,
-    });
-  }
-
-  /**
    * Serializes inventory to JSON.
    * @returns {Array} Inventory array.
    */
@@ -241,7 +228,8 @@ class Inventory {
    */
   async delete(key) {
     await this.checkRegistered();
-    this.inv = this.inv.filter((item) => item.key !== key && item.key !== (await this.keyAt(key)));
+    const keyAt = await this.keyAt(key);
+    this.inv = this.inv.filter((item) => item.key !== key && item.key !== keyAt);
     await this.saveInventory();
   }
 
