@@ -13,7 +13,7 @@ class Inventory {
     limit = Infinity,
     levelingSystem,
   } = {}) {
-    if (!levelingSystem || !(levelingSystem instanceof require('../Hoshino/resources/plugins/level/utils'))) {
+    if (!levelingSystem || !(levelingSystem instanceof require('./LevelingSystem'))) {
       throw new Error('A valid LevelingSystem instance is required.');
     }
     inventory ??= [];
@@ -200,7 +200,8 @@ class Inventory {
    */
   async deleteOne(key) {
     await this.checkRegistered();
-    let index = this.inv.findIndex((item) => item.key === key || item.key === (await this.keyAt(key)));
+    const keyAt = await this.keyAt(key);
+    let index = this.inv.findIndex((item) => item.key === key || (keyAt && item.key === keyAt));
     if (index === -1) {
       index = parseInt(key) - 1;
     }
@@ -229,7 +230,7 @@ class Inventory {
   async delete(key) {
     await this.checkRegistered();
     const keyAt = await this.keyAt(key);
-    this.inv = this.inv.filter((item) => item.key !== key && item.key !== keyAt);
+    this.inv = this.inv.filter((item) => item.key !== key && (!keyAt || item.key !== keyAt));
     await this.saveInventory();
   }
 
@@ -240,7 +241,8 @@ class Inventory {
    */
   async has(key) {
     await this.checkRegistered();
-    return this.inv.some((item) => item.key === key || item.key === (await this.keyAt(key)));
+    const keyAt = await this.keyAt(key);
+    return this.inv.some((item) => item.key === key || (keyAt && item.key === keyAt));
   }
 
   /**
