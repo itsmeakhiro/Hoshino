@@ -3,7 +3,7 @@ const { spawn } = require("child_process");
 function launchProcess(instanceIndex) {
   const childProcess = spawn(
     "node",
-    ["--trace-warnings", "--async-stack-traces", "./core/main.js"],
+    ["--trace-warnings", "--async-stack-traces", "./spawner.js"],
     {
       cwd: __dirname,
       stdio: "inherit",

@@ -6,6 +6,9 @@ const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const app = express();
+try {
+  require("./global");
+} catch (error) {}
 
 const bot = new EventEmitter();
 

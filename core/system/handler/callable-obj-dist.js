@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.example = exports.Namespace = void 0;
