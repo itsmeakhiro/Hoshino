@@ -14,6 +14,7 @@ module.exports = async function commandHandler({
   ...extra
 }) {
   if (!event.body) return;
+  const { senderID } = event;
 
   const mainPrefix = global.Hoshino.config.prefix;
   const usedPrefix = mainPrefix;
@@ -86,4 +87,4 @@ module.exports = async function commandHandler({
       )
     );
   }
-}
+};

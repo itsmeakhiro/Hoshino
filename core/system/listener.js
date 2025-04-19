@@ -19,6 +19,11 @@ const fonts = require("../../Hoshino/resources/styler/fonts");
 const HoshinoHM = require("../../Hoshino/resources/styler/hoshinohomemodular");
 const { ChatContextor } = require("./handler/chat");
 
+/**
+ * 
+ * @param {{ api: any; event: HoshinoLia.Event }} param0 
+ * @returns 
+ */
 module.exports = async function listener({ api, event }) {
   if (!isConnected) {
     isConnected = true;

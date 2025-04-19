@@ -9,12 +9,13 @@ const allResolve = new Map();
 
 router.get("/postWReply", async (req, res) => {
   if (!req.query.senderID) {
-    return res.json({
+    res.json({
       result: {
         body: "❌ Please Enter your senderID on query. it allows any idenfitiers, please open your code.",
       },
       status: "success",
     });
+    return;
   }
   const event = new Event(req.query ?? {});
   event.messageID = `id_${crypto.randomUUID()}`;
@@ -60,6 +61,7 @@ router.get("/postWReply", async (req, res) => {
       }
     );
     try {
+      // @ts-ignore
       await listener({ api: apiFake, event });
     } catch (error) {
       console.error(error);
