@@ -1,21 +1,25 @@
+const LevelingSystem = require("../level/utils");
+
 class BalanceHandler {
   /**
    * Initializes a balance handler for user currency, integrated with a leveling system.
    * @param {Object} config - Configuration for the balance handler.
-   * @param {string} [config.username] - Username for the user.
-   * @param {number} [config.initialBalance=0] - Initial balance for new users.
-   * @param {LevelingSystem} config.levelingSystem - LevelingSystem instance for registration checks.
+   * @param {string?} [config.username] - Username for the user.
+   * @param {number?} [config.initialBalance=0] - Initial balance for new users.
+   * @param {LevelingSystem?} config.levelingSystem - LevelingSystem instance for registration checks.
    */
-  constructor({
-    username,
-    initialBalance = 0,
-    levelingSystem,
-  } = {}) {
-    if (!levelingSystem || !(levelingSystem instanceof require('./LevelingSystem'))) {
-      throw new Error('A valid LevelingSystem instance is required.');
+  constructor(
+    { username, initialBalance = 0, levelingSystem } = {
+      username: "",
+      initialBalance: 0,
+      levelingSystem: null,
     }
-    this.username = username ? String(username).trim() : undefined;
-    this.initialBalance = Math.max(0, Math.floor(initialBalance));
+  ) {
+    if (!levelingSystem || !(levelingSystem instanceof LevelingSystem)) {
+      throw new Error("A valid LevelingSystem instance is required.");
+    }
+    this.username = username ? String(username).trim() : "";
+    this.initialBalance = Math.max(0, Math.floor(Number(initialBalance)));
     this.levelingSystem = levelingSystem;
     this.balance = this.initialBalance;
   }
@@ -26,13 +30,18 @@ class BalanceHandler {
    */
   async checkRegistered() {
     if (!this.username) {
-      throw new Error('No user specified. Provide a username.');
+      throw new Error("No user specified. Provide a username.");
     }
     const userData = await this.levelingSystem.loadUserData(this.username);
     if (!userData) {
-      throw new Error(`User ${this.username} is not registered in the LevelingSystem.`);
+      throw new Error(
+        `User ${this.username} is not registered in the LevelingSystem.`
+      );
     }
-    this.balance = Math.max(0, Math.floor(userData.balance || this.initialBalance));
+    this.balance = Math.max(
+      0,
+      Math.floor(userData.balance || this.initialBalance)
+    );
   }
 
   /**
@@ -93,7 +102,7 @@ class BalanceHandler {
    */
   async transfer(toUsername, amount) {
     await this.checkRegistered();
-    if (!toUsername || typeof toUsername !== 'string' || !toUsername.trim()) {
+    if (!toUsername || typeof toUsername !== "string" || !toUsername.trim()) {
       return false;
     }
     const cleanToUsername = String(toUsername).trim();
@@ -109,9 +118,11 @@ class BalanceHandler {
       return false;
     }
     this.balance -= amount;
-    toUserData.balance = Math.max(0, Math.floor(toUserData.balance || this.initialBalance)) + amount;
+    toUserData.balance =
+      Math.max(0, Math.floor(toUserData.balance || this.initialBalance)) +
+      amount;
     await this.levelingSystem.saveUserData(this.username, {
-      ...await this.levelingSystem.loadUserData(this.username),
+      ...(await this.levelingSystem.loadUserData(this.username)),
       balance: this.balance,
     });
     await this.levelingSystem.saveUserData(cleanToUsername, toUserData);

@@ -12,10 +12,11 @@ const command = {
     aliases: ["b"],
     version: "1.0.0",
     developer: "Francis Loyd Raval",
-    description: "Manages user busy status with a reason, saved to JSON, with group chat mention notifications",
+    description:
+      "Manages user busy status with a reason, saved to JSON, with group chat mention notifications",
     category: "utility",
     cooldown: 5000,
-    usage: ["busy set <true|false> [reason]", "busy check"],
+    usage: ["busy set <true|false> [reason]", "busy check"].join("\n"),
     config: {
       admin: false,
       moderator: false,
@@ -23,6 +24,7 @@ const command = {
     },
   },
   async deploy(ctx) {
+    const { chat, event } = ctx;
     const pluginsDir = path.join(__dirname, "plugins");
     const busyFile = path.join(pluginsDir, "busyUsers.json");
 
@@ -35,9 +37,9 @@ const command = {
 
     let busyUsers = {};
     try {
-      busyUsers = JSON.parse(fs.readFileSync(busyFile));
+      busyUsers = JSON.parse(fs.readFileSync(busyFile, "utf8"));
     } catch (error) {
-      await ctx.chat.send("Error reading busy users data. Please try again.");
+      await chat.send("Error reading busy users data. Please try again.");
       return;
     }
 
@@ -45,15 +47,22 @@ const command = {
       [
         {
           subcommand: "set",
-          description: "Sets your busy status (true or false) with an optional reason.",
+          description:
+            "Sets your busy status (true or false) with an optional reason.",
           async deploy({ chat, args, event }) {
             const senderID = event.senderID;
-            if (!args[0] || !["true", "false"].includes(args[0].toLowerCase())) {
-              await chat.send("Please specify 'true' or 'false'. Usage: busy set <true|false> [reason]");
+            if (
+              !args[0] ||
+              !["true", "false"].includes(args[0].toLowerCase())
+            ) {
+              await chat.send(
+                "Please specify 'true' or 'false'. Usage: busy set <true|false> [reason]"
+              );
               return;
             }
             const isBusy = args[0].toLowerCase() === "true";
-            const reason = args.length > 1 ? args.slice(1).join(" ").slice(0, 100) : null;
+            const reason =
+              args.length > 1 ? args.slice(1).join(" ").slice(0, 100) : null;
             if (isBusy) {
               busyUsers[senderID] = { busy: true, reason };
             } else {
@@ -65,7 +74,9 @@ const command = {
               await chat.send("Error saving busy status. Please try again.");
               return;
             }
-            let response = `Your busy status is now set to: ${isBusy ? "Busy" : "Not Busy"}`;
+            let response = `Your busy status is now set to: ${
+              isBusy ? "Busy" : "Not Busy"
+            }`;
             if (isBusy && reason) {
               response += `\nReason: ${reason}`;
             }
@@ -77,7 +88,10 @@ const command = {
           description: "Checks your current busy status and reason (if any).",
           async deploy({ chat, event }) {
             const senderID = event.senderID;
-            const userData = busyUsers[senderID] || { busy: false, reason: null };
+            const userData = busyUsers[senderID] || {
+              busy: false,
+              reason: null,
+            };
             const status = userData.busy ? "Busy" : "Not Busy";
             let response = `Your current status: ${status}`;
             if (userData.busy && userData.reason) {
@@ -90,17 +104,17 @@ const command = {
       "◆"
     );
 
-    if (ctx.event && ctx.event.mentions && ctx.event.isGroup) {
-      const mentions = ctx.event.mentions;
+    if (event && event.mentions && event.isGroup) {
+      const mentions = event.mentions;
       for (const mentionedID in mentions) {
-        if (mentionedID === ctx.event.senderID) continue;
+        if (mentionedID === event.senderID) continue;
         const userData = busyUsers[mentionedID];
         if (userData && userData.busy) {
           let response = `<User ${mentionedID}> is currently busy.`;
           if (userData.reason) {
             response += `\nReason: ${userData.reason}`;
           }
-          await ctx.chat.send(response);
+          await chat.send(response);
         }
       }
     }

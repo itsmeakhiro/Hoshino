@@ -1,5 +1,6 @@
 const fs = require('fs').promises;
 const path = require('path');
+// WTF WHY NAKA JSON????
 
 class LevelingSystem {
   /**

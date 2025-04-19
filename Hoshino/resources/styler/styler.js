@@ -78,10 +78,10 @@ function applyFont(text, style) {
 /**
  * Styles text using a design from the JSON file
  * @param {string} type - Design name
- * @param {string} title - Title text
- * @param {string} content - Main content
- * @param {string} footer - Footer text
- * @param {Object} styles - Font styles for each section
+ * @param {string?} title - Title text
+ * @param {string?} content - Main content
+ * @param {string?} footer - Footer text
+ * @param {Object?} styles - Font styles for each section
  * @returns {string} Formatted text
  */
 module.exports = function styler(type, title, content, footer, styles = {}) {

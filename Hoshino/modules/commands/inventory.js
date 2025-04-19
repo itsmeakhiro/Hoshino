@@ -126,7 +126,7 @@ const command = {
           const sellValue = sellPrice * amount;
           inventory.toss(itemKey, amount);
           const balanceHandler = new BalanceHandler(userData);
-          balanceHandler.addBalance(sellValue);
+          balanceHandler.add(sellValue);
           await hoshinoDB.set(event.senderID, {
             inventory: inventory.raw(),
             balance: balanceHandler.getBalance(),
