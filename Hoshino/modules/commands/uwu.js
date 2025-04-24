@@ -18,7 +18,7 @@ const command = {
   style: {
       type: "lines1",
       title: "🥴 UWU",
-      footer: "Make sure you're registered on profile, if not use **profile register [ username ]** to register.\nDeveloped by: Francis Loyd Raval",
+      footer: "Make sure you're registered on profile, if not use **profile register [ username ]** to register.\n\nDeveloped by: Francis Loyd Raval",
   },
   font: {
       title: "bold",
