@@ -22,7 +22,7 @@ class HoshinoHM {
      * @param {HoshinoLia.EntryObj} ctx
      */
     async runInContext(ctx) {
-      const { args, chat } = ctx;
+      const { args, chat, hoshinoDB, fonts, event } = ctx;
       const subcommand = args[0];
   
       if (!subcommand || !this.commands.has(subcommand)) {
