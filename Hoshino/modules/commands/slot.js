@@ -6,7 +6,7 @@ const command = {
     name: "slot",
     aliases: ["slots", "spin"],
     version: "1.0.0",
-    developer: "Analyze this",
+    developer: "Francis Loyd Raval",
     description: "Play a slot machine game by betting an amount of currency",
     category: "Game",
     usage: "!slot <bet>",
@@ -34,34 +34,32 @@ const command = {
       const reel2 = symbols[Math.floor(Math.random() * symbols.length)];
       const reel3 = symbols[Math.floor(Math.random() * symbols.length)];
 
-      await chat.reply(`🎰 Spinning: [${reel1} | ${reel2} | ${reel3}]`);
-
       const allSame = reel1 === reel2 && reel2 === reel3;
       const twoSame = reel1 === reel2 || reel2 === reel3 || reel1 === reel3;
+
+      let resultMessage = `🎰 Spinning: [${reel1} | ${reel2} | ${reel3}]\n`;
 
       if (allSame && reel1 === "⭐") {
         const winnings = bet * 5;
         balance += winnings;
         await hoshinoDB.set(event.senderID, { balance });
-        return await chat.reply(`JACKPOT! Three ⭐! You won $${winnings}! Your new balance is $${balance}.`);
-      }
-
-      if (allSame) {
+        resultMessage += `JACKPOT! Three ⭐! You won $${winnings}! Your new balance is $${balance}.`;
+      } else if (allSame) {
         const winnings = bet * 3;
         balance += winnings;
         await hoshinoDB.set(event.senderID, { balance });
-        return await chat.reply(`Big win! Three matching ${reel1}! You won $${winnings}. Your new balance is $${balance}.`);
-      }
-
-      if (twoSame) {
+        resultMessage += `Big win! Three matching ${reel1}! You won $${winnings}. Your new balance is $${balance}.`;
+      } else if (twoSame) {
         const winnings = bet * 2;
         balance += winnings;
         await hoshinoDB.set(event.senderID, { balance });
-        return await chat.reply(`Nice! Two matching symbols! You won $${winnings}. Your new balance is $${balance}.`);
+        resultMessage += `Nice! Two matching symbols! You won $${winnings}. Your new balance is $${balance}.`;
+      } else {
+        await hoshinoDB.set(event.senderID, { balance });
+        resultMessage += `No luck this time. You lost $${bet}. Your new balance is $${balance}.`;
       }
 
-      await hoshinoDB.set(event.senderID, { balance });
-      await chat.reply(`No luck this time. You lost $${bet}. Your new balance is $${balance}.`);
+      await chat.reply(resultMessage);
     } catch (error) {
       console.error("Error in slot command:", error);
       await chat.reply("An error occurred while playing the slot machine.");
