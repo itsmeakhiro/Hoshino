@@ -61,9 +61,7 @@ module.exports = async function listener({ api, event }) {
     HoshinoHM,
     replies,
     LevelSystem,
-    BalanceHandler,
     Inventory,
-    BankHandler,
   };
 
   global.bot.emit("message", entryObj);
