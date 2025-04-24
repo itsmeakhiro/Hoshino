@@ -97,7 +97,7 @@ module.exports.addDesign = function (name, template) {
  * @param {Object} event - Event object containing senderID
  * @returns {string|null} Error message if not registered, null if registered
  */
-module.exports.checkRegistration = function (event) {
+module.exports.checkRegistration = function (event, hoshinoDB) {
   const userData = hoshinoDB.get(event.senderID);
   if (!userData || !userData.username) {
     return "Please register first before accessing this command";
