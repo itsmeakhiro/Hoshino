@@ -4,19 +4,12 @@ const fonts = require("./fonts");
 
 const DESIGNS_FILE = path.join(__dirname, "./plugin/designs.json");
 
-/**
- * Ensures the designs file exists (empty by default)
- */
 function initializeDesignsFile() {
   if (!fs.existsSync(DESIGNS_FILE)) {
     fs.writeFileSync(DESIGNS_FILE, JSON.stringify({}, null, 2));
   }
 }
 
-/**
- * Loads designs from the JSON file
- * @returns {Object} Designs object
- */
 function loadDesigns() {
   initializeDesignsFile();
   try {
@@ -27,12 +20,6 @@ function loadDesigns() {
   }
 }
 
-/**
- * Saves a new design to the JSON file
- * @param {string} name - Name of the design
- * @param {string} template - Design template
- * @returns {boolean} Success status
- */
 function saveDesign(name, template) {
   const designs = loadDesigns();
   designs[name] = template;
@@ -45,22 +32,16 @@ function saveDesign(name, template) {
   }
 }
 
-/**
- * Applies font styling to text, including autobold for **text**
- * @param {string} text - Text to style
- * @param {string|string[]} style - Font style(s) to apply
- * @returns {string} Styled text
- */
 function applyFont(text, style) {
   if (!text) return "";
 
   let styledText = text
     .replace(/\*\*(.*?)\*\*/g, (_, p1) => {
-    return fonts.bold ? fonts.bold(p1) : `**${p1}**`
-  })
+      return fonts.bold ? fonts.bold(p1) : `**${p1}**`;
+    })
     .replace(/\*(.*?)\*/g, (_, p1) => {
       return fonts.italic ? fonts.italic(p1) : `*${p1}*`;
-  });
+    });
 
   if (style) {
     if (Array.isArray(style)) {
@@ -75,15 +56,6 @@ function applyFont(text, style) {
   return styledText;
 }
 
-/**
- * Styles text using a design from the JSON file
- * @param {string} type - Design name
- * @param {string?} title - Title text
- * @param {string?} content - Main content
- * @param {string?} footer - Footer text
- * @param {Object?} styles - Font styles for each section
- * @returns {string} Formatted text
- */
 module.exports = function styler(type, title, content, footer, styles = {}) {
   title = applyFont(title || "", styles.title);
   content = applyFont(content || "", styles.content);
@@ -120,4 +92,23 @@ module.exports.addDesign = function (name, template) {
   return saveDesign(name, template);
 };
 
+/**
+ * Checks if a user is registered using hoshinoDB
+ * @param {Object} event - Event object containing senderID
+ * @returns {string|null} Error message if not registered, null if registered
+ */
+module.exports.checkRegistration = function (event) {
+  const userData = hoshinoDB.get(event.senderID);
+  if (!userData || !userData.username) {
+    return "Please register first before accessing this command";
+  }
+  return null;
+};
+
+/**
+ * Applies font styling to text, including autobold for **text**
+ * @param {string} text - Text to style
+ * @param {string|string[]} style - Font style(s) to apply
+ * @returns {string} Styled text
+ */
 module.exports.applyFont = applyFont;
