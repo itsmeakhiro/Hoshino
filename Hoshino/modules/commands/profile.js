@@ -4,13 +4,13 @@
 
 const command = {
   manifest: {
-    name: "Profile",
+    name: "profile",
     aliases: ["prof"],
     version: "1.0",
     developer: "Francis Loyd Raval",
-    description: "Check your profile balance or register with a username.",
+    description: "Check your profile balance, register, or change your username.",
     category: "Economy",
-    usage: "profile balance | profile register <username>",
+    usage: "profile balance | profile register <username> | profile changeusername <newusername>",
     config: {
       admin: false,
       moderator: false,
@@ -49,6 +49,28 @@ const command = {
             let { balance = 0, username } = userData;
             const formattedBalance = balance.toLocaleString('en-US');
             await chat.reply(`${username}, your balance is $${formattedBalance}.`);
+          },
+        },
+        {
+          subcommand: "changeusername",
+          description: "Change your username for 5,000.",
+          async deploy({ chat, args, event, hoshinoDB }) {
+            if (args.length < 1) {
+              return await chat.reply("Please provide a new username. Usage: profile changeusername <newusername>");
+            }
+            const newUsername = args.join(" ").trim();
+            if (!newUsername || newUsername.length > 20) {
+              return await chat.reply("New username must be 1-20 characters long.");
+            }
+            const userData = await hoshinoDB.get(event.senderID);
+            if (!userData || !userData.username) {
+              return await chat.reply("You need to register first! Use: profile register <username>");
+            }
+            if (userData.balance < 5000) {
+              return await chat.reply("You need 5,000 to change your username!");
+            }
+            await hoshinoDB.set(event.senderID, { ...userData, username: newUsername, balance: userData.balance - 5000 });
+            await chat.reply(`Username changed to ${newUsername}! 5,000 has been deducted from your balance.`);
           },
         },
       ],
