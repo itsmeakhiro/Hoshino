@@ -18,7 +18,7 @@ const command = {
   style: {
       type: "lines1",
       title: "🎰 SLOT",
-      footer: "Make sure you're registered on profile, if not use **profile register [ username ]** to register, You may disregard this message if you are already registered.\n\nDeveloped by: Francis Loyd Raval",
+      footer: "**Developed by**: Francis Loyd Raval",
   },
   font: {
       title: "bold",
@@ -28,12 +28,17 @@ const command = {
   async deploy(ctx) {
     const { chat, hoshinoDB, event, args } = ctx;
     try {
+      const userData = await hoshinoDB.get(event.senderID);
+      if (!userData || !userData.username) {
+        return await chat.reply("You must register first using profile register [username]");
+      }
+
       const bet = parseInt(args[0]);
       if (!bet || bet <= 0) {
         return await chat.reply("Please specify a valid bet amount (e.g., !slot 100).");
       }
 
-      let { balance = 0 } = await hoshinoDB.get(event.senderID);
+      let { balance = 0 } = userData;
       if (balance < bet) {
         return await chat.reply(`You don't have enough balance! Your balance: $${balance}.`);
       }
@@ -53,20 +58,20 @@ const command = {
       if (allSame && reel1 === "⭐") {
         const winnings = bet * 5;
         balance += winnings;
-        await hoshinoDB.set(event.senderID, { balance });
+        await hoshinoDB.set(event.senderID, { ...userData, balance });
         resultMessage += `JACKPOT! Three ⭐! You won $${winnings}! Your new balance is $${balance}.`;
       } else if (allSame) {
         const winnings = bet * 3;
         balance += winnings;
-        await hoshinoDB.set(event.senderID, { balance });
+        await hoshinoDB.set(event.senderID, { ...userData, balance });
         resultMessage += `Big win! Three matching ${reel1}! You won $${winnings}. Your new balance is $${balance}.`;
       } else if (twoSame) {
         const winnings = bet * 2;
         balance += winnings;
-        await hoshinoDB.set(event.senderID, { balance });
+        await hoshinoDB.set(event.senderID, { ...userData, balance });
         resultMessage += `Nice! Two matching symbols! You won $${winnings}. Your new balance is $${balance}.`;
       } else {
-        await hoshinoDB.set(event.senderID, { balance });
+        await hoshinoDB.set(event.senderID, { ...userData, balance });
         resultMessage += `No luck this time. You lost $${bet}. Your new balance is $${balance}.`;
       }
 
