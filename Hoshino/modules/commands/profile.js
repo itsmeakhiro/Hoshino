@@ -26,7 +26,7 @@ const command = {
             if (args.length < 1) {
               return await chat.reply("Please provide a username. Usage: profile register <username>");
             }
-            const username = args.join(" ").trim();
+            const username = args.slice(1).join(" ").trim();
             if (username.length < 1 || username.length > 20) {
               return await chat.reply("Username must be 1-20 characters long.");
             }
