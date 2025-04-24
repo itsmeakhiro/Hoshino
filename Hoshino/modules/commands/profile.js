@@ -10,7 +10,7 @@ const command = {
     developer: "Francis Loyd Raval",
     description: "Check your profile balance.",
     category: "Economy",
-    usage: ["profile balance"],
+    usage: "profile balance",
     config: {
       admin: false,
       moderator: false,
