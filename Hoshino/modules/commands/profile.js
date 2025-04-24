@@ -4,7 +4,7 @@
 
 const command = {
   manifest: {
-    name: "Profile",
+    name: "profile",
     aliases: ["prof"],
     version: "1.0",
     developer: "Francis Loyd Raval",
@@ -24,7 +24,9 @@ const command = {
           description: "Check your balance.",
           async deploy({ chat, args, event, hoshinoDB }) {
             let { balance = 0 } = await hoshinoDB.get(event.senderID);
-            await chat.send(`Your balance is $${balance}.`);
+            
+            const formattedBalance = balance.toLocaleString('en-US');
+            await chat.send(`Your balance is $${formattedBalance}.`);
           },
         },
       ],
