@@ -15,6 +15,16 @@ const command = {
       moderator: false,
     },
   },
+  style: {
+      type: "lines1",
+      title: "🎰 SLOT",
+      footer: "Make sure you're registered on profile, if not use **profile register [ username ]** to register.\nDeveloped by: Francis Loyd Raval",
+  },
+  font: {
+      title: "bold",
+      content: "sans",
+      footer: "sans",
+  },
   async deploy(ctx) {
     const { chat, hoshinoDB, event, args } = ctx;
     try {
