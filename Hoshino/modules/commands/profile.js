@@ -22,7 +22,7 @@ const command = {
         {
           subcommand: "balance",
           description: "Check your balance.",
-          async deploy({ chat, args, event }) {
+          async deploy({ chat, args, event, hoshinoDB }) {
             let { balance = 0 } = await hoshinoDB.get(event.senderID);
             await chat.send(`Your balance is $${balance}.`);
           },
