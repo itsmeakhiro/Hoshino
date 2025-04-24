@@ -47,7 +47,7 @@ const command = {
       const allSame = reel1 === reel2 && reel2 === reel3;
       const twoSame = reel1 === reel2 || reel2 === reel3 || reel1 === reel3;
 
-      let resultMessage = `                 **Result**
+      let resultMessage = `                    **Result**
            〘 ${reel1} | ${reel2} | ${reel3} 〙\n`;
 
       if (allSame && reel1 === "⭐") {
