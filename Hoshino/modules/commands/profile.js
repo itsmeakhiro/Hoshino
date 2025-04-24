@@ -27,7 +27,7 @@ const command = {
               return await chat.reply("Please provide a username. Usage: profile register <username>");
             }
             const username = args.join(" ").trim();
-            if (!username || username.length > 20) {
+            if (username.length < 1 || username.length > 20) {
               return await chat.reply("Username must be 1-20 characters long.");
             }
             const userData = await hoshinoDB.get(event.senderID);
@@ -59,7 +59,7 @@ const command = {
               return await chat.reply("Please provide a new username. Usage: profile changeusername <newusername>");
             }
             const newUsername = args.join(" ").trim();
-            if (!newUsername || newUsername.length > 20) {
+            if (newUsername.length < 1 || newUsername.length > 20) {
               return await chat.reply("New username must be 1-20 characters long.");
             }
             const userData = await hoshinoDB.get(event.senderID);
