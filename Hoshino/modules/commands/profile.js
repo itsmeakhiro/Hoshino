@@ -8,7 +8,7 @@ const command = {
     aliases: ["prof"],
     version: "1.0",
     developer: "Francis Loyd Raval",
-    description: "Check your profile info (balance, health, mana, level), register, or change your username.",
+    description: "Check your profile info (balance), register, or change your username.",
     category: "Economy",
     usage: "profile info | profile register <username> | profile changeusername <newusername>",
     config: {
@@ -36,25 +36,22 @@ const command = {
             }
             await hoshinoDB.set(event.senderID, { 
               username, 
-              balance: 0, 
-              health: 100, 
-              mana: 50, 
-              level: 1 
+              balance: 0
             });
             await chat.reply(`Successfully registered as ${username}!`);
           },
         },
         {
           subcommand: "info",
-          description: "Check your balance, health, mana, and level.",
+          description: "Check your balance.",
           async deploy({ chat, args, event, hoshinoDB }) {
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
               return await chat.reply("You need to register first! Use: profile register <username>");
             }
-            let { balance = 0, username, health = 100, mana = 50, level = 1 } = userData;
+            let { balance = 0, username } = userData;
             const formattedBalance = balance.toLocaleString('en-US');
-            await chat.reply(`${username}, your balance is $${formattedBalance}, health: ${health}, mana: ${mana}, level: ${level}.`);
+            await chat.reply(`${username}, your balance is $${formattedBalance}.`);
           },
         },
         {
@@ -65,7 +62,7 @@ const command = {
               return await chat.reply("Please provide a new username. Usage: profile changeusername <newusername>");
             }
             const newUsername = args.join(" ").trim();
-            if (newUsername.length < 1 || newUsername.length > 20) {
+            if (newUsername.length < 1 || username.length > 20) {
               return await chat.reply("New username must be 1-20 characters long.");
             }
             const userData = await hoshinoDB.get(event.senderID);
