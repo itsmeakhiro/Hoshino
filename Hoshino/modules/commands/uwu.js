@@ -1,0 +1,38 @@
+/**
+ * @type {HoshinoLia.Command}
+ */
+const command = {
+  manifest: {
+    name: "uwu",
+    aliases: ["u"],
+    version: "1.0.0",
+    developer: "Liane Cagara",
+    description: "Play a game with a 50% chance to win 500-1000 in currency",
+    category: "Game",
+    usage: "!uwu",
+    config: {
+      admin: false,
+      moderator: false,
+    },
+  },
+  async deploy(ctx) {
+    const { chat, hoshinoDB, event } = ctx;
+    try {
+      const isWin = Math.random() < 0.5;
+      if (isWin) {
+        const winnings = Math.floor(Math.random() * (1000 - 500 + 1)) + 500;
+        let { balance = 0 } = await hoshinoDB.get(event.senderID);
+        balance += winnings;
+        await hoshinoDB.set(event.senderID, { balance });
+        await chat.send(`Enebe... nacutetan ako sa UwU mo, eto $${winnings} para sayo, mwaps. So pera mo ngayon is nasa $${balance}.`);
+      } else {
+        await chat.send(`Yock pangit naman ng uwu mo layas.`);
+      }
+    } catch (error) {
+      console.error("Error in uwu command:", error);
+      await chat.send("An error occurred while playing the game.");
+    }
+  },
+};
+
+module.exports = command;
