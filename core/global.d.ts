@@ -77,9 +77,7 @@ declare global {
       HoshinoHM: typeof import("../Hoshino/resources/styler/hoshinohomemodular");
       hoshinoDB: import("../Hoshino/resources/plugins/database/utils");
       LevelSystem: typeof import("../Hoshino/resources/plugins/level/utils");
-      BalanceHandler: typeof import("../Hoshino/resources/plugins/balance/utils");
       Inventory: typeof import("../Hoshino/resources/plugins/inventory/utils");
-      BankHandler: typeof import("../Hoshino/resources/plugins/bank/utils");
     }
     export type CommandContext = EntryObj;
 
