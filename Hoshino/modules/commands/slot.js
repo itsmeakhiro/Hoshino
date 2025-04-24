@@ -18,7 +18,7 @@ const command = {
   style: {
       type: "lines1",
       title: "🎰 SLOT",
-      footer: "Make sure you're registered on profile, if not use **profile register [ username ]** to register.\nDeveloped by: Francis Loyd Raval",
+      footer: "Make sure you're registered on profile, if not use **profile register [ username ]** to register, You may disregard this message if you are already registered.\n\nDeveloped by: Francis Loyd Raval",
   },
   font: {
       title: "bold",
@@ -47,7 +47,8 @@ const command = {
       const allSame = reel1 === reel2 && reel2 === reel3;
       const twoSame = reel1 === reel2 || reel2 === reel3 || reel1 === reel3;
 
-      let resultMessage = `🎰 Spinning: [${reel1} | ${reel2} | ${reel3}]\n`;
+      let resultMessage = `                 **Result**
+           〘 ${reel1} | ${reel2} | ${reel3} 〙\n`;
 
       if (allSame && reel1 === "⭐") {
         const winnings = bet * 5;
