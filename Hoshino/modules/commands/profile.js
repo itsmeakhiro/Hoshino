@@ -1,5 +1,5 @@
 /**
-  * @type {HoshinoLia.Command} 
+ * @type {HoshinoLia.Command} 
 */
 
 const command = {
@@ -8,9 +8,9 @@ const command = {
     aliases: ["prof"],
     version: "1.0",
     developer: "Francis Loyd Raval",
-    description: "Check your profile balance, register, or change your username.",
+    description: "Check your profile info (balance, health, mana, level), register, or change your username.",
     category: "Economy",
-    usage: "profile balance | profile register <username> | profile changeusername <newusername>",
+    usage: "profile info | profile register <username> | profile changeusername <newusername>",
     config: {
       admin: false,
       moderator: false,
@@ -34,21 +34,27 @@ const command = {
             if (userData && userData.username) {
               return await chat.reply("You are already registered!");
             }
-            await hoshinoDB.set(event.senderID, { username, balance: 0 });
+            await hoshinoDB.set(event.senderID, { 
+              username, 
+              balance: 0, 
+              health: 100, 
+              mana: 50, 
+              level: 1 
+            });
             await chat.reply(`Successfully registered as ${username}!`);
           },
         },
         {
-          subcommand: "balance",
-          description: "Check your balance.",
+          subcommand: "info",
+          description: "Check your balance, health, mana, and level.",
           async deploy({ chat, args, event, hoshinoDB }) {
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
               return await chat.reply("You need to register first! Use: profile register <username>");
             }
-            let { balance = 0, username } = userData;
+            let { balance = 0, username, health = 100, mana = 50, level = 1 } = userData;
             const formattedBalance = balance.toLocaleString('en-US');
-            await chat.reply(`${username}, your balance is $${formattedBalance}.`);
+            await chat.reply(`${username}, your balance is $${formattedBalance}, health: ${health}, mana: ${mana}, level: ${level}.`);
           },
         },
         {
@@ -69,7 +75,11 @@ const command = {
             if (userData.balance < 5000) {
               return await chat.reply("You need 5,000 to change your username!");
             }
-            await hoshinoDB.set(event.senderID, { ...userData, username: newUsername, balance: userData.balance - 5000 });
+            await hoshinoDB.set(event.senderID, { 
+              ...userData, 
+              username: newUsername, 
+              balance: userData.balance - 5000 
+            });
             await chat.reply(`Username changed to ${newUsername}! 5,000 has been deducted from your balance.`);
           },
         },
