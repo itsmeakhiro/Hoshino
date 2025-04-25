@@ -1,4 +1,4 @@
-class LevelingSystem {
+class LevelSystem {
   constructor({
     level = 1,
     xp = 0,
