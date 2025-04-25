@@ -46,7 +46,7 @@ class HoshinoHM {
         .map((cmd) => {
           const aliases = cmd.aliases && cmd.aliases.length ? ` (aliases: ${cmd.aliases.join(", ")})` : "";
           const description = `${this.icon} ${cmd.subcommand}${aliases} → ${cmd.description}`;
-          return cmd.usage ? `${description}\n   Usage: ${cmd.usage}` : description;
+          return cmd.usage ? `${description}\n   **Usage:** ${cmd.usage}` : description;
         })
         .join("\n\n");
 
