@@ -42,13 +42,13 @@ class HoshinoHM {
     const subcommand = args[0];
 
     if (!subcommand || !this.commands.has(subcommand)) {
-      const list = [...new Set(this.commands.values())] // Deduplicate commands
+      const list = [...new Set(this.commands.values())]
         .map((cmd) => {
           const aliases = cmd.aliases && cmd.aliases.length ? ` (aliases: ${cmd.aliases.join(", ")})` : "";
           const description = `${this.icon} ${cmd.subcommand}${aliases} → ${cmd.description}`;
           return cmd.usage ? `${description}\n   Usage: ${cmd.usage}` : description;
         })
-        .join("\n\n");
+        .join("\n");
 
       const stylerFn = ctx.styler || styler;
 
@@ -73,6 +73,7 @@ class HoshinoHM {
           this.style.footer || '',
           fontStyles
         );
+        console.log('Formatted output:', formattedList);
         return await chat.reply(formattedList);
       } catch (error) {
         console.error('Styler error:', error);
