@@ -26,18 +26,19 @@ const command = {
     const reference = args.slice(1).join(" ");
 
     try {
-      const { data } = await chat.req(`https://api.biblesupersearch.com/api`, {
-        bible: bible,
-        reference: reference
-      });
+      const { data } = await chat.req(`https://api.biblesupersearch.com/api?bible=${encodeURIComponent(bible)}&reference=${encodeURIComponent(reference)}`, {});
 
       if (data.results && data.results.length > 0) {
-        chat.reply(`${bible} ${reference}: ${data.results[0].text}`);
+        const verseData = data.results[0].verses[bible.toLowerCase()];
+        const chapter = Object.keys(verseData)[0];
+        const verse = Object.keys(verseData[chapter])[0];
+        const text = verseData[chapter][verse].text;
+        chat.reply(`${bible} ${reference}: ${text}`);
       } else {
         chat.reply("No verse found.");
       }
     } catch (error) {
-      chat.reply("Error fetching verse.");
+      chat.reply(`Error fetching verse: ${error.message}`);
     }
   }
 }
