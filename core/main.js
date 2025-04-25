@@ -19,7 +19,6 @@ process.on("uncaughtException", (error) => console.log("ERROR", error.stack));
 global.bot = bot;
 
 app.use("", hoshino);
-app.use("", tool);
 app.use("", api);
 
 global.Hoshino = {
