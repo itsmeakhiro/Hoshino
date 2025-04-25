@@ -48,7 +48,7 @@ class HoshinoHM {
           const description = `${this.icon} ${cmd.subcommand}${aliases} → ${cmd.description}`;
           return cmd.usage ? `${description}\n   Usage: ${cmd.usage}` : description;
         })
-        .join("\n");
+        .join("\n\n");
 
       const stylerFn = ctx.styler || styler;
 
