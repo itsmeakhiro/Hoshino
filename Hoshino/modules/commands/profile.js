@@ -1,7 +1,6 @@
 /**
  * @type {HoshinoLia.Command} 
-*/
-
+ */
 const command = {
   manifest: {
     name: "profile",
@@ -31,7 +30,9 @@ const command = {
       [
         {
           subcommand: "register",
+          aliases: ["reg", "signup"], // Added aliases
           description: "Register with a username to use the economy system.",
+          usage: "profile register <username>",
           async deploy({ chat, args, event, hoshinoDB }) {
             if (args.length < 1) {
               return await chat.reply("Please provide a username. Usage: profile register <username>");
@@ -53,7 +54,9 @@ const command = {
         },
         {
           subcommand: "info",
+          aliases: ["me", "i"], // Added aliases
           description: "Check your balance.",
+          usage: "profile info",
           async deploy({ chat, args, event, hoshinoDB }) {
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
@@ -66,7 +69,9 @@ const command = {
         },
         {
           subcommand: "changeusername",
+          aliases: ["rename", "chname"], // Added aliases
           description: "Change your username for 5,000.",
+          usage: "profile changeusername <newusername>",
           async deploy({ chat, args, event, hoshinoDB }) {
             if (args.length < 1) {
               return await chat.reply("Please provide a new username. Usage: profile changeusername <newusername>");
@@ -91,7 +96,9 @@ const command = {
           },
         },
       ],
-      "◆"
+      "◆",
+      command.style,
+      command.font
     );
     await home.runInContext(ctx);
   },
