@@ -1,5 +1,5 @@
 const express = require('express');
-const axios = require('axios');
+const axios = require('axios').default;
 const router = express.Router();
 
 router.get('/verse', async (req, res) => {
