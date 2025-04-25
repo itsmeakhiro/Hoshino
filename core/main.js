@@ -1,5 +1,6 @@
 const hoshino = require("./hoshino");
 const api = require("./system/handler/hoshinoAPI/plugins/characters");
+const tool = require("./system/handler/hoshinoAPI/plugins/tools");
 const EventEmitter = require("events");
 const utils = require("./utils");
 const express = require("express");
@@ -18,6 +19,7 @@ process.on("uncaughtException", (error) => console.log("ERROR", error.stack));
 global.bot = bot;
 
 app.use("", hoshino);
+app.use("", tool);
 app.use("", api);
 
 global.Hoshino = {
