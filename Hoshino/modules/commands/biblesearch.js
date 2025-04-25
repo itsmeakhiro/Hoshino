@@ -37,8 +37,8 @@ const command = {
       } else {
         chat.reply("No verse found.");
       }
-    } catch (error: Error) {
-      chat.reply(`Error fetching verse: ${error.message}`);
+    } catch (error) {
+      chat.reply(`Error fetching verse: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 }
