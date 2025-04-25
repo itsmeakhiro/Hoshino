@@ -16,14 +16,15 @@ const command = {
     },
   },
   style: {
-      type: "lines1",
-      title: "🥴 UWU",
-      footer: "Make sure you're registered on profile, if not use **profile register [ username ]** to register.\n\nDeveloped by: Francis Loyd Raval",
+    type: "lines1",
+    title: "🥴 UWU",
+    footer:
+      "Make sure you're registered on profile, if not use **profile register [ username ]** to register.\n\nDeveloped by: Francis Loyd Raval",
   },
   font: {
-      title: "bold",
-      content: "sans",
-      footer: "sans",
+    title: "bold",
+    content: "sans",
+    footer: "sans",
   },
   async deploy(ctx) {
     const { chat, hoshinoDB, event } = ctx;
@@ -34,9 +35,15 @@ const command = {
         let { balance = 0 } = await hoshinoDB.get(event.senderID);
         balance += winnings;
         await hoshinoDB.set(event.senderID, { balance });
-        await chat.send(`Enebe... nacutetan ako sa UwU mo, eto $${winnings} para sayo, mwaps. So pera mo ngayon is nasa $${balance}.`);
+        await chat.send(
+          `Enebe... nacutetan ako sa UwU mo, eto $${winnings} para sayo, mwaps. So pera mo ngayon is nasa $${balance}.`
+        );
       } else {
-        await chat.send(`Yock pangit naman ng uwu mo layas.`);
+        const info = await chat.send(`Yock pangit naman ng uwu mo layas.`);
+        info.addReply(async ({ chat }) => {
+          await chat.reply("Oh bat ka nagrereply?");
+          info.edit("Wala na nag reply amputa");
+        });
       }
     } catch (error) {
       console.error("Error in uwu command:", error);
