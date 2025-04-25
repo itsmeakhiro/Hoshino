@@ -15,12 +15,12 @@ const Inventory = require("../../Hoshino/resources/plugins/inventory/utils");
 const styler = require("../../Hoshino/resources/styler/styler");
 const fonts = require("../../Hoshino/resources/styler/fonts");
 const HoshinoHM = require("../../Hoshino/resources/styler/hoshinohomemodular");
-const { ChatContextor } = require("./handler/chat");
+const { ChatContextor, ChatResult } = require("./handler/chat");
 
 /**
- * 
- * @param {{ api: any; event: HoshinoLia.Event }} param0 
- * @returns 
+ *
+ * @param {{ api: any; event: HoshinoLia.Event }} param0
+ * @returns
  */
 module.exports = async function listener({ api, event }) {
   if (!isConnected) {
@@ -42,7 +42,7 @@ module.exports = async function listener({ api, event }) {
   }
 
   const command = global.Hoshino.commands.get(commandName);
-  const chat = ChatContextor({ api, event, command });
+  const chat = ChatContextor({ api, event, command, replies });
 
   /**
    * @type {HoshinoLia.CommandContext}
@@ -61,6 +61,7 @@ module.exports = async function listener({ api, event }) {
     HoshinoHM,
     replies,
     LevelSystem,
+    ChatResult,
     Inventory,
   };
 
@@ -89,7 +90,6 @@ module.exports = async function listener({ api, event }) {
   const admins = global.Hoshino.config.admin || [];
   const moderators = global.Hoshino.config.moderator || [];
 
-
   function hasPermission(type) {
     return (
       developer?.includes(senderID) ||
@@ -116,12 +116,15 @@ module.exports = async function listener({ api, event }) {
 
   if (command) {
     // Check command permissions before execution
-    if (command.manifest?.config?.privateOnly && event.threadID !== event.senderID) {
+    if (
+      command.manifest?.config?.privateOnly &&
+      event.threadID !== event.senderID
+    ) {
       return await chat.reply(
         fonts.sans("This command can only be used in private chats.")
       );
     }
-    
+
     if (command.manifest.config?.admin && !isAdmin) {
       return await chat.reply(
         fonts.sans("This command is restricted to administrators.")

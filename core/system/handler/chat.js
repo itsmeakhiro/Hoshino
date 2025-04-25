@@ -2,6 +2,81 @@ const axios = require("axios").default;
 const styler = require("../../../Hoshino/resources/styler/styler");
 const { MethodContextor } = require("./callable-obj-dist");
 
+class ChatResult {
+  /**
+   * @type {string}
+   */
+  threadID;
+  /**
+   * @type {string}
+   */
+  messageID;
+  /**
+   * @type {number}
+   */
+  timestamp;
+
+  /**
+   * @type {any}
+   */
+  #api = null;
+
+  /**
+   * @type {Map<string, HoshinoLia.RepliesArg> | null}
+   */
+  #replies = null;
+
+  /**
+   *
+   * @param {Partial<ChatResult> | Record<string, any>} res
+   * @param {any} api
+   * @param {Map<string, HoshinoLia.RepliesArg>} replies
+   */
+  constructor(res, api, replies) {
+    this.threadID = res.threadID ?? null;
+    this.messageID = res.messageID ?? null;
+    this.timestamp = res.timestamp ?? Date.now();
+    this.#api = api;
+    this.#replies = replies;
+    if (!this.#api) {
+      throw new TypeError("api is not provided.");
+    }
+    if (!this.messageID) {
+      throw new TypeError("Invalid messageID.");
+    }
+    if (!this.threadID) {
+      throw new TypeError("Invalid threadID.");
+    }
+    if (!(this.#replies instanceof Map)) {
+      throw new TypeError("Invalid replies map.");
+    }
+  }
+
+  /**
+   *
+   * @param {string} newText
+   */
+  async edit(newText) {
+    await this.#api.editMessage(newText, this.messageID);
+  }
+
+  async unsend() {
+    await this.#api.unsendMessage(this.messageID);
+  }
+
+  /**
+   *
+   * @param {(ctx: HoshinoLia.EntryObj) => any | Promise<any>} callback
+   */
+  async addReply(callback) {
+    this.#replies?.set(this.messageID, { callback });
+  }
+
+  async delReply() {
+    this.#replies?.delete(this.messageID);
+  }
+}
+
 const ChatContextor = MethodContextor(
   {
     /**
@@ -13,6 +88,12 @@ const ChatContextor = MethodContextor(
      */
     command: null,
 
+    /**
+     * @type {Map<string, HoshinoLia.RepliesArg>}
+     */
+    // @ts-ignore
+    replies: null,
+
     styler,
     /**
      * @type {any}
@@ -23,7 +104,7 @@ const ChatContextor = MethodContextor(
      * @param {HoshinoLia.MessageForm} message - Message to send
      * @param {string} [goal] - Thread ID (defaults to current thread)
      * @param {boolean} [noStyle=false] - If true, skip styling
-     * @returns {Promise<any>} - Message send info or error
+     * @returns {Promise<ChatResult>} - Message send info or error
      */
     async send(message, goal, noStyle = false) {
       try {
@@ -33,7 +114,7 @@ const ChatContextor = MethodContextor(
             goal || this.event?.threadID,
             (err, info) => {
               if (err) rej(err);
-              else res(info);
+              else res(new ChatResult(info, this.api, this.replies));
             }
           );
         });
@@ -48,7 +129,7 @@ const ChatContextor = MethodContextor(
      * @param {string} [goal] - Thread ID (defaults to current thread)
      * @param {boolean} [noStyle=false] - If true, skip styling
 
-     * @returns {Promise<any>} - Message reply info or error
+     * @returns {Promise<ChatResult>} - Message reply info or error
      */
     async reply(message, goal, noStyle = false) {
       return new Promise((res, rej) => {
@@ -57,7 +138,7 @@ const ChatContextor = MethodContextor(
           goal || this.event?.threadID,
           (err, info) => {
             if (err) rej(err);
-            else res(info);
+            else res(new ChatResult(info, this.api, this.replies));
           },
           this.event?.messageID
         );
@@ -68,9 +149,17 @@ const ChatContextor = MethodContextor(
      * @param {any} config.api - The API object for sending messages
      * @param {Record<string, any>} config.event - Contains event details like threadID and messageID
      * @param {HoshinoLia.Command?} [config.command] - Optional command object containing style/font info
+     * @param {Map<string, HoshinoLia.RepliesArg>} [config.replies]
      */
-    create({ api, event, command }) {
-      return ChatContextor({ api, event, command });
+    create({ api, event, command, replies }) {
+      return ChatContextor({ api, event, command, replies });
+    },
+
+    /**
+     * @param {number} ms
+     */
+    delay(ms = 0) {
+      return new Promise((i) => setTimeout(i, ms));
     },
 
     /**
@@ -154,14 +243,16 @@ const ChatContextor = MethodContextor(
       }
     },
   },
-  function ({ api, event, command = null }) {
+  function ({ api, event, command = null, replies }) {
     this.api = api;
     this.event = event;
     this.command = command;
     this.styler = styler;
+    this.replies = replies;
   }
 );
 
 module.exports = {
   ChatContextor,
+  ChatResult,
 };

@@ -1,5 +1,6 @@
 import chat = require("./system/handler/chat");
 import FontSys = require("../Hoshino/resources/styler/fonts");
+import ccc = require("./system/handler/chat");
 
 declare global {
   var bot: import("events").EventEmitter;
@@ -78,6 +79,7 @@ declare global {
       hoshinoDB: import("../Hoshino/resources/plugins/database/utils");
       LevelSystem: typeof import("../Hoshino/resources/plugins/level/utils");
       Inventory: typeof import("../Hoshino/resources/plugins/inventory/utils");
+      ChatResult: typeof ccc.ChatResult;
     }
     export type CommandContext = EntryObj;
 
