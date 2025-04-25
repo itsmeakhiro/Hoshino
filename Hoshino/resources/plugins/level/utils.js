@@ -23,7 +23,7 @@ class LevelSystem {
       { name: "Hashira", minLevel: 100 },
     ],
   } = {}) {
-    this.maxLevel = Math.max(1, parseInt(maxLevel) || 100);
+    this.maxLevel = Math.max(1, Number(maxLevel) || 100);
     this.xpCurve = typeof xpCurve === "function" ? xpCurve : () => 100 * level * level;
     this.maxHealth = typeof maxHealth === "function" ? maxHealth : () => 100 + level * 50;
     this.maxMana = typeof maxMana === "function" ? maxMana : () => 50 + level * 25;
