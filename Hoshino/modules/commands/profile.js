@@ -97,7 +97,6 @@ const command = {
         },
       ],
       "◆",
-      command.font
     );
     await home.runInContext(ctx);
   },
