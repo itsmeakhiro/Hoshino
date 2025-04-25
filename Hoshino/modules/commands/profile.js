@@ -16,6 +16,16 @@ const command = {
       moderator: false,
     },
   },
+  style: {
+    type: "lines1",
+    title: "〘 👤 〙 PROFILE",
+    footer: "**Developed by**: Francis Loyd Raval",
+  },
+  font: {
+    title: "bold",
+    content: "sans",
+    footer: "sans",
+  },
   async deploy(ctx) {
     const home = new ctx.HoshinoHM(
       [
