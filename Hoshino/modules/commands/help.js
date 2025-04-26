@@ -60,16 +60,17 @@ const command = {
       }
     }
 
-    const commandList = Array.from(uniqueCommands.entries())
+    const sortedCommands = Array.from(uniqueCommands.entries()).sort((a, b) =>
+      a[0].localeCompare(b[0])
+    );
+
+    const commandList = sortedCommands
       .map(([name], index) => {
         return `〘  ${index + 1}  〙 ${name}`;
       })
-      .sort()
       .join("\n");
 
-    const helpText = [
-      commandList || "No commands loaded yet."
-    ].join("\n");
+    const helpText = [commandList || "No commands loaded yet."].join("\n");
 
     return chat.reply(helpText);
   },
