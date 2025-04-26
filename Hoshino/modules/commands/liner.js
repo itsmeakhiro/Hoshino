@@ -32,7 +32,7 @@ const command = {
       return chat.reply(fonts.sans("Provide a query."));
     }
     try {
-      const { answer } = await chat.req(
+      const ans = await chat.req(
         "https://haji-mix.up.railway.app/api/liner",
         {
           ask,
@@ -41,7 +41,9 @@ const command = {
           stream: "false"
         }
       );
-      chat.reply(answer);
+
+      const ans = response.data.answer["llm_response"];
+      chat.reply(ans);
     } catch (error) {
       chat.reply(error instanceof Error ? String(error.stack) : String(error));
     }
