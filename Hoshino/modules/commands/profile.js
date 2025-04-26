@@ -7,9 +7,9 @@ const command = {
     aliases: ["prof"],
     version: "1.0",
     developer: "Francis Loyd Raval",
-    description: "Check your profile info (balance), register, or change your username.",
+    description: "Check your profile info (balance), register, change your username, or stalk another user's info.",
     category: "Economy",
-    usage: "profile info | profile register <username> | profile changeusername <newusername>",
+    usage: "profile info | profile register <username> | profile changeusername <newusername> | profile stalk <username>",
     config: {
       admin: false,
       moderator: false,
@@ -30,7 +30,7 @@ const command = {
       [
         {
           subcommand: "register",
-          aliases: ["reg", "signup"], // Added aliases
+          aliases: ["reg", "signup"],
           description: "Register with a username to use the economy system.",
           usage: "profile register <username>",
           async deploy({ chat, args, event, hoshinoDB }) {
@@ -54,7 +54,7 @@ const command = {
         },
         {
           subcommand: "info",
-          aliases: ["me", "i"], // Added aliases
+          aliases: ["me", "i"],
           description: "Check your balance.",
           usage: "profile info",
           async deploy({ chat, args, event, hoshinoDB }) {
@@ -69,7 +69,7 @@ const command = {
         },
         {
           subcommand: "changeusername",
-          aliases: ["rename", "chname"], // Added aliases
+          aliases: ["rename", "chname"],
           description: "Change your username for 5,000.",
           usage: "profile changeusername <newusername>",
           async deploy({ chat, args, event, hoshinoDB }) {
@@ -93,6 +93,35 @@ const command = {
               balance: userData.balance - 5000 
             });
             await chat.reply(`Username changed to ${newUsername}! 5,000 has been deducted from your balance.`);
+          },
+        },
+        {
+          subcommand: "stalk",
+          aliases: ["view", "check"],
+          description: "Check another user's balance by username.",
+          usage: "profile stalk <username>",
+          async deploy({ chat, args, event, hoshinoDB }) {
+            if (args.length < 1) {
+              return await chat.reply("Please provide a username. Usage: profile stalk <username>");
+            }
+            const targetUsername = args.join(" ").trim();
+            if (targetUsername.length < 1 || targetUsername.length > 20) {
+              return await chat.reply("Username must be 1-20 characters long.");
+            }
+            
+            let targetUser = null;
+            const allUsers = await hoshinoDB.getAll();
+            for (const [userID, userData] of Object.entries(allUsers)) {
+              if (userData.username === targetUsername) {
+                targetUser = { id: userID, ...userData };
+                break;
+              }
+            }
+            if (!targetUser) {
+              return await chat.reply(`No user found with username ${targetUsername}.`);
+            }
+            const formattedBalance = targetUser.balance.toLocaleString('en-US');
+            await chat.reply(`${targetUsername}'s balance is $${formattedBalance}.`);
           },
         },
       ],
