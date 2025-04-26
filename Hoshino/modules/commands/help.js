@@ -20,7 +20,7 @@ const command = {
   style: {
     type: "help1",
     title: "ＨＯＳＨＩＮＯ ＢＯＴ",
-    footer: `You may use the command help [ command name ] to view the details \n\n**Developed by**: Francis Loyd Raval`,
+    footer: `       〘 𝚅𝙴𝚁𝚂𝙸𝙾𝙽 𝟸.𝟶.𝟶 〙`,
   },
   font: {
     content: "sans",
@@ -65,9 +65,9 @@ const command = {
 
     const commandList = sortedCommands
       .map(([name], index) => {
-        return `〘  ${index + 1}  〙 ${name}`;
+        return `**${index + 1}**. ${name}\n  **Description**: ${description}\n  **Usage**: ${usage}`;
       })
-      .join("\n");
+      .join("\n\n");
 
     const helpText = [commandList || "No commands loaded yet."].join("\n");
 
