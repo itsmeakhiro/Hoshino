@@ -19,7 +19,7 @@ const command = {
   },
   style: {
     type: "help1",
-    title: "📚 **HOSHINO** COMMAND",
+    title: "📚 **HOSHINO COMMAND - Page {page}**",
     footer: `You may use the command help [command | page number] to view details or a specific page \n\n**Developed by**: Francis Loyd Raval`,
   },
   font: {
@@ -63,12 +63,12 @@ const command = {
           .join("\n");
 
         const helpText = [
-          `**Page ${pageNum} of ${totalPages}**`,
           commandList || "No commands available.",
-          `\nUse "help <page number>" to view other pages or "help <command>" for command details.`,
         ].join("\n");
 
-        return chat.reply(helpText);
+        const formattedTitle = this.style.title.replace("{page}", pageNum);
+
+        return chat.reply(`${formattedTitle}\n\n${helpText}`);
       }
 
       const commandName = input;
@@ -92,7 +92,7 @@ const command = {
         .filter(Boolean)
         .join("\n");
 
-      return chat.send(helpText);
+      return chat.send(`${this.style.title.replace("{page}", "Details")}\n\n${helpText}`);
     }
 
     const commandsPerPage = 10;
@@ -118,12 +118,12 @@ const command = {
       .join("\n");
 
     const helpText = [
-      `**Page 1 of ${totalPages}**`,
       commandList || "No commands loaded yet.",
-      `\nUse "help <page number>" to view other pages or "help <command>" for command details.`,
     ].join("\n");
 
-    return chat.reply(helpText);
+    const formattedTitle = this.style.title.replace("{page}", "1");
+
+    return chat.reply(`${formattedTitle}\n\n${helpText}`);
   },
 };
 
