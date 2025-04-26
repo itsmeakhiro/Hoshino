@@ -19,11 +19,10 @@ const command = {
   },
   style: {
     type: "help1",
-    title: "📚 **HOSHINO** COMMAND",
+    title: "ＨＯＳＨＩＮＯ ＢＯＴ",
     footer: `You may use the command help [ command name ] to view the details \n\n**Developed by**: Francis Loyd Raval`,
   },
   font: {
-    title: "Sans",
     content: "sans",
     footer: "sans",
   },
