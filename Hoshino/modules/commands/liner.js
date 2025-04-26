@@ -6,7 +6,7 @@ const command = {
     name: "liner",
     aliases: ["line"],
     version: "1.0.0",
-    developer: "Francis Loyd Raval",
+    developer: "Francis Loyd Raval & Kenneth Panio",
     description: "Meet Liner AI from Opera Browser developed by Kenneth Panio.",
     category: "education",
     cooldown: 0,
@@ -19,7 +19,7 @@ const command = {
   style: {
     type: "lines1",
     title: "〘 𖣐 〙 LINER AI",
-    footer: `Developed by: Francis Loyd Raval`,
+    footer: `**CREDITS**: Kenneth Panio`,
   },
   font: {
     title: "bold",
@@ -32,7 +32,7 @@ const command = {
       return chat.reply(fonts.sans("Provide a query."));
     }
     try {
-      const ans = await chat.req(
+      const { answer } = await chat.req(
         "https://haji-mix.up.railway.app/api/liner",
         {
           ask,
@@ -41,9 +41,7 @@ const command = {
           stream: "false"
         }
       );
-
-      const ans = response.data.answer["llm_response"];
-      chat.reply(ans);
+      chat.reply(answer.llm_response);
     } catch (error) {
       chat.reply(error instanceof Error ? String(error.stack) : String(error));
     }
