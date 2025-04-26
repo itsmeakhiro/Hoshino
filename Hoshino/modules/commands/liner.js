@@ -3,11 +3,11 @@
  */
 const command = {
   manifest: {
-    name: "perplexity",
-    aliases: ["plexity"],
+    name: "liner",
+    aliases: ["line"],
     version: "1.0.0",
     developer: "Francis Loyd Raval",
-    description: "Meet Perplexity AI from Opera Browser developed by Kenneth Panio.",
+    description: "Meet Liner AI from Opera Browser developed by Kenneth Panio.",
     category: "education",
     cooldown: 0,
     config: {
@@ -18,7 +18,7 @@ const command = {
   },
   style: {
     type: "lines1",
-    title: "〘 𖣐 〙 PERPLEXITY AI",
+    title: "〘 𖣐 〙 LINER AI",
     footer: `Developed by: Francis Loyd Raval`,
   },
   font: {
@@ -33,9 +33,12 @@ const command = {
     }
     try {
       const { answer } = await chat.req(
-        "https://haji-mix.up.railway.app/api/aria",
+        "https://haji-mix.up.railway.app/api/liner",
         {
-          ask
+          ask,
+          mode = general,
+          deepsearch = false,
+          stream = false
         }
       );
       chat.reply(answer);
