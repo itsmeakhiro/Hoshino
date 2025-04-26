@@ -7,9 +7,9 @@ const command = {
     aliases: ["prof"],
     version: "1.0",
     developer: "Francis Loyd Raval",
-    description: "Check your profile info (balance), register, change your username, or stalk another user's info by senderID.",
+    description: "Check your profile info (balance), register, or change your username.",
     category: "Economy",
-    usage: "profile info | profile register <username> | profile changeusername <newusername> | profile stalk <senderID>",
+    usage: "profile info | profile register <username> | profile changeusername <newusername>",
     config: {
       admin: false,
       moderator: false,
@@ -30,7 +30,7 @@ const command = {
       [
         {
           subcommand: "register",
-          aliases: ["reg", "signup"],
+          aliases: ["reg", "signup"], // Added aliases
           description: "Register with a username to use the economy system.",
           usage: "profile register <username>",
           async deploy({ chat, args, event, hoshinoDB }) {
@@ -54,7 +54,7 @@ const command = {
         },
         {
           subcommand: "info",
-          aliases: ["me", "i"],
+          aliases: ["me", "i"], // Added aliases
           description: "Check your balance.",
           usage: "profile info",
           async deploy({ chat, args, event, hoshinoDB }) {
@@ -69,7 +69,7 @@ const command = {
         },
         {
           subcommand: "changeusername",
-          aliases: ["rename", "chname"],
+          aliases: ["rename", "chname"], // Added aliases
           description: "Change your username for 5,000.",
           usage: "profile changeusername <newusername>",
           async deploy({ chat, args, event, hoshinoDB }) {
@@ -93,29 +93,6 @@ const command = {
               balance: userData.balance - 5000 
             });
             await chat.reply(`Username changed to ${newUsername}! 5,000 has been deducted from your balance.`);
-          },
-        },
-        {
-          subcommand: "stalk",
-          aliases: ["view", "check"],
-          description: "Check another user's balance by senderID.",
-          usage: "profile stalk <senderID>",
-          async deploy({ chat, args, event, hoshinoDB }) {
-            if (args.length < 1) {
-              return await chat.reply("Please provide a senderID. Usage: profile stalk <senderID>");
-            }
-            
-            const senderID = args.slice(1).join(" ").trim();
-            if (senderID.length < 1) {
-              return await chat.reply("SenderID must not be empty. Usage: profile stalk <senderID>");
-            }
-            
-            const userData = await hoshinoDB.get(senderID);
-            if (!userData || !userData.username) {
-              return await chat.reply(`No registered user found with senderID ${senderID}.`);
-            }
-            const formattedBalance = userData.balance.toLocaleString('en-US');
-            await chat.reply(`${userData.username}'s balance is $${formattedBalance}.`);
           },
         },
       ],
