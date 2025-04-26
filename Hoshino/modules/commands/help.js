@@ -10,7 +10,7 @@ const command = {
     description: "Displays a list of available commands",
     category: "utility",
     cooldown: 0,
-    usage: "help [command]",
+    usage: "help [command | page number]",
     config: {
       moderator: false,
       admin: false,
@@ -20,7 +20,7 @@ const command = {
   style: {
     type: "help1",
     title: "📚 **HOSHINO** COMMAND",
-    footer: `You may use the command help [ command name ] to view the details \n\n**Developed by**: Francis Loyd Raval`,
+    footer: `You may use the command help [command | page number] to view details or a specific page \n\n**Developed by**: Francis Loyd Raval`,
   },
   font: {
     title: "Sans",
@@ -29,7 +29,49 @@ const command = {
   },
   async deploy({ chat, args }) {
     if (args.length > 0) {
-      const commandName = args[0].toLowerCase();
+      const input = args[0].toLowerCase();
+      const pageNum = parseInt(input);
+      if (!isNaN(pageNum) && pageNum > 0) {
+        const commandsPerPage = 10;
+        const uniqueCommands = new Map();
+        for (const [_, cmd] of global.Hoshino.commands) {
+          if (cmd.manifest && !uniqueCommands.has(cmd.manifest.name)) {
+            uniqueCommands.set(cmd.manifest.name, cmd);
+          }
+        }
+
+        const sortedCommands = Array.from(uniqueCommands.entries()).sort((a, b) =>
+          a[0].localeCompare(b[0])
+        );
+
+        const totalCommands = sortedCommands.length;
+        const totalPages = Math.ceil(totalCommands / commandsPerPage);
+
+        if (pageNum > totalPages) {
+          return chat.reply(`Page ${pageNum} does not exist. There are only ${totalPages} pages.`);
+        }
+
+        const startIndex = (pageNum - 1) * commandsPerPage;
+        const endIndex = startIndex + commandsPerPage;
+        const pageCommands = sortedCommands.slice(startIndex, endIndex);
+
+        const commandList = pageCommands
+          .map(([name], index) => {
+            const globalIndex = startIndex + index + 1;
+            return `〘  ${globalIndex}  〙 ${name}`;
+          })
+          .join("\n");
+
+        const helpText = [
+          `**Page ${pageNum} of ${totalPages}**`,
+          commandList || "No commands available.",
+          `\nUse "help <page number>" to view other pages or "help <command>" for command details.`,
+        ].join("\n");
+
+        return chat.reply(helpText);
+      }
+
+      const commandName = input;
       const command = global.Hoshino.commands.get(commandName);
 
       if (!command || !command.manifest) {
@@ -53,6 +95,7 @@ const command = {
       return chat.send(helpText);
     }
 
+    const commandsPerPage = 10;
     const uniqueCommands = new Map();
     for (const [_, cmd] of global.Hoshino.commands) {
       if (cmd.manifest && !uniqueCommands.has(cmd.manifest.name)) {
@@ -64,13 +107,21 @@ const command = {
       a[0].localeCompare(b[0])
     );
 
-    const commandList = sortedCommands
+    const totalCommands = sortedCommands.length;
+    const totalPages = Math.ceil(totalCommands / commandsPerPage);
+    const pageCommands = sortedCommands.slice(0, commandsPerPage);
+
+    const commandList = pageCommands
       .map(([name], index) => {
         return `〘  ${index + 1}  〙 ${name}`;
       })
       .join("\n");
 
-    const helpText = [commandList || "No commands loaded yet."].join("\n");
+    const helpText = [
+      `**Page 1 of ${totalPages}**`,
+      commandList || "No commands loaded yet.",
+      `\nUse "help <page number>" to view other pages or "help <command>" for command details.`,
+    ].join("\n");
 
     return chat.reply(helpText);
   },
