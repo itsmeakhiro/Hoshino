@@ -1,6 +1,7 @@
 /**
  * @type {HoshinoLia.Command}
  */
+
 const command = {
   manifest: {
     name: "help",
@@ -19,7 +20,7 @@ const command = {
   },
   style: {
     type: "help1",
-    title: "📚 **HOSHINO COMMAND - Page {page}**",
+    title: `📚 **HOSHINO** COMMAND\nPage {pageNum} / {totalPages}`,
     footer: `You may use the command help [command | page number] to view details or a specific page \n\n**Developed by**: Francis Loyd Raval`,
   },
   font: {
@@ -28,26 +29,25 @@ const command = {
     footer: "sans",
   },
   async deploy({ chat, args }) {
+    const commandsPerPage = 10;
+    const uniqueCommands = new Map();
+    for (const [_, cmd] of global.Hoshino.commands) {
+      if (cmd.manifest && !uniqueCommands.has(cmd.manifest.name)) {
+        uniqueCommands.set(cmd.manifest.name, cmd);
+      }
+    }
+    const sortedCommands = Array.from(uniqueCommands.entries()).sort((a, b) =>
+      a[0].localeCompare(b[0])
+    );
+    const totalCommands = sortedCommands.length;
+    const totalPages = Math.ceil(totalCommands / commandsPerPage);
+
     if (args.length > 0) {
       const input = args[0].toLowerCase();
       const pageNum = parseInt(input);
-      if (!isNaN(pageNum) && pageNum > 0) {
-        const commandsPerPage = 10;
-        const uniqueCommands = new Map();
-        for (const [_, cmd] of global.Hoshino.commands) {
-          if (cmd.manifest && !uniqueCommands.has(cmd.manifest.name)) {
-            uniqueCommands.set(cmd.manifest.name, cmd);
-          }
-        }
 
-        const sortedCommands = Array.from(uniqueCommands.entries()).sort((a, b) =>
-          a[0].localeCompare(b[0])
-        );
-
-        const totalCommands = sortedCommands.length;
-        const totalPages = Math.ceil(totalCommands / commandsPerPage);
-
-        if (pageNum > totalPages) {
+      if (!isNaN(pageNum)) {
+        if (pageNum <= 0 || pageNum > totalPages) {
           return chat.reply(`Page ${pageNum} does not exist. There are only ${totalPages} pages.`);
         }
 
@@ -63,20 +63,26 @@ const command = {
           .join("\n");
 
         const helpText = [
+          `**Page ${pageNum} of ${totalPages}**`,
           commandList || "No commands available.",
         ].join("\n");
 
-        const formattedTitle = this.style.title.replace("{page}", pageNum);
-
-        return chat.reply(`${formattedTitle}\n\n${helpText}`);
+        return chat.reply(helpText);
       }
 
-      const commandName = input;
-      const command = global.Hoshino.commands.get(commandName);
+      let command = global.Hoshino.commands.get(input);
+      if (!command) {
+        for (const [_, cmd] of global.Hoshino.commands) {
+          if (cmd.manifest?.aliases?.includes(input)) {
+            command = cmd;
+            break;
+          }
+        }
+      }
 
       if (!command || !command.manifest) {
-        return chat.send(
-          `No command found with the name "${commandName}". Use "help" to see all commands.`
+        return chat.reply(
+          `No command found with the name or alias "${input}". Use "help" to see all commands.`
         );
       }
 
@@ -87,43 +93,25 @@ const command = {
         `**Developer**: ${developer || "Unknown"}`,
         `**Description**: ${description || "No description available"}`,
         `**Usage**: ${usage || name}`,
-        aliases && aliases.length > 0 ? `**Aliases**: ${aliases.join(", ")}` : "",
+        aliases && aliases.length > 0 ? `**Aliases**: ${aliases.join(", ")}` : null,
       ]
-        .filter(Boolean)
+        .filter(line => line !== null)
         .join("\n");
 
-      return chat.send(`${this.style.title.replace("{page}", "Details")}\n\n${helpText}`);
+      return chat.reply(helpText);
     }
 
-    const commandsPerPage = 10;
-    const uniqueCommands = new Map();
-    for (const [_, cmd] of global.Hoshino.commands) {
-      if (cmd.manifest && !uniqueCommands.has(cmd.manifest.name)) {
-        uniqueCommands.set(cmd.manifest.name, cmd);
-      }
-    }
-
-    const sortedCommands = Array.from(uniqueCommands.entries()).sort((a, b) =>
-      a[0].localeCompare(b[0])
-    );
-
-    const totalCommands = sortedCommands.length;
-    const totalPages = Math.ceil(totalCommands / commandsPerPage);
     const pageCommands = sortedCommands.slice(0, commandsPerPage);
-
     const commandList = pageCommands
-      .map(([name], index) => {
-        return `〘  ${index + 1}  〙 ${name}`;
-      })
+      .map(([name], index) => `〘  ${index + 1}  〙 ${name}`)
       .join("\n");
 
     const helpText = [
+      `**Page 1 of ${totalPages}**`,
       commandList || "No commands loaded yet.",
     ].join("\n");
 
-    const formattedTitle = this.style.title.replace("{page}", "1");
-
-    return chat.reply(`${formattedTitle}\n\n${helpText}`);
+    return chat.reply(helpText);
   },
 };
 
