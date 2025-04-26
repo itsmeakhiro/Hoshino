@@ -1,284 +1,308 @@
-class LevelSystem {
+class LevelingSystem {
   constructor({
     level = 1,
     xp = 0,
     maxLevel = 100,
-    xpCurve = (level) => 100 * level * level,
-    health = 100,
-    maxHealth = (level) => 100 + level * 50,
-    mana = 50,
-    maxMana = (level) => 50 + level * 25,
-    healthManaUpgradeMode = "full",
-    ranks = [
-      { name: "Mizunoto", minLevel: 1 },
-      { name: "Mizunoe", minLevel: 11 },
-      { name: "Kanoto", minLevel: 21 },
-      { name: "Kanoe", minLevel: 31 },
-      { name: "Tsuchinoto", minLevel: 41 },
-      { name: "Tsuchinoe", minLevel: 51 },
-      { name: "Hinoto", minLevel: 61 },
-      { name: "Hinoe", minLevel: 71 },
-      { name: "Kinoto", minLevel: 81 },
-      { name: "Kinoe", minLevel: 91 },
-      { name: "Hashira", minLevel: 100 },
-    ],
+    baseStats = { health: 100, mana: 50 },
+    statGrowth = { health: 10, mana: 5 },
+    storage = { type: 'manager', manager: null },
+    quests = {},
+    rankNames = [
+      "Mizunoto",
+      "Mizunoe",
+      "Kanoto",
+      "Kanoe",
+      "Tsuchinoto",
+      "Tsuchinoe",
+      "Hinoto",
+      "Hinoe",
+      "Kinoto",
+      "Kinoe",
+      "Hashira Initiate",
+      "Hashira of Water",
+      "Hashira of Flame",
+      "Hashira of Wind",
+      "Hashira of Stone",
+      "Hashira of Thunder",
+      "Hashira of Mist",
+      "Hashira of Sound",
+      "Hashira of Love",
+      "Hashira of Serpent",
+      "Master Hashira",
+      "Legendary Hashira",
+      "Demon Slayer Elite",
+      "Moonlit Slayer",
+      "Sunlit Slayer",
+      "Breath Master",
+      "Demon Bane",
+      "Pillar of Eternity",
+      "Slayer Sovereign",
+      "Transcendent Slayer"
+    ]
   } = {}) {
-    this.maxLevel = Math.max(1, Number(maxLevel) || 100);
-    this.xpCurve = typeof xpCurve === "function" ? xpCurve : () => 100 * level * level;
-    this.maxHealth = typeof maxHealth === "function" ? maxHealth : () => 100 + level * 50;
-    this.maxMana = typeof maxMana === "function" ? maxMana : () => 50 + level * 25;
-    this.healthManaUpgradeMode = healthManaUpgradeMode === "proportional" ? "proportional" : "full";
-    this.ranks = Array.isArray(ranks) ? ranks.sort((a, b) => a.minLevel - b.minLevel) : [{ name: "Mizunoto", minLevel: 1 }];
-
-    this.xp = this.sanitizeXP(xp);
-    this.healthPercent = this.healthManaUpgradeMode === "proportional" ? health / this.maxHealth(level) : 1;
-    this.manaPercent = this.healthManaUpgradeMode === "proportional" ? mana / this.maxMana(level) : 1;
-    this.xpToNext = this.calculateXPToNextLevel();
+    this.maxLevel = Math.max(1, Math.floor(maxLevel));
+    this.level = Math.max(1, Math.min(this.maxLevel, Math.floor(level)));
+    this.xp = Math.max(0, Math.floor(xp));
+    this.baseStats = this.sanitizeStats(baseStats);
+    this.statGrowth = this.sanitizeStats(statGrowth);
+    this.currentStats = this.calculateCurrentStats();
+    this.xpToNextLevel = this.calculateXpToNextLevel();
+    this.storage = storage;
+    this.quests = { ...quests };
+    this.rankNames = Array.isArray(rankNames) && rankNames.length > 0 ? rankNames : ["Mizunoto"];
+    this.dataCache = new Map();
+    if (this.storage.type !== 'manager' || !this.storage.manager) {
+      throw new Error('A valid storage manager is required.');
+    }
   }
 
-  get level() {
-    let totalXP = 0;
-    for (let i = 1; i <= this.maxLevel; i++) {
-      totalXP += this.xpCurve(i);
-      if (this.xp < totalXP) {
-        return Math.min(i, this.maxLevel);
+  sanitizeStats(stats) {
+    const result = {};
+    for (const [key, value] of Object.entries(stats)) {
+      const num = parseFloat(value);
+      result[key] = isNaN(num) ? 0 : Math.max(0, num);
+    }
+    return result;
+  }
+
+  calculateCurrentStats() {
+    const stats = { ...this.baseStats };
+    stats.health = this.baseStats.health * Math.pow(2, this.level - 1);
+    stats.health = Math.max(0, Math.round(stats.health));
+    for (const [stat, growth] of Object.entries(this.statGrowth)) {
+      if (stat !== 'health') {
+        stats[stat] = (stats[stat] || 0) + growth * (this.level - 1);
+        stats[stat] = Math.max(0, Math.round(stats[stat]));
       }
     }
-    return this.maxLevel;
+    return stats;
   }
 
-  get health() {
-    return this.healthManaUpgradeMode === "proportional"
-      ? this.sanitizeHealth(this.maxHealth(this.level) * this.healthPercent, this.level)
-      : this.maxHealth(this.level);
-  }
-
-  set health(value) {
-    this.healthPercent = this.healthManaUpgradeMode === "proportional"
-      ? value / this.maxHealth(this.level)
-      : 1;
-  }
-
-  get mana() {
-    return this.healthManaUpgradeMode === "proportional"
-      ? this.sanitizeMana(this.maxMana(this.level) * this.manaPercent, this.level)
-      : this.maxMana(this.level);
-  }
-
-  set mana(value) {
-    this.manaPercent = this.healthManaUpgradeMode === "proportional"
-      ? value / this.maxMana(this.level)
-      : 1;
-  }
-
-  sanitizeLevel(level) {
-    const parsed = parseInt(level);
-    if (isNaN(parsed)) {
-      throw new Error("Level must be a valid number.");
-    }
-    return Math.max(1, Math.min(this.maxLevel, parsed));
-  }
-
-  sanitizeXP(xp) {
-    const parsed = parseInt(xp);
-    if (isNaN(parsed) || parsed < 0) {
-      return 0;
-    }
-    return parsed;
-  }
-
-  sanitizeHealth(health, level) {
-    const parsed = parseInt(health);
-    if (isNaN(parsed)) {
-      return this.maxHealth(level);
-    }
-    return Math.max(0, Math.min(parsed, this.maxHealth(level)));
-  }
-
-  sanitizeMana(mana, level) {
-    const parsed = parseInt(mana);
-    if (isNaN(parsed)) {
-      return this.maxMana(level);
-    }
-    return Math.max(0, Math.min(parsed, this.maxMana(level)));
-  }
-
-  calculateXPToNextLevel() {
-    if (this.level >= this.maxLevel) {
-      return Infinity;
-    }
-    let totalXP = 0;
-    for (let i = 1; i <= this.level; i++) {
-      totalXP += this.xpCurve(i);
-    }
-    return totalXP - this.xp;
+  calculateXpToNextLevel() {
+    if (this.level >= this.maxLevel) return Infinity;
+    return this.level <= 1 ? 10 : 10 * Math.pow(2, this.level);
   }
 
   getLevel() {
-    return this.level;
+    return this.xp < 10 ? 1 : Math.min(this.maxLevel, Math.floor(Math.log2(this.xp / 10)) + 1);
   }
 
-  getXP() {
+  getXpFromLevel(level) {
+    if (level <= 1) return 0;
+    return 10 * Math.pow(2, level - 1);
+  }
+
+  getNextRemainingXp() {
+    const currentLevel = this.getLevel();
+    const nextLevelXp = this.getXpFromLevel(currentLevel + 1);
+    return nextLevelXp - this.xp;
+  }
+
+  getNextXp() {
+    const currentLevel = this.getLevel();
+    return this.getXpFromLevel(currentLevel + 1);
+  }
+
+  getExpCurrentLevel() {
+    const currentLevel = this.getLevel();
+    const previousLevelXp = this.getXpFromLevel(currentLevel - 1);
+    return this.xp - previousLevelXp;
+  }
+
+  getRankString() {
+    const level = this.getLevel();
+    return this.rankNames[Math.max(0, Math.min(level - 1, this.rankNames.length - 1))];
+  }
+
+  expReached(xp) {
+    return this.xp >= xp;
+  }
+
+  levelReached(level) {
+    return this.getLevel() >= level;
+  }
+
+  get exp() {
     return this.xp;
   }
 
-  getXPToNext() {
-    return this.xpToNext;
+  set exp(value) {
+    this.xp = Math.max(0, Math.floor(value));
+    this.level = this.getLevel();
+    this.xpToNextLevel = this.calculateXpToNextLevel();
+    this.currentStats = this.calculateCurrentStats();
   }
 
-  getMaxLevel() {
-    return this.maxLevel;
+  get level() {
+    return this.getLevel();
   }
 
-  getHealth() {
-    return this.health;
+  set level(value) {
+    this.exp = this.getXpFromLevel(value);
   }
 
-  getMaxHealth() {
-    return this.maxHealth(this.level);
-  }
-
-  getMana() {
-    return this.mana;
-  }
-
-  getMaxMana() {
-    return this.maxMana(this.level);
-  }
-
-  getRank() {
-    let currentRank = this.ranks[0];
-    for (const rank of this.ranks) {
-      if (this.level >= rank.minLevel) {
-        currentRank = rank;
-      } else {
-        break;
+  async loadUserData() {
+    if (this.dataCache.has('default')) {
+      return this.dataCache.get('default');
+    }
+    try {
+      const userData = await this.storage.manager.getUserData('default');
+      if (userData) {
+        this.dataCache.set('default', userData);
+        this.quests = userData.quests || {};
+        this.level = userData.level || 1;
+        this.xp = userData.xp || 0;
+        this.xpToNextLevel = this.calculateXpToNextLevel();
+        this.currentStats = this.calculateCurrentStats();
       }
+      return userData || null;
+    } catch (error) {
+      console.error(`Failed to load user data:`, error);
+      return null;
     }
-    return currentRank.name;
   }
 
-  getRankProgression() {
-    return this.ranks.map(rank => ({ name: rank.name, minLevel: rank.minLevel }));
-  }
-
-  isMaxLevel() {
-    return this.level >= this.maxLevel;
-  }
-
-  isAlive() {
-    return this.health > 0;
-  }
-
-  addXP(amount) {
-    if (this.isMaxLevel()) {
-      return { leveledUp: false, levelsGained: 0 };
+  async saveUserData(data) {
+    try {
+      this.dataCache.set('default', data);
+      await this.storage.manager.setUserData('default', { ...data, quests: this.quests });
+    } catch (error) {
+      console.error(`Failed to save user data:`, error);
+      throw error;
     }
-
-    const parsedAmount = parseInt(amount) || 0;
-    if (parsedAmount <= 0) {
-      return { leveledUp: false, levelsGained: 0 };
-    }
-
-    const previousLevel = this.level;
-    this.xp += parsedAmount;
-    this.xpToNext = this.calculateXPToNextLevel();
-    const levelsGained = this.level - previousLevel;
-
-    if (this.isMaxLevel()) {
-      this.xpToNext = Infinity;
-    }
-
-    return { leveledUp: levelsGained > 0, levelsGained };
   }
 
-  setLevel(level) {
-    const newLevel = this.sanitizeLevel(level);
-    if (newLevel === this.level) {
-      return false;
+  async addXp(xp) {
+    xp = Math.max(0, Math.floor(xp));
+    if (xp === 0 || this.level >= this.maxLevel) {
+      return { levelsGained: 0, newStats: this.currentStats };
     }
-
-    let totalXP = 0;
-    for (let i = 1; i < newLevel; i++) {
-      totalXP += this.xpCurve(i);
+    this.xp += xp;
+    let levelsGained = 0;
+    let previousLevel = this.level;
+    this.level = this.getLevel();
+    levelsGained = this.level - previousLevel;
+    this.xpToNextLevel = this.calculateXpToNextLevel();
+    this.currentStats = this.calculateCurrentStats();
+    if (this.level >= this.maxLevel) {
+      this.xp = this.getXpFromLevel(this.maxLevel);
+      this.xpToNextLevel = Infinity;
     }
-    this.xp = totalXP;
-    this.xpToNext = this.calculateXPToNextLevel();
-    return true;
+    await this.saveUserData(this.export());
+    return { levelsGained, newStats: this.currentStats };
   }
 
-  setXP(xp) {
-    const previousLevel = this.level;
-    this.xp = this.sanitizeXP(xp);
-    this.xpToNext = this.calculateXPToNextLevel();
-    const levelsGained = this.level - previousLevel;
+  getXp() {
+    return this.xp;
+  }
 
-    if (this.isMaxLevel()) {
-      this.xpToNext = Infinity;
+  getXpToNextLevel() {
+    return this.xpToNextLevel;
+  }
+
+  getStats() {
+    return { ...this.currentStats };
+  }
+
+  canLevelUp() {
+    return this.level < this.maxLevel && this.xp >= this.getNextXp();
+  }
+
+  newQuest(questKey, name, description, totalSteps = 10) {
+    if (this.quests[questKey]) {
+      throw new Error(`Quest with key ${questKey} already exists.`);
     }
-
-    return { leveledUp: levelsGained > 0, levelsGained };
+    this.quests[questKey] = {
+      name,
+      description,
+      currentSteps: 0,
+      totalSteps: Math.max(1, Math.floor(totalSteps)),
+      isComplete: false
+    };
   }
 
-  takeDamage(amount) {
-    const parsedAmount = parseInt(amount) || 0;
-    if (parsedAmount <= 0) {
-      return { healthLost: 0, isAlive: this.isAlive() };
+  async advanceQuest(questKey, steps = 1) {
+    const quest = this.quests[questKey];
+    if (!quest) {
+      throw new Error(`Quest with key ${questKey} does not exist.`);
     }
-
-    this.health = this.health - parsedAmount;
-    return { healthLost: parsedAmount, isAlive: this.isAlive() };
+    quest.currentSteps = Math.max(0, quest.currentSteps + Math.floor(steps));
+    quest.isComplete = quest.currentSteps >= quest.totalSteps;
+    await this.saveUserData(this.export());
   }
 
-  restoreHealth(amount) {
-    const parsedAmount = parseInt(amount) || 0;
-    if (parsedAmount <= 0) {
-      return { healthGained: 0 };
+  async completeQuest(questKey, xpReward = 0) {
+    const quest = this.quests[questKey];
+    if (!quest) {
+      throw new Error(`Quest with key ${questKey} does not exist.`);
     }
-
-    this.health = this.health + parsedAmount;
-    return { healthGained: parsedAmount };
-  }
-
-  useMana(amount) {
-    const parsedAmount = parseInt(amount) || 0;
-    if (parsedAmount <= 0 || this.mana < parsedAmount) {
-      return { manaUsed: 0, success: false };
+    if (!quest.isComplete) {
+      throw new Error(`Quest with key ${questKey} is not complete.`);
     }
-
-    this.mana = this.mana - parsedAmount;
-    return { manaUsed: parsedAmount, success: true };
-  }
-
-  restoreMana(amount) {
-    const parsedAmount = parseInt(amount) || 0;
-    if (parsedAmount <= 0) {
-      return { manaGained: 0 };
+    delete this.quests[questKey];
+    let result = { levelsGained: 0, newStats: this.currentStats };
+    if (xpReward > 0) {
+      result = await this.addXp(xpReward);
     }
-
-    this.mana = this.mana + parsedAmount;
-    return { manaGained: parsedAmount };
+    await this.saveUserData(this.export());
+    return result;
   }
 
-  reset() {
-    this.xp = 0;
-    this.healthPercent = 1;
-    this.manaPercent = 1;
-    this.xpToNext = this.calculateXPToNextLevel();
+  deleteQuest(questKey) {
+    if (!this.quests[questKey]) {
+      throw new Error(`Quest with key ${questKey} does not exist.`);
+    }
+    delete this.quests[questKey];
   }
 
-  clone() {
-    return new LevelSystem({
-      xp: this.xp,
+  isQuestComplete(questKey) {
+    const quest = this.quests[questKey];
+    if (!quest) {
+      throw new Error(`Quest with key ${questKey} does not exist.`);
+    }
+    return quest.isComplete;
+  }
+
+  hasQuest(questKey) {
+    return !!this.quests[questKey];
+  }
+
+  async advanceQuestIfHas(questKey, steps = 1) {
+    if (this.hasQuest(questKey)) {
+      await this.advanceQuest(questKey, steps);
+    }
+  }
+
+  getQuestInfo(questKey) {
+    const quest = this.quests[questKey];
+    if (!quest) {
+      throw new Error(`Quest with key ${questKey} does not exist.`);
+    }
+    return { ...quest };
+  }
+
+  resetQuest(questKey) {
+    const quest = this.quests[questKey];
+    if (!quest) {
+      throw new Error(`Quest with key ${questKey} does not exist.`);
+    }
+    quest.currentSteps = 0;
+    quest.isComplete = false;
+  }
+
+  async reset(config = {}) {
+    const defaults = {
+      level: 1,
+      xp: 0,
       maxLevel: this.maxLevel,
-      xpCurve: this.xpCurve,
-      health: this.health,
-      maxHealth: this.maxHealth,
-      mana: this.mana,
-      maxMana: this.maxMana,
-      healthManaUpgradeMode: this.healthManaUpgradeMode,
-      ranks: this.ranks,
-    });
+      baseStats: this.baseStats,
+      statGrowth: this.statGrowth,
+      storage: this.storage,
+      quests: {},
+      rankNames: this.rankNames
+    };
+    Object.assign(this, new LevelingSystem({ ...defaults, ...config }));
+    await this.saveUserData(this.export());
   }
 
   export() {
@@ -286,39 +310,17 @@ class LevelSystem {
       level: this.level,
       xp: this.xp,
       maxLevel: this.maxLevel,
-      health: this.health,
-      maxHealth: this.maxHealth(this.level),
-      mana: this.mana,
-      maxMana: this.maxMana(this.level),
-      healthManaUpgradeMode: this.healthManaUpgradeMode,
-      rank: this.getRank(),
-      ranks: this.getRankProgression(),
+      baseStats: { ...this.baseStats },
+      statGrowth: { ...this.statGrowth },
+      currentStats: { ...this.currentStats },
+      xpToNextLevel: this.xpToNextLevel,
+      quests: { ...this.quests }
     };
   }
 
-  toJSON() {
-    return this.export();
-  }
-
   *[Symbol.iterator]() {
-    for (let i = 1; i <= this.level; i++) {
-      let rank = this.ranks[0];
-      for (const r of this.ranks) {
-        if (i >= r.minLevel) {
-          rank = r;
-        } else {
-          break;
-        }
-      }
-      yield {
-        level: i,
-        xpRequired: i === 1 ? 0 : this.xpCurve(i - 1),
-        maxHealth: this.maxHealth(i),
-        maxMana: this.maxMana(i),
-        rank: rank.name,
-      };
-    }
+    yield { level: this.level, xp: this.xp, stats: this.currentStats, quests: this.quests };
   }
 }
 
-module.exports = LevelSystem;
+module.exports = LevelingSystem;
