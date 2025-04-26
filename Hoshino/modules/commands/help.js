@@ -64,8 +64,8 @@ const command = {
     );
 
     const commandList = sortedCommands
-      .map(([name], index) => {
-        return `**${index + 1}**. ${name}\n  **Description**: ${description}\n  **Usage**: ${usage}`;
+      .map(([name, cmd], index) => {
+        return `**${index + 1}**. ${name}\n  **Description**: ${cmd.manifest.description || "No description available"}\n  **Usage**: ${cmd.manifest.usage || name}`;
       })
       .join("\n\n");
 
