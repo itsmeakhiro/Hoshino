@@ -7,9 +7,9 @@ const command = {
     aliases: ["prof"],
     version: "1.0",
     developer: "Francis Loyd Raval",
-    description: "Check your profile info (balance), register, change your username, or stalk another user's info.",
+    description: "Check your profile info (balance), register, change your username, or stalk another user's info by senderID.",
     category: "Economy",
-    usage: "profile info | profile register <username> | profile changeusername <newusername> | profile stalk <username>",
+    usage: "profile info | profile register <username> | profile changeusername <newusername> | profile stalk <senderID>",
     config: {
       admin: false,
       moderator: false,
@@ -98,30 +98,24 @@ const command = {
         {
           subcommand: "stalk",
           aliases: ["view", "check"],
-          description: "Check another user's balance by username.",
-          usage: "profile stalk <username>",
+          description: "Check another user's balance by senderID.",
+          usage: "profile stalk <senderID>",
           async deploy({ chat, args, event, hoshinoDB }) {
             if (args.length < 1) {
-              return await chat.reply("Please provide a username. Usage: profile stalk <username>");
-            }
-            const targetUsername = args.join(" ").trim();
-            if (targetUsername.length < 1 || targetUsername.length > 20) {
-              return await chat.reply("Username must be 1-20 characters long.");
+              return await chat.reply("Please provide a senderID. Usage: profile stalk <senderID>");
             }
             
-            let targetUser = null;
-            const allUsers = await hoshinoDB.getAll();
-            for (const [userID, userData] of Object.entries(allUsers)) {
-              if (userData.username === targetUsername) {
-                targetUser = { id: userID, ...userData };
-                break;
-              }
+            const senderID = args.slice(1).join(" ").trim();
+            if (senderID.length < 1) {
+              return await chat.reply("SenderID must not be empty. Usage: profile stalk <senderID>");
             }
-            if (!targetUser) {
-              return await chat.reply(`No user found with username ${targetUsername}.`);
+            
+            const userData = await hoshinoDB.get(senderID);
+            if (!userData || !userData.username) {
+              return await chat.reply(`No registered user found with senderID ${senderID}.`);
             }
-            const formattedBalance = targetUser.balance.toLocaleString('en-US');
-            await chat.reply(`${targetUsername}'s balance is $${formattedBalance}.`);
+            const formattedBalance = userData.balance.toLocaleString('en-US');
+            await chat.reply(`${userData.username}'s balance is $${formattedBalance}.`);
           },
         },
       ],
