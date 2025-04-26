@@ -36,9 +36,9 @@ const command = {
         "https://haji-mix.up.railway.app/api/liner",
         {
           ask,
-          mode = general,
-          deepsearch = false,
-          stream = false
+          mode: "general",
+          deepsearch: "false",
+          stream: "false"
         }
       );
       chat.reply(answer);
