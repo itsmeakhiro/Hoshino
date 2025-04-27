@@ -312,4 +312,4 @@ const fonts = {
   },
 };
 
-module.exports = fonts;
+export default fonts;

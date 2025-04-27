@@ -1,8 +1,8 @@
-const fs = require("fs-extra");
-const { execSync } = require("child_process");
-const path = require("path");
-const util = require("util");
-const listener = require("./listener");
+import { readFileSync } from "fs-extra";
+import { execSync } from "child_process";
+import { join } from "path";
+import { promisify } from "util";
+import listener from "./listener";
 
 try {
   require.resolve("chatbox-fca-remake");
@@ -11,14 +11,14 @@ try {
   execSync("npm install chatbox-fca-remake", { stdio: "inherit" });
 }
 
-const login = util.promisify(require("chatbox-fca-remake"));
+const login = promisify(require("chatbox-fca-remake"));
 
-module.exports = async function initializeBot() {
-  const appStatePath = path.join(__dirname, "..", "..", "appstate.json");
+export default async function initializeBot() {
+  const appStatePath = join(__dirname, "..", "..", "appstate.json");
   let api;
   try {
     api = await login({
-      appState: JSON.parse(fs.readFileSync(appStatePath, "utf8")),
+      appState: JSON.parse(readFileSync(appStatePath, "utf8")),
     });
     const conf = global.Hoshino.config["api-options"];
     if (conf) {

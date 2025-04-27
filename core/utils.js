@@ -1,16 +1,16 @@
-const fs = require("fs-extra");
-const path = require("path");
+import { readdirSync } from "fs-extra";
+import { resolve, join } from "path";
 
 /**
  * @type {HoshinoLia.HoshinoUtils}
  */
 const utils = {
   async loadCommands() {
-    const filePath = path.resolve(__dirname, "../Hoshino/modules/commands");
+    const filePath = resolve(__dirname, "../Hoshino/modules/commands");
     console.log(`[DEBUG] Command file path: ${filePath}`);
-    const loadfiles = fs
-      .readdirSync(filePath)
-      .filter((file) => file.endsWith(".js"));
+    const loadfiles = readdirSync(filePath).filter((file) =>
+      file.endsWith(".js")
+    );
 
     if (loadfiles.length === 0) {
       console.log("[ERROR] No commands available to deploy");
@@ -18,11 +18,14 @@ const utils = {
     }
 
     for (const file of loadfiles) {
-      const commandPath = path.join(filePath, file);
+      const commandPath = join(filePath, file);
       /**
-       * @type {HoshinoLia.Command}
+       * @type {HoshinoLia.Command | { default: HoshinoLia.Command }}
        */
-      const command = require(commandPath);
+      let command = require(commandPath);
+      if ("default" in command) {
+        command = command.default;
+      }
       const { manifest, deploy } = command ?? {};
 
       if (!manifest) {
@@ -65,11 +68,11 @@ const utils = {
   },
 
   async loadEvents() {
-    const filePath = path.resolve(__dirname, "../Hoshino/modules/events");
+    const filePath = resolve(__dirname, "../Hoshino/modules/events");
     console.log(`[DEBUG] Event file path: ${filePath}`);
-    const loadfiles = fs
-      .readdirSync(filePath)
-      .filter((file) => file.endsWith(".js"));
+    const loadfiles = readdirSync(filePath).filter((file) =>
+      file.endsWith(".js")
+    );
 
     if (loadfiles.length === 0) {
       console.log("[ERROR] No events available to deploy");
@@ -77,8 +80,11 @@ const utils = {
     }
 
     for (const file of loadfiles) {
-      const eventPath = path.join(filePath, file);
-      const event = require(eventPath);
+      const eventPath = join(filePath, file);
+      let event = require(eventPath);
+      if (event.default) {
+        event = event.default;
+      }
       const { manifest, onEvent } = event ?? {};
 
       if (!manifest) {
@@ -110,4 +116,4 @@ const utils = {
   },
 };
 
-module.exports = utils;
+export default utils;

@@ -30,19 +30,25 @@ const command = {
     try {
       const userData = await hoshinoDB.get(event.senderID);
       if (!userData || !userData.username) {
-        return await chat.reply("You must register first using profile register [username]");
+        return await chat.reply(
+          "You must register first using profile register [username]"
+        );
       }
 
       const choice = args[0]?.toLowerCase();
       const bet = parseInt(args[1]);
 
       if (!["heads", "tails"].includes(choice) || !bet || bet <= 0) {
-        return await chat.reply("Usage: !coinflip <heads/tails> <bet> (e.g., !coinflip heads 100)");
+        return await chat.reply(
+          "Usage: !coinflip <heads/tails> <bet> (e.g., !coinflip heads 100)"
+        );
       }
 
       let { balance = 0 } = userData;
       if (balance < bet) {
-        return await chat.reply(`You don't have enough balance! Your balance: $${balance}.`);
+        return await chat.reply(
+          `You don't have enough balance! Your balance: $${balance}.`
+        );
       }
 
       const flip = Math.random() < 0.5 ? "heads" : "tails";
@@ -68,4 +74,4 @@ const command = {
   },
 };
 
-module.exports = command;
+export default command;

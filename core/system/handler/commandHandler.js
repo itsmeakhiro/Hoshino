@@ -1,12 +1,12 @@
-const fonts = require("../../../Hoshino/resources/styler/fonts");
-const route = require("./apiHandler");
+import fonts from "../../../Hoshino/resources/styler/fonts";
+import route from "./apiHandler";
 
 /**
  *
  * @param {HoshinoLia.CommandContext} param0
  * @returns
  */
-module.exports = async function commandHandler({
+export default async function commandHandler({
   api,
   chat,
   event,
@@ -44,6 +44,7 @@ module.exports = async function commandHandler({
 
     return await chat.reply(fonts.sans(message));
   }
+  
 
   const cooldowns = global.Hoshino.cooldowns;
   const userCooldowns = cooldowns.get(senderID) ?? {};
@@ -87,4 +88,4 @@ module.exports = async function commandHandler({
       )
     );
   }
-};
+}

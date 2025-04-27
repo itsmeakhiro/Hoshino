@@ -1,5 +1,5 @@
 /**
- * @type {HoshinoLia.Command} 
+ * @type {HoshinoLia.Command}
  */
 const command = {
   manifest: {
@@ -7,9 +7,11 @@ const command = {
     aliases: ["prof"],
     version: "1.0",
     developer: "Francis Loyd Raval",
-    description: "Check your profile info (balance), register, or change your username.",
+    description:
+      "Check your profile info (balance), register, or change your username.",
     category: "Economy",
-    usage: "profile info | profile register <username> | profile changeusername <newusername>",
+    usage:
+      "profile info | profile register <username> | profile changeusername <newusername>",
     config: {
       admin: false,
       moderator: false,
@@ -30,12 +32,14 @@ const command = {
       [
         {
           subcommand: "register",
-          aliases: ["reg", "signup"], // Added aliases
+          aliases: ["reg", "signup"],
           description: "Register with a username to use the economy system.",
           usage: "profile register <username>",
           async deploy({ chat, args, event, hoshinoDB }) {
             if (args.length < 1) {
-              return await chat.reply("Please provide a username. Usage: profile register <username>");
+              return await chat.reply(
+                "Please provide a username. Usage: profile register <username>"
+              );
             }
             const username = args.slice(1).join(" ").trim();
             if (username.length < 1 || username.length > 20) {
@@ -45,61 +49,75 @@ const command = {
             if (userData && userData.username) {
               return await chat.reply("You are already registered!");
             }
-            await hoshinoDB.set(event.senderID, { 
-              username, 
-              balance: 0
+            await hoshinoDB.set(event.senderID, {
+              username,
+              balance: 0,
             });
             await chat.reply(`Successfully registered as ${username}!`);
           },
         },
         {
           subcommand: "info",
-          aliases: ["me", "i"], // Added aliases
+          aliases: ["me", "i"],
           description: "Check your balance.",
           usage: "profile info",
           async deploy({ chat, args, event, hoshinoDB }) {
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
-              return await chat.reply("You need to register first! Use: profile register <username>");
+              return await chat.reply(
+                "You need to register first! Use: profile register <username>"
+              );
             }
             let { balance = 0, username } = userData;
-            const formattedBalance = balance.toLocaleString('en-US');
-            await chat.reply(`${username}, your balance is $${formattedBalance}.`);
+            const formattedBalance = balance.toLocaleString("en-US");
+            await chat.reply(
+              `${username}, your balance is $${formattedBalance}.`
+            );
           },
         },
         {
           subcommand: "changeusername",
-          aliases: ["rename", "chname"], // Added aliases
+          aliases: ["rename", "chname"],
           description: "Change your username for 5,000.",
           usage: "profile changeusername <newusername>",
           async deploy({ chat, args, event, hoshinoDB }) {
             if (args.length < 1) {
-              return await chat.reply("Please provide a new username. Usage: profile changeusername <newusername>");
+              return await chat.reply(
+                "Please provide a new username. Usage: profile changeusername <newusername>"
+              );
             }
             const newUsername = args.join(" ").trim();
             if (newUsername.length < 1 || newUsername.length > 20) {
-              return await chat.reply("New username must be 1-20 characters long.");
+              return await chat.reply(
+                "New username must be 1-20 characters long."
+              );
             }
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
-              return await chat.reply("You need to register first! Use: profile register <username>");
+              return await chat.reply(
+                "You need to register first! Use: profile register <username>"
+              );
             }
             if (userData.balance < 5000) {
-              return await chat.reply("You need 5,000 to change your username!");
+              return await chat.reply(
+                "You need 5,000 to change your username!"
+              );
             }
-            await hoshinoDB.set(event.senderID, { 
-              ...userData, 
-              username: newUsername, 
-              balance: userData.balance - 5000 
+            await hoshinoDB.set(event.senderID, {
+              ...userData,
+              username: newUsername,
+              balance: userData.balance - 5000,
             });
-            await chat.reply(`Username changed to ${newUsername}! 5,000 has been deducted from your balance.`);
+            await chat.reply(
+              `Username changed to ${newUsername}! 5,000 has been deducted from your balance.`
+            );
           },
         },
       ],
-      "◆",
+      "◆"
     );
     await home.runInContext(ctx);
   },
 };
 
-module.exports = command;
+export default command;

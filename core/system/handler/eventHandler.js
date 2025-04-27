@@ -3,7 +3,7 @@
  * @param {HoshinoLia.CommandContext} param0
  * @returns
  */
-module.exports = async function eventHandler({ ...entryObj }) {
+export default async function eventHandler({ ...entryObj }) {
   const { event, chat, fonts, api } = entryObj;
   // WARNING THIS IS UNUSED AND EVERYTHING IS IN LISTENER
 
@@ -30,4 +30,4 @@ module.exports = async function eventHandler({ ...entryObj }) {
   } catch (err) {
     console.error("Error in eventHandler:", err);
   }
-};
+}

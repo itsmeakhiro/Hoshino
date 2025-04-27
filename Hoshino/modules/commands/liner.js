@@ -38,7 +38,7 @@ const command = {
           ask,
           mode: "general",
           deepsearch: "false",
-          stream: "false"
+          stream: "false",
         }
       );
       chat.reply(answer.llm_response);
@@ -48,4 +48,4 @@ const command = {
   },
 };
 
-module.exports = command;
+export default command;

@@ -1,6 +1,6 @@
 const fs = require("fs-extra");
 const path = require("path");
-const fonts = require("./fonts");
+const fonts = require("./fonts").default;
 
 const DESIGNS_FILE = path.join(__dirname, "./plugin/designs.json");
 

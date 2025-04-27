@@ -1,7 +1,11 @@
-import chat = require("./system/handler/chat");
-import FontSys = require("../Hoshino/resources/styler/fonts");
-import { HoshinoUser, HoshinoEXP, HoshinoQuest } = require("../Hoshino/resources/plugins/level/utils");
-import ccc = require("./system/handler/chat");
+import * as chat from "./system/handler/chat";
+import FontSys from "../Hoshino/resources/styler/fonts";
+import {
+  HoshinoUser,
+  HoshinoEXP,
+  HoshinoQuest,
+} from "../Hoshino/resources/plugins/level/utils";
+import * as ccc from "./system/handler/chat";
 
 declare global {
   var bot: import("events").EventEmitter;
@@ -76,7 +80,7 @@ declare global {
       styler: Styler;
       route: Route;
       replies: Map<string, RepliesArg>;
-      HoshinoHM: typeof import("../Hoshino/resources/styler/hoshinohomemodular");
+      HoshinoHM: typeof import("../Hoshino/resources/styler/hoshinohomemodular").default;
       hoshinoDB: import("../Hoshino/resources/plugins/database/utils");
       Inventory: typeof import("../Hoshino/resources/plugins/inventory/utils");
       HoshinoUser: typeof HoshinoUser;

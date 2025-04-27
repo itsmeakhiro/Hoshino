@@ -3,7 +3,7 @@
 const express = require("express");
 const crypto = require("crypto");
 const router = express.Router();
-const listener = require("./system/listener");
+const listener = require("./system/listener").default;
 
 const allResolve = new Map();
 

@@ -7,7 +7,8 @@ const command = {
     aliases: ["roll", "duel"],
     version: "1.0.0",
     developer: "Francis Loyd Raval",
-    description: "Roll a dice against the bot and try your luck to win currency",
+    description:
+      "Roll a dice against the bot and try your luck to win currency",
     category: "Game",
     usage: "!dice <bet>",
     config: {
@@ -30,17 +31,23 @@ const command = {
     try {
       const userData = await hoshinoDB.get(event.senderID);
       if (!userData || !userData.username) {
-        return await chat.reply("You must register first using profile register [username]");
+        return await chat.reply(
+          "You must register first using profile register [username]"
+        );
       }
 
       const bet = parseInt(args[0]);
       if (!bet || bet <= 0) {
-        return await chat.reply("Please specify a valid bet amount (e.g., !dice 100).");
+        return await chat.reply(
+          "Please specify a valid bet amount (e.g., !dice 100)."
+        );
       }
 
       let { balance = 0 } = userData;
       if (balance < bet) {
-        return await chat.reply(`You don't have enough balance! Your balance: $${balance}.`);
+        return await chat.reply(
+          `You don't have enough balance! Your balance: $${balance}.`
+        );
       }
 
       const playerRoll = Math.floor(Math.random() * 6) + 1;
@@ -70,4 +77,4 @@ const command = {
   },
 };
 
-module.exports = command;
+export default command;

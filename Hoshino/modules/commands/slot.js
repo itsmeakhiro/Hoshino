@@ -16,31 +16,37 @@ const command = {
     },
   },
   style: {
-      type: "lines1",
-      title: "🎰 SLOT",
-      footer: "**Developed by**: Francis Loyd Raval",
+    type: "lines1",
+    title: "🎰 SLOT",
+    footer: "**Developed by**: Francis Loyd Raval",
   },
   font: {
-      title: "bold",
-      content: "sans",
-      footer: "sans",
+    title: "bold",
+    content: "sans",
+    footer: "sans",
   },
   async deploy(ctx) {
     const { chat, hoshinoDB, event, args } = ctx;
     try {
       const userData = await hoshinoDB.get(event.senderID);
       if (!userData || !userData.username) {
-        return await chat.reply("You must register first using profile register [username]");
+        return await chat.reply(
+          "You must register first using profile register [username]"
+        );
       }
 
       const bet = parseInt(args[0]);
       if (!bet || bet <= 0) {
-        return await chat.reply("Please specify a valid bet amount (e.g., !slot 100).");
+        return await chat.reply(
+          "Please specify a valid bet amount (e.g., !slot 100)."
+        );
       }
 
       let { balance = 0 } = userData;
       if (balance < bet) {
-        return await chat.reply(`You don't have enough balance! Your balance: $${balance}.`);
+        return await chat.reply(
+          `You don't have enough balance! Your balance: $${balance}.`
+        );
       }
 
       balance -= bet;
@@ -83,4 +89,4 @@ const command = {
   },
 };
 
-module.exports = command;
+export default command;

@@ -1,6 +1,6 @@
-const axios = require("axios").default;
-const styler = require("../../../Hoshino/resources/styler/styler");
-const { MethodContextor } = require("./callable-obj-dist");
+import axios from "axios";
+import styler from "../../../Hoshino/resources/styler/styler";
+import { MethodContextor } from "./callable-obj-dist";
 
 class ChatResult {
   /**
@@ -252,7 +252,7 @@ const ChatContextor = MethodContextor(
   }
 );
 
-module.exports = {
+export {
   ChatContextor,
   ChatResult,
 };

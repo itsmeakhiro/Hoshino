@@ -1,4 +1,4 @@
-const styler = require('./styler');
+import styler from './styler';
 
 /**
  * @typedef {Object} Command
@@ -85,4 +85,4 @@ class HoshinoHM {
   }
 }
 
-module.exports = HoshinoHM;
+export default HoshinoHM;

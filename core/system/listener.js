@@ -5,24 +5,28 @@ let isConnected = false;
  * @type {Map<string, HoshinoLia.RepliesArg>}
  */
 const replies = new Map();
-const eventHandler = require("./handler/eventHandler");
-const commandHandler = require("./handler/commandHandler");
-const route = require("./handler/apiHandler");
-const HoshinoDB = require("../../Hoshino/resources/plugins/database/utils");
+import eventHandler from "./handler/eventHandler";
+import commandHandler from "./handler/commandHandler";
+import route from "./handler/apiHandler";
+import HoshinoDB from "../../Hoshino/resources/plugins/database/utils";
 const hoshinoDB = new HoshinoDB();
-const { HoshinoUser, HoshinoEXP, HoshinoQuest } = require("../../Hoshino/resources/plugins/level/utils");
-const Inventory = require("../../Hoshino/resources/plugins/inventory/utils");
-const styler = require("../../Hoshino/resources/styler/styler");
-const fonts = require("../../Hoshino/resources/styler/fonts");
-const HoshinoHM = require("../../Hoshino/resources/styler/hoshinohomemodular");
-const { ChatContextor, ChatResult } = require("./handler/chat");
+import {
+  HoshinoUser,
+  HoshinoEXP,
+  HoshinoQuest,
+} from "../../Hoshino/resources/plugins/level/utils";
+import Inventory from "../../Hoshino/resources/plugins/inventory/utils";
+import styler from "../../Hoshino/resources/styler/styler";
+import fonts from "../../Hoshino/resources/styler/fonts";
+import HoshinoHM from "../../Hoshino/resources/styler/hoshinohomemodular";
+import { ChatContextor, ChatResult } from "./handler/chat";
 
 /**
  *
  * @param {{ api: any; event: HoshinoLia.Event }} param0
  * @returns
  */
-module.exports = async function listener({ api, event }) {
+export default async function listener({ api, event }) {
   if (!isConnected) {
     isConnected = true;
     await hoshinoDB.connect();
@@ -60,8 +64,8 @@ module.exports = async function listener({ api, event }) {
     hoshinoDB,
     HoshinoHM,
     replies,
-    HoshinoUser, 
-    HoshinoEXP, 
+    HoshinoUser,
+    HoshinoEXP,
     HoshinoQuest,
     ChatResult,
     Inventory,
@@ -161,4 +165,4 @@ module.exports = async function listener({ api, event }) {
     default:
       console.log(`Unhandled event type: ${event.type}`);
   }
-};
+}

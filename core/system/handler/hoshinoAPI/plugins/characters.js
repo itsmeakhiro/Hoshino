@@ -1,24 +1,24 @@
-const express = require("express");
-const axios = require("axios").default;
-const fs = require("fs");
-const path = require("path");
-const router = express.Router();
+import { Router } from "express";
+import axios from "axios";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { join } from "path";
+const router = Router();
 
 function getFilePath(senderID) {
-  const directoryPath = path.join(__dirname, "../data");
-  if (!fs.existsSync(directoryPath)) {
-    fs.mkdirSync(directoryPath, { recursive: true });
+  const directoryPath = join(__dirname, "../data");
+  if (!existsSync(directoryPath)) {
+    mkdirSync(directoryPath, { recursive: true });
   }
-  return path.join(directoryPath, `${senderID}data.json`);
+  return join(directoryPath, `${senderID}data.json`);
 }
 
 function loadConversations(senderID) {
   const filePath = getFilePath(senderID);
   try {
-    if (!fs.existsSync(filePath)) {
+    if (!existsSync(filePath)) {
       return [];
     }
-    const data = fs.readFileSync(filePath, "utf-8");
+    const data = readFileSync(filePath, "utf-8");
     return JSON.parse(data);
   } catch {
     return [];
@@ -27,7 +27,7 @@ function loadConversations(senderID) {
 
 function saveConversations(senderID, data) {
   const filePath = getFilePath(senderID);
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
+  writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
 }
 
 router.get("/tate", async (req, res) => {
@@ -120,4 +120,4 @@ router.get("/tate", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

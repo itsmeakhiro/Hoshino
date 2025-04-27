@@ -1,5 +1,5 @@
-const utils = require("../utils");
-const login = require("../system/login");
+const utils = require("../utils").default;
+const login = require("../system/login").default;
 const { getTheme, styleText } = require("./custom");
 
 const currentTheme = 'hacker';

@@ -17,6 +17,7 @@ const command = {
       privateOnly: false,
     },
   },
+  // DO NOT EMBED FONTS DIRECTLY
   style: {
     type: "help1",
     title: "ＨＯＳＨＩＮＯ ＢＯＴ",
@@ -37,14 +38,17 @@ const command = {
         );
       }
 
-      const { name, description, usage, aliases, version, developer } = command.manifest;
+      const { name, description, usage, aliases, version, developer } =
+        command.manifest;
       const helpText = [
         `**Command**: ${name}`,
         `**Version**: ${version}`,
         `**Developer**: ${developer || "Unknown"}`,
         `**Description**: ${description || "No description available"}`,
         `**Usage**: ${usage || name}`,
-        aliases && aliases.length > 0 ? `**Aliases**: ${aliases.join(", ")}` : "",
+        aliases && aliases.length > 0
+          ? `**Aliases**: ${aliases.join(", ")}`
+          : "",
       ]
         .filter(Boolean)
         .join("\n");
@@ -52,6 +56,9 @@ const command = {
       return chat.send(helpText);
     }
 
+    /**
+     * @type {Map<string, HoshinoLia.Command>}
+     */
     const uniqueCommands = new Map();
     for (const [_, cmd] of global.Hoshino.commands) {
       if (cmd.manifest && !uniqueCommands.has(cmd.manifest.name)) {
@@ -65,7 +72,9 @@ const command = {
 
     const commandList = sortedCommands
       .map(([name, cmd], index) => {
-        return `**${index + 1}**. ${name}\n  **Description**: ${cmd.manifest.description || "No description available"}\n  **Usage**: ${cmd.manifest.usage || name}`;
+        return `**${index + 1}**. ${name}\n  **Description**: ${
+          cmd.manifest.description || "No description available"
+        }\n  **Usage**: ${cmd.manifest.usage || name}`;
       })
       .join("\n\n");
 
@@ -75,4 +84,4 @@ const command = {
   },
 };
 
-module.exports = command;
+export default command;
