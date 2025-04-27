@@ -1,5 +1,6 @@
 import chat = require("./system/handler/chat");
 import FontSys = require("../Hoshino/resources/styler/fonts");
+import { HoshinoUser, HoshinoEXP, HoshinoQuest } = require("../Hoshino/resources/plugins/level/utils");
 import ccc = require("./system/handler/chat");
 
 declare global {
@@ -77,10 +78,10 @@ declare global {
       replies: Map<string, RepliesArg>;
       HoshinoHM: typeof import("../Hoshino/resources/styler/hoshinohomemodular");
       hoshinoDB: import("../Hoshino/resources/plugins/database/utils");
-      HoshinoUser: typeof import("../Hoshino/resources/plugins/level/utils");
-      HoshinoEXP: typeof import("../Hoshino/resources/plugins/level/utils"); 
-      HoshinoQuest: typeof import("../Hoshino/resources/plugins/level/utils");
       Inventory: typeof import("../Hoshino/resources/plugins/inventory/utils");
+      HoshinoUser: typeof HoshinoUser;
+      HoshinoQuest: typeof HoshinoQuest;
+      HoshinoEXP: typeof HoshinoEXP;
       ChatResult: typeof ccc.ChatResult;
     }
     export type CommandContext = EntryObj;
