@@ -146,8 +146,8 @@ class LevelingSystem {
       return this.dataCache.get('default');
     }
     try {
-      if (!this.storage.manager) {
-        throw new Error('Storage manager is not available.');
+      if (!this.storage.manager || typeof this.storage.manager.getUserData !== 'function') {
+        throw new Error('Storage manager with getUserData method is not available.');
       }
       const userData = await this.storage.manager.getUserData('default');
       if (userData) {
@@ -167,8 +167,8 @@ class LevelingSystem {
 
   async saveUserData(data) {
     try {
-      if (!this.storage.manager) {
-        throw new Error('Storage manager is not available.');
+      if (!this.storage.manager || typeof this.storage.manager.setUserData !== 'function') {
+        throw new Error('Storage manager with setUserData method is not available.');
       }
       this.dataCache.set('default', data);
       await this.storage.manager.setUserData('default', { ...data, quests: this.quests });
