@@ -143,4 +143,4 @@ const command = {
   },
 };
 
-module.exports = command;
+export default command;
