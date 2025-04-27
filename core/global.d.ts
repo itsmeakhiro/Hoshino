@@ -77,7 +77,9 @@ declare global {
       replies: Map<string, RepliesArg>;
       HoshinoHM: typeof import("../Hoshino/resources/styler/hoshinohomemodular");
       hoshinoDB: import("../Hoshino/resources/plugins/database/utils");
-      LevelSystem: typeof import("../Hoshino/resources/plugins/level/utils");
+      HoshinoUser: typeof import("../Hoshino/resources/plugins/level/utils");
+      HoshinoEXP: typeof import("../Hoshino/resources/plugins/level/utils"); 
+      HoshinoQuest: typeof import("../Hoshino/resources/plugins/level/utils");
       Inventory: typeof import("../Hoshino/resources/plugins/inventory/utils");
       ChatResult: typeof ccc.ChatResult;
     }
