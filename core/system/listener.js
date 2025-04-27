@@ -10,7 +10,7 @@ const commandHandler = require("./handler/commandHandler");
 const route = require("./handler/apiHandler");
 const HoshinoDB = require("../../Hoshino/resources/plugins/database/utils");
 const hoshinoDB = new HoshinoDB();
-const LevelSystem = require("../../Hoshino/resources/plugins/level/utils");
+const { HoshinoUser, HoshinoEXP, HoshinoQuest } = require("../../Hoshino/resources/plugins/level/utils");
 const Inventory = require("../../Hoshino/resources/plugins/inventory/utils");
 const styler = require("../../Hoshino/resources/styler/styler");
 const fonts = require("../../Hoshino/resources/styler/fonts");
@@ -60,7 +60,9 @@ module.exports = async function listener({ api, event }) {
     hoshinoDB,
     HoshinoHM,
     replies,
-    LevelSystem,
+    HoshinoUser, 
+    HoshinoEXP, 
+    HoshinoQuest,
     ChatResult,
     Inventory,
   };
