@@ -10,24 +10,25 @@ const command = {
     description: "Displays a list of available commands",
     category: "utility",
     cooldown: 0,
-    usage: "help [command | page <number>]",
+    usage: "help [command | page number]",
     config: {
       moderator: false,
       admin: false,
       privateOnly: false,
     },
   },
+  // DO NOT EMBED FONTS DIRECTLY
   style: {
     type: "help1",
     title: "ＨＯＳＨＩＮＯ ＢＯＴ",
-    footer: `        〘 𝚅𝙴𝚁𝚂𝙸𝙾𝙽 𝟸.𝟶.𝟶 〙`,
+    footer: `       〘 𝚅𝙴𝚁𝚂𝙸𝙾𝙽 𝟸.𝟶.𝟶 〙`,
   },
   font: {
     content: "sans",
     footer: "sans",
   },
   async deploy({ chat, args }) {
-    if (args.length > 0 && args[0].toLowerCase() !== "page") {
+    if (args.length > 0 && isNaN(args[0])) {
       const commandName = args[0].toLowerCase();
       const command = global.Hoshino.commands.get(commandName);
 
@@ -47,9 +48,9 @@ const command = {
         `**Usage**: ${usage || name}`,
         aliases && aliases.length > 0
           ? `**Aliases**: ${aliases.join(", ")}`
-          : "",
+          : null,
       ]
-        .filter(Boolean)
+        .filter((item) => item !== null)
         .join("\n");
 
       return chat.send(helpText);
@@ -72,13 +73,11 @@ const command = {
     const commandsPerPage = 10;
     const totalCommands = sortedCommands.length;
     const totalPages = Math.ceil(totalCommands / commandsPerPage);
-
     let page = 1;
-    if (args.length > 1 && args[0].toLowerCase() === "page") {
-      const requestedPage = parseInt(args[1]);
-      if (!isNaN(requestedPage) && requestedPage > 0 && requestedPage <= totalPages) {
-        page = requestedPage;
-      } else {
+
+    if (args.length > 0 && !isNaN(args[0])) {
+      page = parseInt(args[0], 10);
+      if (page < 1 || page > totalPages) {
         return chat.send(
           `Invalid page number. Please use a number between 1 and ${totalPages}.`
         );
@@ -98,11 +97,11 @@ const command = {
       .join("\n\n");
 
     const helpText = [
-      commandList || "No commands loaded yet.",
-      `\n\n             Page **${page} | ${totalPages}**`,
-      totalPages > 1 || "";
+      totalCommands > 0
+        ? `${commandList}\n\n**Page ${page} of ${totalPages}** (${totalCommands} commands total)`
+        : "No commands loaded yet.",
     ]
-      .filter(Boolean)
+      .filter((item) => item !== null)
       .join("\n");
 
     return chat.reply(helpText);
