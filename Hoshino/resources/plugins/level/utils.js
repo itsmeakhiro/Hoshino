@@ -1,217 +1,391 @@
-class LevelingSystem {
-  constructor({
-    level = 1,
-    xp = 0,
-    maxLevel = 100,
-    baseStats = { health: 100, mana: 50 },
-    statGrowth = { health: 10, mana: 5 },
-    storage = { type: 'manager', manager: null },
-    quests = {},
-    rankNames = [
-      "Mizunoto",
-      "Mizunoe",
-      "Kanoto",
-      "Kanoe",
-      "Tsuchinoto",
-      "Tsuchinoe",
-      "Hinoto",
-      "Hinoe",
-      "Kinoto",
-      "Kinoe",
-      "Hashira Initiate",
-      "Hashira of Water",
-      "Hashira of Flame",
-      "Hashira of Wind",
-      "Hashira of Stone",
-      "Hashira of Thunder",
-      "Hashira of Mist",
-      "Hashira of Sound",
-      "Hashira of Love",
-      "Hashira of Serpent",
-      "Master Hashira",
-      "Legendary Hashira",
-      "Demon Slayer Elite",
-      "Moonlit Slayer",
-      "Sunlit Slayer",
-      "Breath Master",
-      "Demon Bane",
-      "Pillar of Eternity",
-      "Slayer Sovereign",
-      "Transcendent Slayer"
-    ]
-  } = {}) {
-    this.maxLevel = Math.max(1, Math.floor(maxLevel));
-    this.level = Math.max(1, Math.min(this.maxLevel, Math.floor(level)));
-    this.xp = Math.max(0, Math.floor(xp));
-    this.baseStats = this.sanitizeStats(baseStats);
-    this.statGrowth = this.sanitizeStats(statGrowth);
-    this.currentStats = this.calculateCurrentStats();
-    this.xpToNextLevel = this.calculateXpToNextLevel();
-    this.storage = storage;
-    this.quests = { ...quests };
-    this.rankNames = Array.isArray(rankNames) && rankNames.length > 0 ? rankNames : ["Mizunoto"];
-    this.dataCache = new Map();
-    if (this.storage.type !== 'manager' || !this.storage.manager) {
-      throw new Error('A valid storage manager is required.');
+class HoshinoUser {
+  constructor(allData = {}) {
+    this.allData = allData;
+  }
+}
+
+class HoshinoEXP {
+  constructor(hoshinoEXP = { exp: 0 }) {
+    this.cxp = this.sanitize(hoshinoEXP);
+    this.expControls = new HoshinoEXPControl(this);
+  }
+
+  sanitize(data) {
+    let { exp } = data;
+    if (isNaN(exp)) {
+      exp = 0;
     }
+    exp = Number.parseInt(String(exp), 10);
+
+    return {
+      ...data,
+      exp,
+    };
   }
 
-  sanitizeStats(stats) {
-    const result = {};
-    for (const [key, value] of Object.entries(stats)) {
-      const num = parseFloat(value);
-      result[key] = isNaN(num) ? 0 : Math.max(0, num);
-    }
-    return result;
+  getEXP() {
+    return this.cxp.exp;
   }
 
-  calculateCurrentStats() {
-    const stats = { health: 100, mana: 50, ...this.baseStats };
-    stats.health = this.baseStats.health * Math.pow(2, this.level - 1);
-    stats.health = Math.max(0, Math.round(stats.health));
-    for (const [stat, growth] of Object.entries(this.statGrowth)) {
-      if (stat !== 'health') {
-        stats[stat] = (stats[stat] || 0) + growth * (this.level - 1);
-        stats[stat] = Math.max(0, Math.round(stats[stat]));
-      }
-    }
-    return stats;
-  }
-
-  calculateXpToNextLevel() {
-    if (this.level >= this.maxLevel) return Infinity;
-    return this.level <= 1 ? 10 : 10 * Math.pow(2, this.level);
-  }
-
-  getLevel() {
-    return this.xp < 10 ? 1 : Math.min(this.maxLevel, Math.floor(Math.log2(this.xp / 10)) + 1);
-  }
-
-  getXpFromLevel(level) {
-    if (level <= 1) return 0;
-    return 10 * Math.pow(2, level - 1);
-  }
-
-  getNextRemainingXp() {
-    const currentLevel = this.getLevel();
-    const nextLevelXp = this.getXpFromLevel(currentLevel + 1);
-    return nextLevelXp - this.xp;
-  }
-
-  getNextXp() {
-    const currentLevel = this.getLevel();
-    return this.getXpFromLevel(currentLevel + 1);
-  }
-
-  getExpCurrentLevel() {
-    const currentLevel = this.getLevel();
-    const previousLevelXp = this.getXpFromLevel(currentLevel - 1);
-    return this.xp - previousLevelXp;
-  }
-
-  getRankString() {
-    const level = this.getLevel();
-    return this.rankNames[Math.max(0, Math.min(level - 1, this.rankNames.length - 1))];
-  }
-
-  expReached(xp) {
-    return this.xp >= xp;
-  }
-
-  levelReached(level) {
-    return this.getLevel() >= level;
+  setEXP(exp) {
+    this.cxp.exp = exp;
+    return true;
   }
 
   get exp() {
-    return this.xp;
+    return this.getEXP();
   }
 
-  set exp(value) {
-    this.xp = Math.max(0, Math.floor(value));
-    this.level = this.getLevel();
-    this.xpToNextLevel = this.calculateXpToNextLevel();
-    this.currentStats = this.calculateCurrentStats();
+  set exp(exp) {
+    this.setEXP(exp);
+  }
+
+  getLevel() {
+    return HoshinoEXP.getLevelFromEXP(this.getEXP());
+  }
+
+  setLevel(level) {
+    this.setEXP(HoshinoEXP.getEXPFromLevel(level));
+    return true;
   }
 
   get level() {
     return this.getLevel();
   }
 
-  set level(value) {
-    this.exp = this.getXpFromLevel(value);
+  set level(level) {
+    this.setLevel(level);
   }
 
-  async loadUserData() {
-    if (this.dataCache.has('default')) {
-      return this.dataCache.get('default');
+  getNextRemaningEXP() {
+    const currentLevel = this.getLevel();
+    const currentEXP = this.getEXP();
+    const nextLevelEXP = HoshinoEXP.getEXPFromLevel(currentLevel + 1);
+    return nextLevelEXP - currentEXP;
+  }
+
+  getNextEXP() {
+    const currentLevel = this.getLevel();
+    const nextLevelEXP = HoshinoEXP.getEXPFromLevel(currentLevel + 1);
+    return nextLevelEXP;
+  }
+
+  getEXPBeforeLv() {
+    const lim = HoshinoEXP.getEXPFromLevel(this.getLevel() - 1);
+    return lim;
+  }
+
+  getNextEXPCurrentLv() {
+    const currentLevel = this.getLevel();
+    const nextEXP = this.getNextEXP();
+    const levelEXP = HoshinoEXP.getEXPFromLevel(currentLevel - 1);
+    return nextEXP - levelEXP;
+  }
+
+  getEXPCurrentLv() {
+    const lim = HoshinoEXP.getEXPFromLevel(this.getLevel() - 1);
+    return this.getEXP() - lim;
+  }
+
+  raw() {
+    return JSON.parse(JSON.stringify(this.cxp));
+  }
+
+  getRankString() {
+    return HoshinoEXP.rankNames[
+      Math.max(0, Math.min(this.getLevel() - 1, HoshinoEXP.rankNames.length - 1))
+    ];
+  }
+
+  expReached(exp) {
+    return this.getEXP() >= exp;
+  }
+
+  levelReached(level) {
+    return this.getLevel() >= level;
+  }
+
+  static getEXPFromLevel(level) {
+    if (level <= 1) {
+      return 0;
+    } else {
+      return 10 * Math.pow(2, level - 1);
     }
-    try {
-      if (!this.storage.manager || typeof this.storage.manager.getUserData !== 'function') {
-        throw new Error('Storage manager with getUserData method is not available.');
-      }
-      const userData = await this.storage.manager.getUserData('default');
-      if (userData) {
-        this.dataCache.set('default', userData);
-        this.quests = userData.quests || {};
-        this.level = userData.level || 1;
-        this.xp = userData.xp || 0;
-        this.xpToNextLevel = this.calculateXpToNextLevel();
-        this.currentStats = this.calculateCurrentStats();
-      }
-      return userData || null;
-    } catch (error) {
-      console.error('Failed to load user data:', error);
-      return null;
-    }
   }
 
-  async saveUserData(data) {
-    try {
-      if (!this.storage.manager || typeof this.storage.manager.setUserData !== 'function') {
-        throw new Error('Storage manager with setUserData method is not available.');
-      }
-      this.dataCache.set('default', data);
-      await this.storage.manager.setUserData('default', { ...data, quests: this.quests });
-    } catch (error) {
-      console.error('Failed to save user data:', error);
-      throw error;
-    }
+  static getLevelFromEXP(lastExp) {
+    return lastExp < 10 ? 1 : Math.floor(Math.log2(lastExp / 10)) + 1;
   }
 
-  async addXp(xp) {
-    xp = Math.max(0, Math.floor(xp));
-    if (xp === 0 || this.level >= this.maxLevel) {
-      return { levelsGained: 0, newStats: this.currentStats };
-    }
-    this.xp += xp;
-    let levelsGained = 0;
-    let previousLevel = this.level;
-    this.level = this.getLevel();
-    levelsGained = this.level - previousLevel;
-    this.xpToNextLevel = this.calculateXpToNextLevel();
-    this.currentStats = this.calculateCurrentStats();
-    if (this.level >= this.maxLevel) {
-      this.xp = this.getXpFromLevel(this.maxLevel);
-      this.xpToNextLevel = Infinity;
-    }
-    await this.saveUserData(this.export());
-    return { levelsGained, newStats: this.currentStats };
+  static rankNames = [
+    "Academy Student",
+    "Genin",
+    "Chunin",
+    "Jonin",
+    "Elite Jonin",
+    "Anbu",
+    "Anbu Captain",
+    "Kage Apprentice",
+    "Kage",
+    "Legendary Kage",
+    "Hunter",
+    "Rogue Hunter",
+    "Master Hunter",
+    "Nen User",
+    "Nen Master",
+    "Star Hunter",
+    "Double-Star Hunter",
+    "Triple-Star Hunter",
+    "Hero Trainee",
+    "Class-C Hero",
+    "Class-B Hero",
+    "Class-A Hero",
+    "Class-S Hero",
+    "Top-Class Hero",
+    "Hashira",
+    "Tsuguko",
+    "Demon Slayer",
+    "Upper Moon",
+    "Lower Moon",
+    "Demon King",
+    "Mage Apprentice",
+    "Mage",
+    "High Mage",
+    "Archmage",
+    "Wizard",
+    "Grand Wizard",
+    "Sorcerer",
+    "Great Sorcerer",
+    "Sage",
+    "Great Sage",
+    "Shinobi",
+    "Elite Shinobi",
+    "Shadow Shinobi",
+    "Phantom Shinobi",
+    "Samurai",
+    "Master Samurai",
+    "Shogun",
+    "Legendary Shogun",
+    "Alchemist",
+    "State Alchemist",
+    "Homunculus",
+    "Philosopher",
+    "Espada",
+    "Arrancar",
+    "Captain",
+    "Soul Reaper",
+    "Zero Division",
+    " Quincy",
+    "Sternritter",
+    "Grandmaster Quincy",
+    "Pirate",
+    "Pirate Captain",
+    "Yonko",
+    "Admiral",
+    "Fleet Admiral",
+    "Haki User",
+    "Haki Master",
+    "Devil Fruit User",
+    "Awakened User",
+    "Titan",
+    "Titan Shifter",
+    "Scout",
+    "Scout Captain",
+    "Warrior",
+    "Eldian",
+    "Marleyan",
+    "Coordinate",
+    "Exorcist",
+    "Meister",
+    "Weapon",
+    "Death Scythe",
+    "Shinigami",
+    "True Shinigami",
+    "Paladin",
+    "Holy Knight",
+    "Commandment",
+    "Archangel",
+    "Goddess",
+    "Demon",
+    "Demon Lord",
+    "Overlord",
+    "Dragon Slayer",
+    "Dragon Tamer",
+    "Dragon King",
+    "Fairy",
+    "Fairy King",
+    "Celestial Mage",
+    "Celestial King",
+    "Spirit",
+    "Spirit King",
+    "Beast Tamer",
+    "Beast King",
+    "Summoner",
+    "Grand Summoner",
+    "Necromancer",
+    "Lich",
+    "Vampire",
+    "Vampire Lord",
+    "Werewolf",
+    "Alpha Werewolf",
+    "Esper",
+    "Level 5 Esper",
+    "Magical Girl",
+    "Puella Magi",
+    "Witch",
+    "Archwitch",
+    "Time Traveler",
+    "Chrono Master",
+    "Alchemical Sage",
+    "Star Mage",
+    "Cosmic Ninja",
+    "Void Walker",
+    "Astral Samurai",
+    "Eclipse Hunter",
+    "Dawn Slayer",
+    "Twilight Sage",
+    "Stellar Shinobi",
+    "Lunar Kage",
+    "Solar Kage",
+    "Galactic Hero",
+    "Nova Sorcerer",
+    "Abyssal Demon",
+    "Ethereal Spirit",
+    "Primal Dragon",
+    "Aether Mage",
+    "Chaos Alchemist",
+    "Order Paladin",
+    "Infinity Summoner",
+    "Eternal Exorcist",
+    "Divine Shinigami",
+    "Mythic Pirate",
+    "Cosmic Yonko",
+    "Starlight Quincy",
+    "Nebula Reaper",
+    "Aurora Samurai",
+    "Celestial Overlord",
+    "Void Shogun",
+    "Eclipse Kage",
+    "Astral Hashira",
+    "Nova Slayer",
+    "Chrono Sorcerer",
+    "Ethereal Sage",
+    "Primal Shinobi",
+    "Galactic Alchemist",
+    "Stellar Demon",
+    "Lunar Hero",
+    "Solar Mage",
+    "Abyssal Hunter",
+    "Cosmic Dragon",
+    "Aether Samurai",
+    "Chaos Reaper",
+    "Order Shinigami",
+    "Infinity Slayer",
+    "Eternal Kage",
+    "Divine Yonko",
+    "Mythic Sorcerer",
+    "Starlight Paladin",
+    "Nebula Ninja",
+    "Aurora Mage",
+    "Celestial Shogun",
+    "Void Hero",
+    "Eclipse Summoner",
+    "Astral Dragon",
+    "Nova Shinobi",
+    "Chrono Slayer",
+    "Ethereal Alchemist",
+    "Primal Sage",
+    "Galactic Reaper",
+    "Stellar Kage",
+    "Lunar Demon",
+    "Solar Quincy",
+    "Abyssal Samurai",
+    "Cosmic Exorcist",
+    "Aether Shinigami",
+    "Chaos Hero",
+    "Order Sorcerer",
+    "Infinity Mage",
+    "Eternal Hashira",
+    "Divine Pirate",
+    "Mythic Ninja",
+    "Starlight Slayer",
+    "Nebula Sage",
+    "Aurora Dragon",
+    "Celestial Alchemist",
+    "Void Kage",
+    "Eclipse Shinobi",
+    "Astral Hero",
+    "Nova Summoner",
+    "Chrono Samurai",
+    "Ethereal Quincy",
+    "Primal Shinigami",
+    "Galactic Sorcerer",
+    "Stellar Overlord",
+    "Lunar Mage",
+    "Solar Demon",
+    "Abyssal Slayer",
+    "Cosmic Kage",
+    "Aether Ninja",
+    "Chaos Sage",
+    "Order Alchemist",
+    "Infinity Shinobi",
+    "Eternal Sorcerer",
+    "Divine Hero"
+  ];
+}
+
+class HoshinoEXPControl {
+  constructor(parent = new HoshinoEXP()) {
+    this.parent = parent;
   }
 
-  getXp() {
-    return this.xp;
+  get exp() {
+    return this.parent.exp;
   }
 
-  getXpToNextLevel() {
-    return this.xpToNextLevel;
+  set exp(expp) {
+    this.parent.exp = expp;
+    true;
   }
 
-  getStats() {
-    return { ...this.currentStats };
+  raise(expAmount) {
+    this.exp += expAmount;
   }
 
-  canLevelUp() {
-    return this.level < this.maxLevel && this.xp >= this.getNextXp();
+  decrease(expAmount) {
+    this.exp -= expAmount;
+  }
+
+  raiseToLevel(level) {
+    const targetEXP = HoshinoEXP.getEXPFromLevel(level);
+    this.exp = targetEXP;
+  }
+
+  raiseTo(targetEXP) {
+    this.exp = targetEXP;
+  }
+
+  raiseWithLevel(level) {
+    const baseEXP = HoshinoEXP.getEXPFromLevel(level);
+    this.exp = baseEXP + this.exp;
+  }
+
+  retrieve() {
+    return this.exp;
+  }
+
+  getLevel() {
+    return HoshinoEXP.getLevelFromEXP(this.exp);
+  }
+}
+
+class HoshinoQuest {
+  constructor(quests = {}) {
+    this.quests = quests;
+  }
+
+  raw() {
+    return JSON.parse(JSON.stringify(this.quests));
   }
 
   newQuest(questKey, name, description, totalSteps = 10) {
@@ -222,36 +396,9 @@ class LevelingSystem {
       name,
       description,
       currentSteps: 0,
-      totalSteps: Math.max(1, Math.floor(totalSteps)),
-      isComplete: false
+      totalSteps,
+      isComplete: false,
     };
-  }
-
-  async advanceQuest(questKey, steps = 1) {
-    const quest = this.quests[questKey];
-    if (!quest) {
-      throw new Error(`Quest with key ${questKey} does not exist.`);
-    }
-    quest.currentSteps = Math.max(0, quest.currentSteps + Math.floor(steps));
-    quest.isComplete = quest.currentSteps >= quest.totalSteps;
-    await this.saveUserData(this.export());
-  }
-
-  async completeQuest(questKey, xpReward = 0) {
-    const quest = this.quests[questKey];
-    if (!quest) {
-      throw new Error(`Quest with key ${questKey} does not exist.`);
-    }
-    if (!quest.isComplete) {
-      throw new Error(`Quest with key ${questKey} is not complete.`);
-    }
-    delete this.quests[questKey];
-    let result = { levelsGained: 0, newStats: this.currentStats };
-    if (xpReward > 0) {
-      result = await this.addXp(xpReward);
-    }
-    await this.saveUserData(this.export());
-    return result;
   }
 
   deleteQuest(questKey) {
@@ -261,7 +408,29 @@ class LevelingSystem {
     delete this.quests[questKey];
   }
 
-  isQuestComplete(questKey) {
+  complete(questKey) {
+    const quest = this.quests[questKey];
+    if (!quest) {
+      throw new Error(`Quest with key ${questKey} does not exist.`);
+    }
+    if (!quest.isComplete) {
+      throw new Error(
+        `Quest with key ${questKey} is not complete and cannot be deleted.`
+      );
+    }
+    this.deleteQuest(questKey);
+  }
+
+  advance(questKey, steps = 1) {
+    const quest = this.quests[questKey];
+    if (!quest) {
+      throw new Error(`Quest with key ${questKey} does not exist.`);
+    }
+    quest.currentSteps += steps;
+    quest.isComplete = quest.currentSteps >= quest.totalSteps;
+  }
+
+  isComplete(questKey) {
     const quest = this.quests[questKey];
     if (!quest) {
       throw new Error(`Quest with key ${questKey} does not exist.`);
@@ -269,25 +438,56 @@ class LevelingSystem {
     return quest.isComplete;
   }
 
-  hasQuest(questKey) {
+  has(questKey) {
     return !!this.quests[questKey];
   }
 
-  async advanceQuestIfHas(questKey, steps = 1) {
-    if (this.hasQuest(questKey)) {
-      await this.advanceQuest(questKey, steps);
+  advanceIfHas(questKey, steps = 1) {
+    if (!this.has(questKey)) {
+      return;
     }
+    this.advance(questKey, steps);
   }
 
-  getQuestInfo(questKey) {
+  getInfo(questKey) {
     const quest = this.quests[questKey];
     if (!quest) {
       throw new Error(`Quest with key ${questKey} does not exist.`);
     }
-    return { ...quest };
+    return {
+      name: quest.name,
+      description: quest.description,
+      currentSteps: quest.currentSteps,
+      totalSteps: quest.totalSteps,
+      isComplete: quest.isComplete,
+    };
   }
 
-  resetQuest(questKey) {
+  getCurrentSteps(questKey) {
+    const quest = this.quests[questKey];
+    if (!quest) {
+      throw new Error(`Quest with key ${questKey} does not exist.`);
+    }
+    return quest.currentSteps;
+  }
+
+  getStepsTotal(questKey) {
+    const quest = this.quests[questKey];
+    if (!quest) {
+      throw new Error(`Quest with key ${questKey} does not exist.`);
+    }
+    return quest.totalSteps;
+  }
+
+  setTotalSteps(questKey, totalSteps) {
+    const quest = this.quests[questKey];
+    if (!quest) {
+      throw new Error(`Quest with key ${questKey} does not exist.`);
+    }
+    quest.totalSteps = totalSteps;
+  }
+
+  reset(questKey) {
     const quest = this.quests[questKey];
     if (!quest) {
       throw new Error(`Quest with key ${questKey} does not exist.`);
@@ -295,38 +495,10 @@ class LevelingSystem {
     quest.currentSteps = 0;
     quest.isComplete = false;
   }
-
-  async reset(config = {}) {
-    const defaults = {
-      level: 1,
-      xp: 0,
-      maxLevel: this.maxLevel,
-      baseStats: { health: 100, mana: 50, ...this.baseStats },
-      statGrowth: { health: 10, mana: 5, ...this.statGrowth },
-      storage: this.storage,
-      quests: {},
-      rankNames: this.rankNames
-    };
-    Object.assign(this, new LevelingSystem({ ...defaults, ...config }));
-    await this.saveUserData(this.export());
-  }
-
-  export() {
-    return {
-      level: this.level,
-      xp: this.xp,
-      maxLevel: this.maxLevel,
-      baseStats: { ...this.baseStats },
-      statGrowth: { ...this.statGrowth },
-      currentStats: { ...this.currentStats },
-      xpToNextLevel: this.xpToNextLevel,
-      quests: { ...this.quests }
-    };
-  }
-
-  *[Symbol.iterator]() {
-    yield { level: this.level, xp: this.xp, stats: this.currentStats, quests: this.quests };
-  }
 }
 
-module.exports = LevelingSystem;
+module.exports = {
+  HoshinoUser,
+  HoshinoEXP,
+  HoshinoQuest
+};
