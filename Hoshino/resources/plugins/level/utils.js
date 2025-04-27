@@ -1,25 +1,55 @@
 class HoshinoUser {
   constructor(allData = {}) {
     this.allData = allData;
+    this.mana = allData.mana || 100;
+    this.health = allData.health || 100;
+  }
+
+  getMana() {
+    return this.mana;
+  }
+
+  setMana(mana) {
+    this.mana = Math.max(0, mana);
+    return true;
+  }
+
+  getHealth() {
+    return this.health;
+  }
+
+  setHealth(health) {
+    this.health = Math.max(0, health);
+    return true;
   }
 }
 
 class HoshinoEXP {
-  constructor(hoshinoEXP = { exp: 0 }) {
+  constructor(hoshinoEXP = { exp: 0, mana: 100, health: 100 }) {
     this.cxp = this.sanitize(hoshinoEXP);
     this.expControls = new HoshinoEXPControl(this);
   }
 
   sanitize(data) {
-    let { exp } = data;
+    let { exp, mana, health } = data;
     if (isNaN(exp)) {
       exp = 0;
     }
+    if (isNaN(mana)) {
+      mana = 100;
+    }
+    if (isNaN(health)) {
+      health = 100;
+    }
     exp = Number.parseInt(String(exp), 10);
+    mana = Number.parseInt(String(mana), 10);
+    health = Number.parseInt(String(health), 10);
 
     return {
       ...data,
       exp,
+      mana,
+      health,
     };
   }
 
@@ -38,6 +68,32 @@ class HoshinoEXP {
 
   set exp(exp) {
     this.setEXP(exp);
+  }
+
+  getMana() {
+    return this.cxp.mana;
+  }
+
+  setMana(mana) {
+    this.cxp.mana = Math.max(0, Math.min(mana, this.getMaxMana()));
+    return true;
+  }
+
+  getMaxMana() {
+    return 100 + this.getLevel() * 50;
+  }
+
+  getHealth() {
+    return this.cxp.health;
+  }
+
+  setHealth(health) {
+    this.cxp.health = Math.max(0, Math.min(health, this.getMaxHealth()));
+    return true;
+  }
+
+  getMaxHealth() {
+    return 100 + this.getLevel() * 100;
   }
 
   getLevel() {
@@ -293,30 +349,6 @@ class HoshinoEXP {
     "Astral Dragon",
     "Nova Shinobi",
     "Chrono Slayer",
-    "Ethereal Alchemist",
-    "Primal Sage",
-    "Galactic Reaper",
-    "Stellar Kage",
-    "Lunar Demon",
-    "Solar Quincy",
-    "Abyssal Samurai",
-    "Cosmic Exorcist",
-    "Aether Shinigami",
-    "Chaos Hero",
-    "Order Sorcerer",
-    "Infinity Mage",
-    "Eternal Hashira",
-    "Divine Pirate",
-    "Mythic Ninja",
-    "Starlight Slayer",
-    "Nebula Sage",
-    "Aurora Dragon",
-    "Celestial Alchemist",
-    "Void Kage",
-    "Eclipse Shinobi",
-    "Astral Hero",
-    "Nova Summoner",
-    "Chrono Samurai",
     "Ethereal Quincy",
     "Primal Shinigami",
     "Galactic Sorcerer",
@@ -376,6 +408,48 @@ class HoshinoEXPControl {
 
   getLevel() {
     return HoshinoEXP.getLevelFromEXP(this.exp);
+  }
+
+  get mana() {
+    return this.parent.getMana();
+  }
+
+  set mana(mana) {
+    this.parent.setMana(mana);
+    true;
+  }
+
+  increaseMana(amount) {
+    this.mana += amount;
+  }
+
+  decreaseMana(amount) {
+    this.mana -= amount;
+  }
+
+  restoreMana() {
+    this.mana = this.parent.getMaxMana();
+  }
+
+  get health() {
+    return this.parent.getHealth();
+  }
+
+  set health(health) {
+    this.parent.setHealth(health);
+    true;
+  }
+
+  increaseHealth(amount) {
+    this.health += amount;
+  }
+
+  decreaseHealth(amount) {
+    this.health -= amount;
+  }
+
+  restoreHealth() {
+    this.health = this.parent.getMaxHealth();
   }
 }
 
