@@ -66,7 +66,7 @@ class LevelingSystem {
   }
 
   calculateCurrentStats() {
-    const stats = { ...this.baseStats };
+    const stats = { health: 100, mana: 50, ...this.baseStats };
     stats.health = this.baseStats.health * Math.pow(2, this.level - 1);
     stats.health = Math.max(0, Math.round(stats.health));
     for (const [stat, growth] of Object.entries(this.statGrowth)) {
@@ -146,6 +146,9 @@ class LevelingSystem {
       return this.dataCache.get('default');
     }
     try {
+      if (!this.storage.manager) {
+        throw new Error('Storage manager is not available.');
+      }
       const userData = await this.storage.manager.getUserData('default');
       if (userData) {
         this.dataCache.set('default', userData);
@@ -157,17 +160,20 @@ class LevelingSystem {
       }
       return userData || null;
     } catch (error) {
-      console.error(`Failed to load user data:`, error);
+      console.error('Failed to load user data:', error);
       return null;
     }
   }
 
   async saveUserData(data) {
     try {
+      if (!this.storage.manager) {
+        throw new Error('Storage manager is not available.');
+      }
       this.dataCache.set('default', data);
       await this.storage.manager.setUserData('default', { ...data, quests: this.quests });
     } catch (error) {
-      console.error(`Failed to save user data:`, error);
+      console.error('Failed to save user data:', error);
       throw error;
     }
   }
@@ -295,8 +301,8 @@ class LevelingSystem {
       level: 1,
       xp: 0,
       maxLevel: this.maxLevel,
-      baseStats: this.baseStats,
-      statGrowth: this.statGrowth,
+      baseStats: { health: 100, mana: 50, ...this.baseStats },
+      statGrowth: { health: 10, mana: 5, ...this.statGrowth },
       storage: this.storage,
       quests: {},
       rankNames: this.rankNames
