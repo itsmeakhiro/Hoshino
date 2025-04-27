@@ -99,8 +99,8 @@ const command = {
 
     const helpText = [
       commandList || "No commands loaded yet.",
-      `\n\n       Page **${page} | ${totalPages}**`,
-      totalPages > 1 ? `Use "help page <number>" to view other pages.` : "",
+      `\n\n          Page **${page} | ${totalPages}**`,
+      totalPages > 1
     ]
       .filter(Boolean)
       .join("\n");
