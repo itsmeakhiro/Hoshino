@@ -35,7 +35,7 @@ const command = {
           aliases: ["reg", "signup"],
           description: "Register with a username to use the economy system.",
           usage: "profile register <username>",
-          async deploy({ chat, args, event, hoshinoDB }) {
+          async deploy({ chat, args, event, hoshinoDB, HoshinoUser, HoshinoEXP }) {
             if (args.length < 1) {
               return await chat.reply(
                 "Please provide a username. Usage: profile register <username>"
@@ -49,9 +49,11 @@ const command = {
             if (userData && userData.username) {
               return await chat.reply("You are already registered!");
             }
+            const exp = new HoshinoEXP({ exp: 0, mana: 100, health: 100 });
             await hoshinoDB.set(event.senderID, {
               username,
               balance: 0,
+              expData: exp.raw(),
             });
             await chat.reply(`Successfully registered as ${username}!`);
           },
@@ -61,18 +63,26 @@ const command = {
           aliases: ["me", "i"],
           description: "Check your balance.",
           usage: "profile info",
-          async deploy({ chat, args, event, hoshinoDB }) {
+          async deploy({ chat, args, event, hoshinoDB, HoshinoUser, HoshinoEXP }) {
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
               return await chat.reply(
                 "You need to register first! Use: profile register <username>"
               );
             }
-            let { balance = 0, username } = userData;
+            const { balance = 0, username, expData = { exp: 0, mana: 100, health: 100 } } = userData;
+            const exp = new HoshinoEXP(expData);
             const formattedBalance = balance.toLocaleString("en-US");
-            await chat.reply(
-              `${username}, your balance is $${formattedBalance}.`
-            );
+            const profileInfo = [
+              `Username: ${username}`,
+              `Balance: $${formattedBalance}`,
+              `Level: ${exp.getLevel()}`,
+              `Rank: ${exp.getRankString()}`,
+              `EXP: ${exp.getEXP()} (Next: ${exp.getNextRemaningEXP()})`,
+              `Mana: ${exp.getMana()}/${exp.getMaxMana()}`,
+              `Health: ${exp.getHealth()}/${exp.getMaxHealth()}`,
+            ].join("\n");
+            await chat.reply(profileInfo);
           },
         },
         {
@@ -80,7 +90,7 @@ const command = {
           aliases: ["rename", "chname"],
           description: "Change your username for 5,000.",
           usage: "profile changeusername <newusername>",
-          async deploy({ chat, args, event, hoshinoDB }) {
+          async deploy({ chat, args, event, hoshinoDB, HoshinoUser, HoshinoEXP }) {
             if (args.length < 1) {
               return await chat.reply(
                 "Please provide a new username. Usage: profile changeusername <newusername>"
