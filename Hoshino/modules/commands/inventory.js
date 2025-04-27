@@ -17,8 +17,17 @@ const command = {
       privateOnly: false,
     },
   },
+  style: {
+    type: "lines1",
+    title: "〘 🎒 〙 INVENTORY",
+    footer: "**Developed by**: Francis Loyd Raval",
+  },
+  font: {
+    title: "bold",
+    content: "sans",
+    footer: "sans",
+  },
   async deploy(ctx) {
-    const { fonts } = ctx;
     const ITEMS_PER_PAGE = 10;
     const INVENTORY_LIMIT = 100;
 
@@ -52,7 +61,7 @@ const command = {
             .map(function (item, i) {
               return `${
                 startIndex + i + 1
-              }. ${item.icon} ${fonts.bold(item.name)} (${item.key}) - ${item.flavorText}`;
+              }. ${item.icon} **${item.name}** (${item.key}) - ${item.flavorText}`;
             })
             .join("\n");
 
