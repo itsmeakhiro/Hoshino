@@ -1,3 +1,5 @@
+const fs = require('fs');
+
 class HoshinoUser {
   constructor(allData = {}) {
     this.allData = allData;
@@ -25,13 +27,24 @@ class HoshinoUser {
 }
 
 class HoshinoEXP {
-  constructor(hoshinoEXP = { exp: 0, mana: 100, health: 100 }) {
+  static get abilitiesList() {
+    try {
+      const data = fs.readFileSync('ability.json', 'utf8');
+      return JSON.parse(data);
+    } catch (error) {
+      console.error('Error loading ability.json:', error.message);
+      return {};
+    }
+  }
+
+  constructor(hoshinoEXP = { exp: 0, mana: 100, health: 100, statPoints: 0 }) {
     this.cxp = this.sanitize(hoshinoEXP);
     this.expControls = new HoshinoEXPControl(this);
+    this.activeProtections = [];
   }
 
   sanitize(data) {
-    let { exp, mana, health } = data;
+    let { exp, mana, health, statPoints } = data;
     if (isNaN(exp)) {
       exp = 0;
     }
@@ -41,15 +54,20 @@ class HoshinoEXP {
     if (isNaN(health)) {
       health = 100;
     }
+    if (isNaN(statPoints)) {
+      statPoints = 0;
+    }
     exp = Number.parseInt(String(exp), 10);
     mana = Number.parseInt(String(mana), 10);
     health = Number.parseInt(String(health), 10);
+    statPoints = Number.parseInt(String(statPoints), 10);
 
     return {
       ...data,
       exp,
       mana,
       health,
+      statPoints,
     };
   }
 
@@ -58,7 +76,12 @@ class HoshinoEXP {
   }
 
   setEXP(exp) {
+    const previousLevel = this.getLevel();
     this.cxp.exp = exp;
+    const newLevel = this.getLevel();
+    if (newLevel > previousLevel) {
+      this.cxp.statPoints += (newLevel - previousLevel) * 5;
+    }
     return true;
   }
 
@@ -80,7 +103,7 @@ class HoshinoEXP {
   }
 
   getMaxMana() {
-    return 100 + this.getLevel() * 50;
+    return 100 + this.getLevel() * 50 + (this.cxp.maxManaBonus || 0);
   }
 
   getHealth() {
@@ -93,7 +116,7 @@ class HoshinoEXP {
   }
 
   getMaxHealth() {
-    return 100 + this.getLevel() * 100;
+    return 100 + this.getLevel() * 100 + (this.cxp.maxHealthBonus || 0);
   }
 
   getLevel() {
@@ -159,6 +182,138 @@ class HoshinoEXP {
 
   levelReached(level) {
     return this.getLevel() >= level;
+  }
+
+  getStatPoints() {
+    return this.cxp.statPoints;
+  }
+
+  spendStatPoints(points) {
+    if (points > this.cxp.statPoints) {
+      throw new Error("Not enough stat points.");
+    }
+    this.cxp.statPoints -= points;
+    return true;
+  }
+
+  upgradeMaxHealth(points) {
+    if (points > this.cxp.statPoints) {
+      throw new Error("Not enough stat points.");
+    }
+    this.cxp.maxHealthBonus = (this.cxp.maxHealthBonus || 0) + points * 10;
+    this.spendStatPoints(points);
+    return true;
+  }
+
+  upgradeMaxMana(points) {
+    if (points > this.cxp.statPoints) {
+      throw new Error("Not enough stat points.");
+    }
+    this.cxp.maxManaBonus = (this.cxp.maxManaBonus || 0) + points * 5;
+    this.spendStatPoints(points);
+    return true;
+  }
+
+  unlockAbility(abilityName) {
+    const ability = HoshinoEXP.abilitiesList[abilityName];
+    if (!ability) {
+      throw new Error(`Ability ${abilityName} does not exist in ability.json.`);
+    }
+    this.cxp.abilities = this.cxp.abilities || {};
+    if (this.cxp.abilities[abilityName]) {
+      throw new Error(`Ability ${abilityName} already unlocked.`);
+    }
+    const cost = ability.statPointCost;
+    if (cost > this.cxp.statPoints) {
+      throw new Error("Not enough stat points to unlock this ability.");
+    }
+    this.cxp.abilities[abilityName] = { ...ability, unlocked: true };
+    this.spendStatPoints(cost);
+    return true;
+  }
+
+  getAbilities() {
+    return Object.values(this.cxp.abilities || {});
+  }
+
+  useAbility(abilityName, target = null) {
+    const ability = (this.cxp.abilities || {})[abilityName];
+    if (!ability) {
+      throw new Error(`Ability ${abilityName} is not unlocked.`);
+    }
+
+    const result = { damage: 0, protection: null };
+
+    if (ability.damageType && ability.damage > 0) {
+      result.damage = ability.damage;
+      const manaCost = ability.damageType === "stronger" ? 20 : 10;
+      if (this.cxp.mana < manaCost) {
+        throw new Error("Not enough mana to use this ability.");
+      }
+      this.cxp.mana -= manaCost;
+    }
+
+    if (ability.protection) {
+      const protection = {
+        type: ability.protection.type,
+        value: ability.protection.value,
+        duration: ability.protection.duration,
+        turnsRemaining: ability.protection.duration,
+      };
+      this.activeProtections.push(protection);
+      result.protection = protection;
+    }
+
+    return result;
+  }
+
+  updateProtections() {
+    this.activeProtections = this.activeProtections
+      .map((protection) => ({
+        ...protection,
+        turnsRemaining: protection.turnsRemaining - 1,
+      }))
+      .filter((protection) => protection.turnsRemaining > 0);
+  }
+
+  getActiveProtections() {
+    return this.activeProtections;
+  }
+
+  applyDamage(damage) {
+    let remainingDamage = damage;
+    for (let i = this.activeProtections.length - 1; i >= 0; i--) {
+      if
+
+(this.activeProtections[i].type === "health") {
+        const shield = this.activeProtections[i];
+        const absorbed = Math.min(shield.value, remainingDamage);
+        shield.value -= absorbed;
+        remainingDamage -= absorbed;
+        if (shield.value <= 0) {
+          this.activeProtections.splice(i, 1);
+        }
+      }
+    }
+    this.cxp.health = Math.max(0, this.cxp.health - remainingDamage);
+    return remainingDamage;
+  }
+
+  applyManaCost(manaCost) {
+    let remainingCost = manaCost;
+    for (let i = this.activeProtections.length - 1; i >= 0; i--) {
+      if (this.activeProtections[i].type === "mana") {
+        const shield = this.activeProtections[i];
+        const absorbed = Math.min(shield.value, remainingCost);
+        shield.value -= absorbed;
+        remainingCost -= absorbed;
+        if (shield.value <= 0) {
+          this.activeProtections.splice(i, 1);
+        }
+      }
+    }
+    this.cxp.mana = Math.max(0, this.cxp.mana - remainingCost);
+    return remainingCost;
   }
 
   static getEXPFromLevel(level) {
@@ -331,30 +486,6 @@ class HoshinoEXP {
     "Stellar Demon",
     "Lunar Hero",
     "Solar Mage",
-    "Abyssal Hunter",
-    "Cosmic Dragon",
-    "Aether Samurai",
-    "Chaos Reaper",
-    "Order Shinigami",
-    "Infinity Slayer",
-    "Eternal Kage",
-    "Divine Yonko",
-    "Mythic Sorcerer",
-    "Starlight Paladin",
-    "Nebula Ninja",
-    "Aurora Mage",
-    "Celestial Shogun",
-    "Void Hero",
-    "Eclipse Summoner",
-    "Astral Dragon",
-    "Nova Shinobi",
-    "Chrono Slayer",
-    "Ethereal Quincy",
-    "Primal Shinigami",
-    "Galactic Sorcerer",
-    "Stellar Overlord",
-    "Lunar Mage",
-    "Solar Demon",
     "Abyssal Slayer",
     "Cosmic Kage",
     "Aether Ninja",
@@ -377,7 +508,7 @@ class HoshinoEXPControl {
 
   set exp(expp) {
     this.parent.exp = expp;
-    true;
+    return true;
   }
 
   raise(expAmount) {
@@ -416,11 +547,11 @@ class HoshinoEXPControl {
 
   set mana(mana) {
     this.parent.setMana(mana);
-    true;
+    return true;
   }
 
   increaseMana(amount) {
-    this.mana += amount;
+    this.mana Dignity += amount;
   }
 
   decreaseMana(amount) {
@@ -437,7 +568,7 @@ class HoshinoEXPControl {
 
   set health(health) {
     this.parent.setHealth(health);
-    true;
+    return true;
   }
 
   increaseHealth(amount) {
@@ -450,6 +581,46 @@ class HoshinoEXPControl {
 
   restoreHealth() {
     this.health = this.parent.getMaxHealth();
+  }
+
+  getStatPoints() {
+    return this.parent.getStatPoints();
+  }
+
+  upgradeMaxHealth(points) {
+    return this.parent.upgradeMaxHealth(points);
+  }
+
+  upgradeMaxMana(points) {
+    return this.parent.upgradeMaxMana(points);
+  }
+
+  unlockAbility(abilityName) {
+    return this.parent.unlockAbility(abilityName);
+  }
+
+  getAbilities() {
+    return this.parent.getAbilities();
+  }
+
+  useAbility(abilityName, target = null) {
+    return this.parent.useAbility(abilityName, target);
+  }
+
+  updateProtections() {
+    return this.parent.updateProtections();
+  }
+
+  getActiveProtections() {
+    return this.parent.getActiveProtections();
+  }
+
+  applyDamage(damage) {
+    return this.parent.applyDamage(damage);
+  }
+
+  applyManaCost(manaCost) {
+    return this.parent.applyManaCost(manaCost);
   }
 }
 
@@ -574,5 +745,5 @@ class HoshinoQuest {
 module.exports = {
   HoshinoUser,
   HoshinoEXP,
-  HoshinoQuest
+  HoshinoQuest,
 };
