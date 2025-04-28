@@ -31,7 +31,7 @@ class HoshinoEXP {
     try {
       const data = fs.readFileSync('ability.json', 'utf8');
       return JSON.parse(data);
-    } catch (error) {
+    } catch (error: Error) {
       console.error('Error loading ability.json:', error.message);
       return {};
     }
@@ -283,9 +283,7 @@ class HoshinoEXP {
   applyDamage(damage) {
     let remainingDamage = damage;
     for (let i = this.activeProtections.length - 1; i >= 0; i--) {
-      if
-
-(this.activeProtections[i].type === "health") {
+      if (this.activeProtections[i].type === "health") {
         const shield = this.activeProtections[i];
         const absorbed = Math.min(shield.value, remainingDamage);
         shield.value -= absorbed;
@@ -508,7 +506,6 @@ class HoshinoEXPControl {
 
   set exp(expp) {
     this.parent.exp = expp;
-    return true;
   }
 
   raise(expAmount) {
@@ -547,11 +544,10 @@ class HoshinoEXPControl {
 
   set mana(mana) {
     this.parent.setMana(mana);
-    return true;
   }
 
   increaseMana(amount) {
-    this.mana Dignity += amount;
+    this.mana += amount;
   }
 
   decreaseMana(amount) {
@@ -568,7 +564,6 @@ class HoshinoEXPControl {
 
   set health(health) {
     this.parent.setHealth(health);
-    return true;
   }
 
   increaseHealth(amount) {
