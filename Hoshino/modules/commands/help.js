@@ -28,7 +28,7 @@ const command = {
     footer: "sans",
   },
   async deploy({ chat, args }) {
-    if (args.length > 0 && isNaN(args[0])) {
+    if (args.length > 0 && isNaN(Number(args[0]))) {
       const commandName = args[0].toLowerCase();
       const command = global.Hoshino.commands.get(commandName);
 
@@ -75,8 +75,8 @@ const command = {
     const totalPages = Math.ceil(totalCommands / commandsPerPage);
     let page = 1;
 
-    if (args.length > 0 && !isNaN(args[0])) {
-      page = parseInt(args[0], 10);
+    if (args.length > 0 && !isNaN(Number(args[0]))) {
+      page = parseInt(String(args[0]), 10);
       if (page < 1 || page > totalPages) {
         return chat.send(
           `Invalid page number. Please use a number between 1 and ${totalPages}.`
