@@ -1,0 +1,30 @@
+{
+  "Fireball": {
+    "name": "Fireball",
+    "damageType": "stronger",
+    "damage": 50,
+    "protection": null,
+    "statPointCost": 3
+  },
+  "IceShield": {
+    "name": "IceShield",
+    "damageType": null,
+    "damage": 0,
+    "protection": { "type": "health", "value": 30, "duration": 2 },
+    "statPointCost": 2
+  },
+  "ThunderBolt": {
+    "name": "ThunderBolt",
+    "damageType": "normal",
+    "damage": 30,
+    "protection": null,
+    "statPointCost": 2
+  },
+  "ManaBarrier": {
+    "name": "ManaBarrier",
+    "damageType": null,
+    "damage": 0,
+    "protection": { "type": "mana", "value": 20, "duration": 3 },
+    "statPointCost": 2
+  }
+}
