@@ -63,11 +63,13 @@ const command = {
             let currentDurability = userData.mining?.durability || pickaxes[userPickaxe].durability;
             if (userData.mining && userData.mining.active) {
               const timeElapsed = (Date.now() - userData.mining.startTime) / 1000 / 60;
-              if (timeElapsed >= 60) {
+              if (isNaN(timeElapsed) || timeElapsed < 0) {
+                message = "Mining session is invalid. Starting a new session.\n";
+              } else if (timeElapsed > 0) {
                 const availableOres = pickaxes[userPickaxe].ores;
                 const collectedOres = {};
                 let totalEarned = 0;
-                const collectionEvents = Math.floor(timeElapsed / (Math.random() * 29 + 1));
+                const collectionEvents = Math.floor(timeElapsed / (Math.random() * 29 + 1)) || 1;
                 let durabilityCost = 0;
                 for (let i = 0; i < collectionEvents; i++) {
                   const numOres = Math.floor(Math.random() * availableOres.length) + 1;
@@ -95,6 +97,7 @@ const command = {
                     earned: 0,
                     pickaxe: userPickaxe,
                     durability: currentDurability,
+                    lastCollectionTime: Date.now(),
                   },
                 });
                 message += `Mined for ${Math.floor(timeElapsed)} minutes:\n` +
@@ -102,11 +105,7 @@ const command = {
                     .map(([ore, quantity]) => `${ores[ore].name}: ${quantity} pieces worth $${(quantity * ores[ore].value).toLocaleString("en-US")}`)
                     .join("\n") +
                   `\nTotal: $${totalEarned.toLocaleString("en-US")}\n`;
-              } else {
-                message = "No ore's collected on it. Comeback after an hour for the collection.\n";
               }
-            } else {
-              message = "No ore's collected on it. Comeback after an hour for the collection.\n";
             }
             const startTime = Date.now();
             await hoshinoDB.set(event.senderID, {
@@ -117,9 +116,10 @@ const command = {
                 earned: 0,
                 pickaxe: userPickaxe,
                 durability: currentDurability,
+                lastCollectionTime: userData.mining?.lastCollectionTime || 0,
               },
             });
-            message += `Mining started with your ${pickaxes[userPickaxe].name} (Durability: ${currentDurability})! Use 'mines collect' to collect your earnings later.`;
+            message += `Mining started with your ${pickaxes[userPickaxe].name} (Durability: ${currentDurability})! Use 'mines collect' to collect your earnings.`;
             await chat.reply(message);
           },
         },
@@ -141,9 +141,31 @@ const command = {
               );
             }
             const timeElapsed = (Date.now() - userData.mining.startTime) / 1000 / 60;
-            if (timeElapsed < 60) {
+            if (isNaN(timeElapsed) || timeElapsed < 0) {
+              await hoshinoDB.set(event.senderID, {
+                ...userData,
+                mining: {
+                  active: false,
+                  startTime: 0,
+                  earned: 0,
+                  pickaxe: userData.mining?.pickaxe || "wooden",
+                  durability: userData.mining?.durability || pickaxes[userData.mining?.pickaxe || "wooden"].durability,
+                  lastCollectionTime: userData.mining?.lastCollectionTime || 0,
+                },
+              });
               return await chat.reply(
-                "No ore's collected on it. Comeback after an hour for the collection."
+                "Mining session is invalid. Please start a new session with 'mines start'."
+              );
+            }
+            const lastCollectionTime = userData.mining.lastCollectionTime || 0;
+            if (Date.now() - lastCollectionTime < 60000) {
+              return await chat.reply(
+                "No ore's collected on it. Comeback after an minute or an hour for the collection."
+              );
+            }
+            if (timeElapsed <= 0) {
+              return await chat.reply(
+                "No ore's collected on it. Comeback after an minute or an hour for the collection."
               );
             }
             let userPickaxe = userData.mining.pickaxe || "wooden";
@@ -151,7 +173,7 @@ const command = {
             const availableOres = pickaxes[userPickaxe].ores;
             const collectedOres = {};
             let totalEarned = 0;
-            const collectionEvents = Math.floor(timeElapsed / (Math.random() * 29 + 1));
+            const collectionEvents = Math.floor(timeElapsed / (Math.random() * 29 + 1)) || 1;
             let durabilityCost = 0;
             for (let i = 0; i < collectionEvents; i++) {
               const numOres = Math.floor(Math.random() * availableOres.length) + 1;
@@ -175,11 +197,12 @@ const command = {
               ...userData,
               balance: newBalance,
               mining: {
-                active: false,
-                startTime: 0,
+                active: true, // Keep session active for further collections
+                startTime: userData.mining.startTime, // Preserve start time
                 earned: 0,
                 pickaxe: userPickaxe,
                 durability: currentDurability,
+                lastCollectionTime: Date.now(),
               },
             });
             const formattedBalance = newBalance.toLocaleString("en-US");
