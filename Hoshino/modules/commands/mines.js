@@ -28,21 +28,21 @@ const command = {
   },
   async deploy(ctx) {
     const pickaxes = {
-      wooden: { name: "Wooden Pickaxe", cost: 0, ores: ["stone", "coal", "copper"], durability: 59, minYield: 50, maxYield: 150 },
-      stone: { name: "Stone Pickaxe", cost: 1000, ores: ["stone", "coal", "copper", "iron"], durability: 131, minYield: 100, maxYield: 200 },
-      iron: { name: "Iron Pickaxe", cost: 5000, ores: ["stone", "coal", "copper", "iron", "gold", "redstone"], durability: 250, minYield: 150, maxYield: 300 },
-      diamond: { name: "Diamond Pickaxe", cost: 25000, ores: ["stone", "coal", "copper", "iron", "gold", "redstone", "emerald", "diamond"], durability: 1561, minYield: 200, maxYield: 400 },
-      netherite: { name: "Netherite Pickaxe", cost: 100000, ores: ["stone", "coal", "copper", "iron", "gold", "redstone", "emerald", "diamond"], durability: 2031, minYield: 300, maxYield: 600 },
+      wooden: { name: "Wooden Pickaxe", cost: 0, ores: ["stone", "coal", "clay"], durability: 59, minYield: 50, maxYield: 150 },
+      stone: { name: "Stone Pickaxe", cost: 1000, ores: ["stone", "coal", "clay", "copper"], durability: 131, minYield: 100, maxYield: 200 },
+      iron: { name: "Iron Pickaxe", cost: 5000, ores: ["stone", "coal", "clay", "copper", "iron"], durability: 250, minYield: 150, maxYield: 300 },
+      diamond: { name: "Diamond Pickaxe", cost: 25000, ores: ["stone", "coal", "clay", "copper", "iron", "gold", "emerald"], durability: 1561, minYield: 200, maxYield: 400 },
+      netherite: { name: "Netherite Pickaxe", cost: 100000, ores: ["stone", "coal", "clay", "copper", "iron", "gold", "emerald", "diamond"], durability: 2031, minYield: 300, maxYield: 600 },
     };
     const ores = {
-      stone: { name: "Stone", value: 500 },
-      coal: { name: "Coal", value: 1000 },
-      copper: { name: "Copper", value: 1500 },
-      iron: { name: "Iron", value: 2500 },
-      redstone: { name: "Redstone", value: 3000 },
-      gold: { name: "Gold", value: 5000 },
-      emerald: { name: "Emerald", value: 7500 },
-      diamond: { name: "Diamond", value: 10000 },
+      stone: { name: "Stone", value: 2 },
+      coal: { name: "Coal", value: 5 },
+      clay: { name: "Clay", value: 3 },
+      copper: { name: "Copper", value: 100 },
+      iron: { name: "Iron", value: 50 },
+      gold: { name: "Gold", value: 1000 },
+      emerald: { name: "Emerald", value: 2500 },
+      diamond: { name: "Diamond", value: 5000 },
     };
     const home = new ctx.HoshinoHM(
       [
@@ -126,7 +126,7 @@ const command = {
         {
           subcommand: "collect",
           aliases: ["claim", "gather"],
-          description: "Collect money earned from mining and reset the simulator.",
+          description: "Collect money earned from mining.",
           usage: "mines collect",
           async deploy({ chat, event, hoshinoDB }) {
             const userData = await hoshinoDB.get(event.senderID);
@@ -197,8 +197,8 @@ const command = {
               ...userData,
               balance: newBalance,
               mining: {
-                active: true, // Keep session active for further collections
-                startTime: userData.mining.startTime, // Preserve start time
+                active: true,
+                startTime: userData.mining.startTime,
                 earned: 0,
                 pickaxe: userPickaxe,
                 durability: currentDurability,
