@@ -67,20 +67,25 @@ const command = {
                 const availableOres = pickaxes[userPickaxe].ores;
                 const collectedOres = {};
                 let totalEarned = 0;
-                for (const ore of availableOres) {
-                  if (Math.random() > 0.5) {
+                const collectionEvents = Math.floor(timeElapsed / (Math.random() * 29 + 1));
+                let durabilityCost = 0;
+                for (let i = 0; i < collectionEvents; i++) {
+                  const numOres = Math.floor(Math.random() * availableOres.length) + 1;
+                  const selectedOres = availableOres.sort(() => Math.random() - 0.5).slice(0, numOres);
+                  for (const ore of selectedOres) {
                     const quantity = Math.floor(Math.random() * (pickaxes[userPickaxe].maxYield - pickaxes[userPickaxe].minYield + 1)) + pickaxes[userPickaxe].minYield;
-                    collectedOres[ore] = quantity;
+                    collectedOres[ore] = (collectedOres[ore] || 0) + quantity;
                     totalEarned += quantity * ores[ore].value;
                   }
+                  durabilityCost += 1;
                 }
-                const newBalance = (userData.balance || 0) + totalEarned;
-                currentDurability -= 1;
+                currentDurability -= durabilityCost;
                 if (currentDurability <= 0) {
                   userPickaxe = "wooden";
                   currentDurability = pickaxes.wooden.durability;
                   message = `Your ${pickaxes[userData.mining.pickaxe].name} broke! Reverted to Wooden Pickaxe.\n`;
                 }
+                const newBalance = (userData.balance || 0) + totalEarned;
                 await hoshinoDB.set(event.senderID, {
                   ...userData,
                   balance: newBalance,
@@ -92,15 +97,11 @@ const command = {
                     durability: currentDurability,
                   },
                 });
-                if (Object.keys(collectedOres).length > 0) {
-                  message += "Collected from your previous mining session:\n" +
-                    Object.entries(collectedOres)
-                      .map(([ore, quantity]) => `${ores[ore].name}: ${quantity} pieces worth $${(quantity * ores[ore].value).toLocaleString("en-US")}`)
-                      .join("\n") +
-                    `\nTotal: $${totalEarned.toLocaleString("en-US")}\n`;
-                } else {
-                  message += "No ores collected from your previous mining session.\n";
-                }
+                message += `Mined for ${Math.floor(timeElapsed)} minutes:\n` +
+                  Object.entries(collectedOres)
+                    .map(([ore, quantity]) => `${ores[ore].name}: ${quantity} pieces worth $${(quantity * ores[ore].value).toLocaleString("en-US")}`)
+                    .join("\n") +
+                  `\nTotal: $${totalEarned.toLocaleString("en-US")}\n`;
               } else {
                 message = "No ore's collected on it. Comeback after an hour for the collection.\n";
               }
@@ -150,21 +151,26 @@ const command = {
             const availableOres = pickaxes[userPickaxe].ores;
             const collectedOres = {};
             let totalEarned = 0;
-            for (const ore of availableOres) {
-              if (Math.random() > 0.5) {
+            const collectionEvents = Math.floor(timeElapsed / (Math.random() * 29 + 1));
+            let durabilityCost = 0;
+            for (let i = 0; i < collectionEvents; i++) {
+              const numOres = Math.floor(Math.random() * availableOres.length) + 1;
+              const selectedOres = availableOres.sort(() => Math.random() - 0.5).slice(0, numOres);
+              for (const ore of selectedOres) {
                 const quantity = Math.floor(Math.random() * (pickaxes[userPickaxe].maxYield - pickaxes[userPickaxe].minYield + 1)) + pickaxes[userPickaxe].minYield;
-                collectedOres[ore] = quantity;
+                collectedOres[ore] = (collectedOres[ore] || 0) + quantity;
                 totalEarned += quantity * ores[ore].value;
               }
+              durabilityCost += 1;
             }
-            const newBalance = (userData.balance || 0) + totalEarned;
-            currentDurability -= 1;
+            currentDurability -= durabilityCost;
             let breakMessage = "";
             if (currentDurability <= 0) {
               userPickaxe = "wooden";
               currentDurability = pickaxes.wooden.durability;
               breakMessage = `Your ${pickaxes[userData.mining.pickaxe].name} broke! Reverted to Wooden Pickaxe.\n`;
             }
+            const newBalance = (userData.balance || 0) + totalEarned;
             await hoshinoDB.set(event.senderID, {
               ...userData,
               balance: newBalance,
@@ -177,16 +183,12 @@ const command = {
               },
             });
             const formattedBalance = newBalance.toLocaleString("en-US");
-            let replyMessage = breakMessage;
-            if (Object.keys(collectedOres).length > 0) {
-              replyMessage += "Collected from mining:\n" +
-                Object.entries(collectedOres)
-                  .map(([ore, quantity]) => `${ores[ore].name}: ${quantity} pieces worth $${(quantity * ores[ore].value).toLocaleString("en-US")}`)
-                  .join("\n") +
-                `\nTotal: $${totalEarned.toLocaleString("en-US")}\nYour new balance is $${formattedBalance}.`;
-            } else {
-              replyMessage += "No ores collected from mining.\nYour balance remains $${formattedBalance}.";
-            }
+            const replyMessage = breakMessage +
+              `Mined for ${Math.floor(timeElapsed)} minutes:\n` +
+              Object.entries(collectedOres)
+                .map(([ore, quantity]) => `${ores[ore].name}: ${quantity} pieces worth $${(quantity * ores[ore].value).toLocaleString("en-US")}`)
+                .join("\n") +
+              `\nTotal: $${totalEarned.toLocaleString("en-US")}\nYour new balance is $${formattedBalance}.`;
             await chat.reply(replyMessage);
           },
         },
