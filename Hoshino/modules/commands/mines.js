@@ -1,5 +1,5 @@
 /**
- * @type {HoshinoLiae.Command}
+ * @type {HoshinoLia.Command}
  */
 const command = {
   manifest: {
