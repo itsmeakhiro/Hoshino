@@ -35,14 +35,14 @@ const command = {
       netherite: { name: "Netherite Pickaxe", cost: 100000, ores: ["stone", "coal", "clay", "copper", "iron", "gold", "emerald", "diamond"], durability: 2031, minYield: 300, maxYield: 600 },
     };
     const ores = {
-      stone: { name: "Stone", value: 2 },
-      coal: { name: "Coal", value: 5 },
-      clay: { name: "Clay", value: 3 },
-      copper: { name: "Copper", value: 100 },
-      iron: { name: "Iron", value: 50 },
-      gold: { name: "Gold", value: 1000 },
-      emerald: { name: "Emerald", value: 2500 },
-      diamond: { name: "Diamond", value: 5000 },
+      stone: { name: "Stone", value: 2, emoji: "🪨" },
+      coal: { name: "Coal", value: 5, emoji: "⛏️" },
+      clay: { name: "Clay", value: 3, emoji: "🏺" },
+      copper: { name: "Copper", value: 100, emoji: "🟠" },
+      iron: { name: "Iron", value: 50, emoji: "🔩" },
+      gold: { name: "Gold", value: 1000, emoji: "🪙" },
+      emerald: { name: "Emerald", value: 2500, emoji: "💚" },
+      diamond: { name: "Diamond", value: 5000, emoji: "💎" },
     };
     const home = new ctx.HoshinoHM(
       [
@@ -61,7 +61,7 @@ const command = {
             let message = "";
             let userPickaxe = userData.mining?.pickaxe || "wooden";
             let currentDurability = userData.mining?.durability || pickaxes[userPickaxe].durability;
-            if (userData.mining && userData.mining.active) {
+            if (userData.mining && userData.mining.active && userData.mining.startTime) {
               const timeElapsed = (Date.now() - userData.mining.startTime) / 1000 / 60;
               if (isNaN(timeElapsed) || timeElapsed < 0) {
                 message = "Mining session is invalid. Starting a new session.\n";
@@ -100,9 +100,10 @@ const command = {
                     lastCollectionTime: Date.now(),
                   },
                 });
-                message += `Mined for ${Math.floor(timeElapsed)} minutes:\n` +
+                const timeDisplay = timeElapsed < 1 ? `${Math.floor(timeElapsed * 60)} seconds` : `${Math.floor(timeElapsed)} minutes`;
+                message += `Mined for ${timeDisplay}:\n` +
                   Object.entries(collectedOres)
-                    .map(([ore, quantity]) => `${ores[ore].name}: ${quantity} pieces worth $${(quantity * ores[ore].value).toLocaleString("en-US")}`)
+                    .map(([ore, quantity]) => `${ores[ore].name} ${ores[ore].emoji}: ${quantity} pieces worth $${(quantity * ores[ore].value).toLocaleString("en-US")}`)
                     .join("\n") +
                   `\nTotal: $${totalEarned.toLocaleString("en-US")}\n`;
               }
@@ -135,7 +136,7 @@ const command = {
                 "You need to register first! Use: profile register <username>"
               );
             }
-            if (!userData.mining || !userData.mining.active) {
+            if (!userData.mining || !userData.mining.active || !userData.mining.startTime) {
               return await chat.reply(
                 "You haven't started mining! Use 'mines start' to begin."
               );
@@ -193,25 +194,26 @@ const command = {
               breakMessage = `Your ${pickaxes[userData.mining.pickaxe].name} broke! Reverted to Wooden Pickaxe.\n`;
             }
             const newBalance = (userData.balance || 0) + totalEarned;
+            const newStartTime = Date.now();
             await hoshinoDB.set(event.senderID, {
               ...userData,
               balance: newBalance,
               mining: {
                 active: true,
-                startTime: userData.mining.startTime,
+                startTime: newStartTime,
                 earned: 0,
                 pickaxe: userPickaxe,
                 durability: currentDurability,
-                lastCollectionTime: Date.now(),
+                lastCollectionTime: newStartTime,
               },
             });
-            const formattedBalance = newBalance.toLocaleString("en-US");
+            const timeDisplay = timeElapsed < 1 ? `${Math.floor(timeElapsed * 60)} seconds` : `${Math.floor(timeElapsed)} minutes`;
             const replyMessage = breakMessage +
-              `Mined for ${Math.floor(timeElapsed)} minutes:\n` +
+              `Mined for ${timeDisplay}:\n` +
               Object.entries(collectedOres)
-                .map(([ore, quantity]) => `${ores[ore].name}: ${quantity} pieces worth $${(quantity * ores[ore].value).toLocaleString("en-US")}`)
+                .map(([ore, quantity]) => `${ores[ore].name} ${ores[ore].emoji}: ${quantity} pieces worth $${(quantity * ores[ore].value).toLocaleString("en-US")}`)
                 .join("\n") +
-              `\nTotal: $${totalEarned.toLocaleString("en-US")}\nYour new balance is $${formattedBalance}.`;
+              `\nTotal: $${totalEarned.toLocaleString("en-US")}\nYour new balance is $${newBalance.toLocaleString("en-US")}.`;
             await chat.reply(replyMessage);
           },
         },
@@ -229,16 +231,16 @@ const command = {
             }
             if (args.length < 1) {
               return await chat.reply(
-                "Please specify a pickaxe to buy. Usage: mines buy <wooden | stone | iron | diamond | netherite>\nAvailable pickaxes:\n" +
+                `Please specify a pickaxe to buy. Usage: mines buy <wooden | stone | iron | diamond | netherite>\nAvailable pickaxes:\n` +
                 Object.values(pickaxes)
-                  .map(p => `${p.name}: $${p.cost.toLocaleString("en-US")} (Mines: ${p.ores.map(o => ores[o].name).join(", ")}, Durability: ${p.durability})`)
+                  .map(p => `${p.name}: $${p.cost.toLocaleString("en-US")} (Mines: ${p.ores.map(o => `${ores[o].name} ${ores[o].emoji}`).join(", ")}, Durability: ${p.durability})`)
                   .join("\n")
               );
             }
-            const pickaxeType = args[0].toLowerCase();
+            const pickaxeType = args[0].toLowerCase().trim();
             if (!pickaxes[pickaxeType]) {
               return await chat.reply(
-                "Invalid pickaxe! Use: mines buy <wooden | stone | iron | diamond | netherite>"
+                `Invalid pickaxe: ${args[0]}. Use: mines buy <wooden | stone | iron | diamond | netherite>`
               );
             }
             const currentPickaxe = userData.mining?.pickaxe || "wooden";
@@ -248,24 +250,28 @@ const command = {
               );
             }
             const cost = pickaxes[pickaxeType].cost;
-            if ((userData.balance || 0) < cost) {
+            const currentBalance = userData.balance || 0;
+            if (currentBalance < cost) {
               return await chat.reply(
-                `You need $${cost.toLocaleString("en-US")} to buy a ${pickaxes[pickaxeType].name}!`
+                `You need $${cost.toLocaleString("en-US")} to buy a ${pickaxes[pickaxeType].name}, but you only have $${currentBalance.toLocaleString("en-US")}!`
               );
             }
             await hoshinoDB.set(event.senderID, {
               ...userData,
-              balance: (userData.balance || 0) - cost,
+              balance: currentBalance - cost,
               mining: {
-                ...userData.mining,
+                active: userData.mining?.active || false,
+                startTime: userData.mining?.startTime || 0,
+                earned: userData.mining?.earned || 0,
                 pickaxe: pickaxeType,
                 durability: pickaxes[pickaxeType].durability,
+                lastCollectionTime: userData.mining?.lastCollectionTime || 0,
               },
             });
             await chat.reply(
               `Successfully purchased a ${pickaxes[pickaxeType].name} for $${cost.toLocaleString(
                 "en-US"
-              )}! You can now mine: ${pickaxes[pickaxeType].ores.map(o => ores[o].name).join(", ")}. Durability: ${pickaxes[pickaxeType].durability}.`
+              )}! You can now mine: ${pickaxes[pickaxeType].ores.map(o => `${ores[o].name} ${ores[o].emoji}`).join(", ")}. Durability: ${pickaxes[pickaxeType].durability}.`
             );
           },
         },
