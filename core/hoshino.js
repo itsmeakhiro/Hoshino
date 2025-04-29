@@ -1,4 +1,4 @@
-// Disclaimer: This function may / has to be in beta version. So please do not intent to modify this file as this is an own developed code by Francis Loyd Raval. Do not MODIFY this if you dont want to global ban you to the website and its bot functionality. This part is where the tokito has access to become a API
+// Disclaimer: This function may / has to be in beta version. So please do not intent to modify this file as this is an own developed code by Liane Cagara. Do not MODIFY this if you dont want to global ban you to the website and its bot functionality. This part is where the tokito has access to become a API
 
 const express = require("express");
 const crypto = require("crypto");
@@ -6,6 +6,7 @@ const router = express.Router();
 const listener = require("./system/listener").default;
 
 const allResolve = new Map();
+const replyCallbacks = new Map(); 
 
 router.get("/postWReply", async (req, res) => {
   if (!req.query.senderID) {
@@ -19,6 +20,77 @@ router.get("/postWReply", async (req, res) => {
   }
   const event = new Event(req.query ?? {});
   event.messageID = `id_${crypto.randomUUID()}`;
+
+  // Check if this is a reply event
+  if (event.messageReply && event.messageReply.messageID && replyCallbacks.has(event.messageReply.messageID)) {
+    const callback = replyCallbacks.get(event.messageReply.messageID);
+    const apiFake = new Proxy(
+      {
+        sendMessage(form, _threadID, third) {
+          const nform = normalizeMessageForm(form);
+          const ll = {
+            result: {
+              body: nform.body,
+              messageID: `id_${crypto.randomUUID()}`,
+              timestamp: Date.now().toString(),
+            },
+            status: "success",
+          };
+          if (typeof third === "function") {
+            try {
+              third(ll);
+            } catch (error) {
+              console.error(error);
+            }
+          }
+          return ll; 
+        },
+      },
+      {
+        get(target, prop) {
+          if (prop in target) {
+            return target[prop];
+          }
+          return (...args) => {
+            console.log(
+              `Warn: 
+    api.${String(prop)}(${args
+                .map((i) => `[ ${typeof i} ${i?.constructor?.name || ""} ]`)
+                .join(",")}) has no effect!`
+            );
+          };
+        },
+      }
+    );
+
+    try {
+      const ctx = {
+        api: apiFake,
+        event,
+        chat: require("../chat").ChatContextor({ api: apiFake, event, replies: replyCallbacks }),
+      };
+      const result = await callback(ctx);
+      res.json({
+        result: {
+          body: result?.result?.body || "Reply processed",
+          messageID: result?.result?.messageID || `id_${crypto.randomUUID()}`,
+          timestamp: Date.now().toString(),
+        },
+        status: "success",
+      });
+    } catch (error) {
+      console.error("Error in reply callback:", error);
+      res.json({
+        result: {
+          body: "Error processing reply",
+          messageID: `id_${crypto.randomUUID()}`,
+          timestamp: Date.now().toString(),
+        },
+        status: "error",
+      });
+    }
+    return;
+  }
 
   const botResponse = await new Promise(async (resolve) => {
     allResolve.set(event.messageID, resolve);
@@ -42,6 +114,12 @@ router.get("/postWReply", async (req, res) => {
               console.error(error);
             }
           }
+          const ChatResult = require("../chat").ChatResult;
+          const result = new ChatResult(ll.result, this, replyCallbacks);
+          result.addReply = (callback) => {
+            replyCallbacks.set(ll.result.messageID, callback);
+          };
+          return result; 
         },
       },
       {
@@ -116,7 +194,6 @@ class Event {
       this.messageReply
     ) {
       // @ts-ignore
-
       this.messageReply.senderID = formatIP(this.messageReply.senderID);
     }
     this.participantIDs ??= [];
