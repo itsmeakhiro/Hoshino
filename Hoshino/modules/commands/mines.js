@@ -1,6 +1,4 @@
-/** 
- * @type {HoshinoLia.Command} 
- */
+/** @type {HoshinoLia.Command} */
 const command = {
   manifest: {
     name: "mines",
@@ -87,10 +85,7 @@ const command = {
                 let maxYield = pickaxes[userPickaxe].maxYield;
                 let durabilityCost = 1;
                 if (enchantment === "efficiency") {
-                  collectionEvents = Math.floor(collectionEvents * 1.5);
-                  minYield *= 1.3;
-                  maxYield *= 1.3;
-                  durabilityCost *= 2;
+                  durabilityCost *= 3;
                 } else if (enchantment === "unbreaking") {
                   minYield *= 0.8;
                   maxYield *= 0.8;
@@ -104,6 +99,9 @@ const command = {
                     collectedOres[ore] = (collectedOres[ore] || 0) + quantity;
                     totalEarned += quantity * ores[ore].value;
                   }
+                }
+                if (enchantment === "efficiency") {
+                  totalEarned *= 2;
                 }
                 currentDurability -= durabilityCost * collectionEvents;
                 if (currentDurability <= 0) {
@@ -211,10 +209,7 @@ const command = {
             let maxYield = pickaxes[userPickaxe].maxYield;
             let durabilityCost = 1;
             if (enchantment === "efficiency") {
-              collectionEvents = Math.floor(collectionEvents * 1.5);
-              minYield *= 1.3;
-              maxYield *= 1.3;
-              durabilityCost *= 2;
+              durabilityCost *= 3;
             } else if (enchantment === "unbreaking") {
               minYield *= 0.8;
               maxYield *= 0.8;
@@ -228,6 +223,9 @@ const command = {
                 collectedOres[ore] = (collectedOres[ore] || 0) + quantity;
                 totalEarned += quantity * ores[ore].value;
               }
+            }
+            if (enchantment === "efficiency") {
+              totalEarned *= 2;
             }
             currentDurability -= durabilityCost * collectionEvents;
             let breakMessage = "";
@@ -388,10 +386,7 @@ const command = {
             let maxYield = pickaxes[currentPickaxe].maxYield;
             let durabilityCost = 1;
             if (enchantment === "efficiency") {
-              collectionEvents = Math.floor(collectionEvents * 1.5);
-              minYield *= 1.3;
-              maxYield *= 1.3;
-              durabilityCost *= 2;
+              durabilityCost *= 3;
             } else if (enchantment === "unbreaking") {
               minYield *= 0.8;
               maxYield *= 0.8;
@@ -405,6 +400,9 @@ const command = {
                 collectedOres[ore] = (collectedOres[ore] || 0) + quantity;
                 totalEarned += quantity * ores[ore].value;
               }
+            }
+            if (enchantment === "efficiency") {
+              totalEarned *= 2;
             }
             const newDurability = currentDurability - durabilityCost * collectionEvents;
             await hoshinoDB.set(event.senderID, {
