@@ -1,5 +1,5 @@
-/**
- * @type {HoshinoLia.Command}
+/** 
+ * @type {HoshinoLia.Command} 
  */
 const command = {
   manifest: {
@@ -8,9 +8,9 @@ const command = {
     version: "1.0",
     developer: "Francis Loyd Raval",
     description:
-      "Start a mining simulator to earn money, collect ores, buy better pickaxes, or check status.",
+      "Start a mining simulator to earn money, collect ores, buy better pickaxes, check status, or enchant pickaxes.",
     category: "Economy",
-    usage: "mines start | mines collect | mines buy <pickaxe> | mines status",
+    usage: "mines start | mines collect | mines buy <pickaxe> | mines status | mines enchant <efficiency | unbreaking>",
     config: {
       admin: false,
       moderator: false,
@@ -44,6 +44,18 @@ const command = {
       emerald: { name: "Emerald", value: 2500, emoji: "💚" },
       diamond: { name: "Diamond", value: 5000, emoji: "💎" },
     };
+    const enchantments = {
+      efficiency: {
+        name: "Efficiency",
+        description: "Increases mining speed for higher earnings.",
+        cost: (tier) => tier * 1000,
+      },
+      unbreaking: {
+        name: "Unbreaking",
+        description: "Makes your pickaxe last longer by reducing durability loss.",
+        cost: (tier) => tier * 800,
+      },
+    };
     const home = new ctx.HoshinoHM(
       [
         {
@@ -61,6 +73,7 @@ const command = {
             let message = "";
             let userPickaxe = userData.mining?.pickaxe || "wooden";
             let currentDurability = userData.mining?.durability || pickaxes[userPickaxe].durability;
+            let enchantment = userData.mining?.enchantment || null;
             if (userData.mining && userData.mining.active && userData.mining.startTime) {
               const timeElapsed = (Date.now() - userData.mining.startTime) / 1000 / 60;
               if (isNaN(timeElapsed) || timeElapsed < 0) {
@@ -69,22 +82,34 @@ const command = {
                 const availableOres = pickaxes[userPickaxe].ores;
                 const collectedOres = userData.mining.collectedOres || {};
                 let totalEarned = 0;
-                const collectionEvents = Math.floor(timeElapsed / (Math.random() * 29 + 1)) || 1;
-                let durabilityCost = 0;
+                let collectionEvents = Math.floor(timeElapsed / (Math.random() * 29 + 1)) || 1;
+                let minYield = pickaxes[userPickaxe].minYield;
+                let maxYield = pickaxes[userPickaxe].maxYield;
+                let durabilityCost = 1;
+                if (enchantment === "efficiency") {
+                  collectionEvents = Math.floor(collectionEvents * 1.5);
+                  minYield *= 1.3;
+                  maxYield *= 1.3;
+                  durabilityCost *= 2;
+                } else if (enchantment === "unbreaking") {
+                  minYield *= 0.8;
+                  maxYield *= 0.8;
+                  durabilityCost *= 0.5;
+                }
                 for (let i = 0; i < collectionEvents; i++) {
                   const numOres = Math.floor(Math.random() * availableOres.length) + 1;
                   const selectedOres = availableOres.sort(() => Math.random() - 0.5).slice(0, numOres);
                   for (const ore of selectedOres) {
-                    const quantity = Math.floor(Math.random() * (pickaxes[userPickaxe].maxYield - pickaxes[userPickaxe].minYield + 1)) + pickaxes[userPickaxe].minYield;
+                    const quantity = Math.floor(Math.random() * (maxYield - minYield + 1)) + minYield;
                     collectedOres[ore] = (collectedOres[ore] || 0) + quantity;
                     totalEarned += quantity * ores[ore].value;
                   }
-                  durabilityCost += 1;
                 }
-                currentDurability -= durabilityCost;
+                currentDurability -= durabilityCost * collectionEvents;
                 if (currentDurability <= 0) {
                   userPickaxe = "wooden";
                   currentDurability = pickaxes.wooden.durability;
+                  enchantment = null;
                   message = `Your ${pickaxes[userData.mining.pickaxe].name} broke! Reverted to Wooden Pickaxe.\n`;
                 }
                 const newBalance = (userData.balance || 0) + totalEarned;
@@ -99,6 +124,7 @@ const command = {
                     durability: currentDurability,
                     lastCollectionTime: Date.now(),
                     collectedOres: {},
+                    enchantment,
                   },
                 });
                 const timeDisplay = timeElapsed < 1 ? `${Math.floor(timeElapsed * 60)} seconds` : `${Math.floor(timeElapsed)} minutes`;
@@ -120,9 +146,10 @@ const command = {
                 durability: currentDurability,
                 lastCollectionTime: userData.mining?.lastCollectionTime || 0,
                 collectedOres: {},
+                enchantment,
               },
             });
-            message += `Mining started with your ${pickaxes[userPickaxe].name} (Durability: ${currentDurability})! Use 'mines collect' to collect your earnings.`;
+            message += `Mining started with your ${pickaxes[userPickaxe].name} (Durability: ${currentDurability})${enchantment ? ` [${enchantments[enchantment].name}]` : ""}! Use 'mines collect' to collect your earnings.`;
             await chat.reply(message);
           },
         },
@@ -155,6 +182,7 @@ const command = {
                   durability: userData.mining?.durability || pickaxes[userData.mining?.pickaxe || "wooden"].durability,
                   lastCollectionTime: userData.mining?.lastCollectionTime || 0,
                   collectedOres: {},
+                  enchantment: null,
                 },
               });
               return await chat.reply(
@@ -174,26 +202,39 @@ const command = {
             }
             let userPickaxe = userData.mining.pickaxe || "wooden";
             let currentDurability = userData.mining.durability || pickaxes[userPickaxe].durability;
+            let enchantment = userData.mining.enchantment || null;
             const availableOres = pickaxes[userPickaxe].ores;
             const collectedOres = userData.mining.collectedOres || {};
             let totalEarned = 0;
-            const collectionEvents = Math.floor(timeElapsed / (Math.random() * 29 + 1)) || 1;
-            let durabilityCost = 0;
+            let collectionEvents = Math.floor(timeElapsed / (Math.random() * 29 + 1)) || 1;
+            let minYield = pickaxes[userPickaxe].minYield;
+            let maxYield = pickaxes[userPickaxe].maxYield;
+            let durabilityCost = 1;
+            if (enchantment === "efficiency") {
+              collectionEvents = Math.floor(collectionEvents * 1.5);
+              minYield *= 1.3;
+              maxYield *= 1.3;
+              durabilityCost *= 2;
+            } else if (enchantment === "unbreaking") {
+              minYield *= 0.8;
+              maxYield *= 0.8;
+              durabilityCost *= 0.5;
+            }
             for (let i = 0; i < collectionEvents; i++) {
               const numOres = Math.floor(Math.random() * availableOres.length) + 1;
               const selectedOres = availableOres.sort(() => Math.random() - 0.5).slice(0, numOres);
               for (const ore of selectedOres) {
-                const quantity = Math.floor(Math.random() * (pickaxes[userPickaxe].maxYield - pickaxes[userPickaxe].minYield + 1)) + pickaxes[userPickaxe].minYield;
+                const quantity = Math.floor(Math.random() * (maxYield - minYield + 1)) + minYield;
                 collectedOres[ore] = (collectedOres[ore] || 0) + quantity;
                 totalEarned += quantity * ores[ore].value;
               }
-              durabilityCost += 1;
             }
-            currentDurability -= durabilityCost;
+            currentDurability -= durabilityCost * collectionEvents;
             let breakMessage = "";
             if (currentDurability <= 0) {
               userPickaxe = "wooden";
               currentDurability = pickaxes.wooden.durability;
+              enchantment = null;
               breakMessage = `Your ${pickaxes[userData.mining.pickaxe].name} broke! Reverted to Wooden Pickaxe.\n`;
             }
             const newBalance = (userData.balance || 0) + totalEarned;
@@ -209,6 +250,7 @@ const command = {
                 durability: currentDurability,
                 lastCollectionTime: newStartTime,
                 collectedOres: {},
+                enchantment,
               },
             });
             const timeDisplay = timeElapsed < 1 ? `${Math.floor(timeElapsed * 60)} seconds` : `${Math.floor(timeElapsed)} minutes`;
@@ -289,6 +331,7 @@ const command = {
                 durability: pickaxes[pickaxeType].durability,
                 lastCollectionTime: userData.mining?.lastCollectionTime || 0,
                 collectedOres: userData.mining?.collectedOres || {},
+                enchantment: null,
               },
             });
             await chat.reply(
@@ -312,7 +355,8 @@ const command = {
             }
             const currentPickaxe = userData.mining?.pickaxe || "wooden";
             const currentDurability = userData.mining?.durability || pickaxes[currentPickaxe].durability;
-            let message = `Current Pickaxe: ${pickaxes[currentPickaxe].name} (Durability: ${currentDurability})\n`;
+            const enchantment = userData.mining?.enchantment || null;
+            let message = `Current Pickaxe: ${pickaxes[currentPickaxe].name} (Durability: ${currentDurability})${enchantment ? ` [${enchantments[enchantment].name}]` : ""}\n`;
             if (!userData.mining || !userData.mining.active || !userData.mining.startTime) {
               message += "Status: Not currently mining. Use 'mines start' to begin.\n";
               return await chat.reply(message);
@@ -329,6 +373,7 @@ const command = {
                   durability: currentDurability,
                   lastCollectionTime: userData.mining?.lastCollectionTime || 0,
                   collectedOres: {},
+                  enchantment: null,
                 },
               });
               return await chat.reply(
@@ -338,24 +383,36 @@ const command = {
             const availableOres = pickaxes[currentPickaxe].ores;
             const collectedOres = userData.mining.collectedOres || {};
             let totalEarned = 0;
-            const collectionEvents = Math.floor(timeElapsed / (Math.random() * 29 + 1)) || 1;
-            let durabilityCost = 0;
+            let collectionEvents = Math.floor(timeElapsed / (Math.random() * 29 + 1)) || 1;
+            let minYield = pickaxes[currentPickaxe].minYield;
+            let maxYield = pickaxes[currentPickaxe].maxYield;
+            let durabilityCost = 1;
+            if (enchantment === "efficiency") {
+              collectionEvents = Math.floor(collectionEvents * 1.5);
+              minYield *= 1.3;
+              maxYield *= 1.3;
+              durabilityCost *= 2;
+            } else if (enchantment === "unbreaking") {
+              minYield *= 0.8;
+              maxYield *= 0.8;
+              durabilityCost *= 0.5;
+            }
             for (let i = 0; i < collectionEvents; i++) {
               const numOres = Math.floor(Math.random() * availableOres.length) + 1;
               const selectedOres = availableOres.sort(() => Math.random() - 0.5).slice(0, numOres);
               for (const ore of selectedOres) {
-                const quantity = Math.floor(Math.random() * (pickaxes[currentPickaxe].maxYield - pickaxes[currentPickaxe].minYield + 1)) + pickaxes[currentPickaxe].minYield;
+                const quantity = Math.floor(Math.random() * (maxYield - minYield + 1)) + minYield;
                 collectedOres[ore] = (collectedOres[ore] || 0) + quantity;
                 totalEarned += quantity * ores[ore].value;
               }
-              durabilityCost += 1;
             }
+            const newDurability = currentDurability - durabilityCost * collectionEvents;
             await hoshinoDB.set(event.senderID, {
               ...userData,
               mining: {
                 ...userData.mining,
                 collectedOres,
-                durability: currentDurability - durabilityCost,
+                durability: newDurability > 0 ? newDurability : currentDurability,
               },
             });
             const timeDisplay = timeElapsed < 1 ? `${Math.floor(timeElapsed * 60)} seconds` : `${Math.floor(timeElapsed)} minutes`;
@@ -368,6 +425,66 @@ const command = {
                         : "No ores collected yet.") +
                       `\nTotal Earnings: $${totalEarned.toLocaleString("en-US")}`;
             await chat.reply(message);
+          },
+        },
+        {
+          subcommand: "enchant",
+          aliases: ["upgrade", "enhance"],
+          description: "Enchant your pickaxe to improve its performance.",
+          usage: "mines enchant <efficiency | unbreaking>",
+          async deploy({ chat, args, event, hoshinoDB }) {
+            const userData = await hoshinoDB.get(event.senderID);
+            if (!userData || !userData.username) {
+              return await chat.reply(
+                "You need to register first! Use: profile register <username>"
+              );
+            }
+            const currentPickaxe = userData.mining?.pickaxe || "wooden";
+            if (currentPickaxe === "wooden") {
+              return await chat.reply(
+                "You cannot enchant a Wooden Pickaxe! Buy a better pickaxe first."
+              );
+            }
+            let enchantmentType = args[0]?.toLowerCase().trim() || "";
+            if (enchantmentType === "enchant" && args.length > 1) {
+              enchantmentType = args[1].toLowerCase().trim();
+            }
+            if (!enchantmentType) {
+              return await chat.reply(
+                `No enchantment specified. Usage: mines enchant <efficiency | unbreaking>\n` +
+                `Available enchantments for your ${pickaxes[currentPickaxe].name}:\n\n` +
+                Object.entries(enchantments)
+                  .map(([key, ench]) => 
+                    `${ench.name}\n` +
+                    `Description: ${ench.description}\n` +
+                    `Cost: $${ench.cost(pickaxes[currentPickaxe].tier).toLocaleString("en-US")}`
+                  )
+                  .join("\n\n")
+              );
+            }
+            if (!enchantments[enchantmentType]) {
+              return await chat.reply(
+                `Invalid enchantment: ${args[0] || enchantmentType}. Use: mines enchant <efficiency | unbreaking>`
+              );
+            }
+            const cost = enchantments[enchantmentType].cost(pickaxes[currentPickaxe].tier);
+            const currentBalance = userData.balance || 0;
+            if (currentBalance < cost) {
+              return await chat.reply(
+                `You need $${cost.toLocaleString("en-US")} to enchant your ${pickaxes[currentPickaxe].name} with ${enchantments[enchantmentType].name}, but you only have $${currentBalance.toLocaleString("en-US")}!`
+              );
+            }
+            await hoshinoDB.set(event.senderID, {
+              ...userData,
+              balance: currentBalance - cost,
+              mining: {
+                ...userData.mining,
+                enchantment: enchantmentType,
+              },
+            });
+            await chat.reply(
+              `Successfully enchanted your ${pickaxes[currentPickaxe].name} with ${enchantments[enchantmentType].name} for $${cost.toLocaleString("en-US")}! ${enchantments[enchantmentType].description}`
+            );
           },
         },
       ],
