@@ -28,11 +28,11 @@ const command = {
   },
   async deploy(ctx) {
     const pickaxes = {
-      wooden: { name: "Wooden Pickaxe", description: "A basic pickaxe for mining common ores.", cost: 0, ores: ["stone", "coal", "clay"], durability: 59, minYield: 50, maxYield: 150 },
-      stone: { name: "Stone Pickaxe", description: "A sturdy pickaxe for mining basic and copper ores.", cost: 1000, ores: ["stone", "coal", "clay", "copper"], durability: 131, minYield: 100, maxYield: 200 },
-      iron: { name: "Iron Pickaxe", description: "A strong pickaxe for mining iron and other ores.", cost: 5000, ores: ["stone", "coal", "clay", "copper", "iron"], durability: 250, minYield: 150, maxYield: 300 },
-      diamond: { name: "Diamond Pickaxe", description: "A premium pickaxe for mining valuable gems.", cost: 25000, ores: ["stone", "coal", "clay", "copper", "iron", "gold", "emerald"], durability: 1561, minYield: 200, maxYield: 400 },
-      netherite: { name: "Netherite Pickaxe", description: "The ultimate pickaxe for mining all ores, including diamonds.", cost: 100000, ores: ["stone", "coal", "clay", "copper", "iron", "gold", "emerald", "diamond"], durability: 2031, minYield: 300, maxYield: 600 },
+      wooden: { name: "Wooden Pickaxe", description: "A basic pickaxe for mining common ores.", cost: 0, ores: ["stone", "coal", "clay"], durability: 59, minYield: 50, maxYield: 150, tier: 1 },
+      stone: { name: "Stone Pickaxe", description: "A sturdy pickaxe for mining basic and copper ores.", cost: 1000, ores: ["stone", "coal", "clay", "copper"], durability: 131, minYield: 100, maxYield: 200, tier: 2 },
+      iron: { name: "Iron Pickaxe", description: "A strong pickaxe for mining iron and other ores.", cost: 5000, ores: ["stone", "coal", "clay", "copper", "iron"], durability: 250, minYield: 150, maxYield: 300, tier: 3 },
+      diamond: { name: "Diamond Pickaxe", description: "A premium pickaxe for mining valuable gems.", cost: 25000, ores: ["stone", "coal", "clay", "copper", "iron", "gold", "emerald"], durability: 1561, minYield: 200, maxYield: 400, tier: 4 },
+      netherite: { name: "Netherite Pickaxe", description: "The ultimate pickaxe for mining all ores, including diamonds.", cost: 100000, ores: ["stone", "coal", "clay", "copper", "iron", "gold", "emerald", "diamond"], durability: 2031, minYield: 300, maxYield: 600, tier: 5 },
     };
     const ores = {
       stone: { name: "Stone", value: 2, emoji: "🪨" },
@@ -256,6 +256,12 @@ const command = {
               );
             }
             const currentPickaxe = userData.mining?.pickaxe || "wooden";
+            const currentDurability = userData.mining?.durability || pickaxes[currentPickaxe].durability;
+            if (pickaxes[pickaxeType].tier < pickaxes[currentPickaxe].tier && currentDurability > 0) {
+              return await chat.reply(
+                `You cannot buy a lower-quality pickaxe while your ${pickaxes[currentPickaxe].name} has durability remaining (${currentDurability}).`
+              );
+            }
             if (currentPickaxe === pickaxeType) {
               return await chat.reply(
                 `You already own a ${pickaxes[pickaxeType].name}!`
