@@ -8,9 +8,9 @@ const command = {
     version: "1.0",
     developer: "Francis Loyd Raval",
     description:
-      "Run a salon simulator to earn money by buying a shop, starting operations, recruiting a designer, upgrading shop or designer, and collecting earnings.",
+      "Run a salon simulator to earn money by buying a shop, starting operations, recruiting a designer, upgrading shop or designer, checking status, and collecting earnings.",
     category: "Economy",
-    usage: "salon buy | salon start | salon recruit | salon upgrade | salon collect",
+    usage: "salon buy | salon start | salon recruit | salon upgrade | salon status | salon collect",
     config: {
       admin: false,
       moderator: false,
@@ -441,6 +441,85 @@ const command = {
                 )}% salary tax.`
               );
             }
+          },
+        },
+        {
+          subcommand: "status",
+          aliases: ["info", "progress"],
+          description: "Check your salon's progress, shop level, designer status, and estimated earnings.",
+          usage: "salon status",
+          async deploy({ chat, event, hoshinoDB }) {
+            const userData = await hoshinoDB.get(event.senderID);
+            if (!userData || !userData.username) {
+              return await chat.reply(
+                "You need to register first! Use: profile register <username>"
+              );
+            }
+            if (!userData.salon?.shop) {
+              return await chat.reply(
+                "You need to buy a salon first! Use: salon buy <basic | deluxe | luxury>"
+              );
+            }
+            const shop = shops[userData.salon.shop];
+            const shopLevel = userData.salon.shopLevel || 1;
+            const designerLevel = userData.salon.designerLevel || 0;
+            let message = `Salon: ${shop.name} ${shop.emoji} (Level ${shopLevel}/${shop.maxLevel})\n` +
+                          `Earnings Multiplier: ${(1 + 0.2 * (shopLevel - 1)).toFixed(2)}x\n` +
+                          `Designer: ${userData.salon.designer ? `${designer.name} (Level ${designerLevel}/${designer.maxLevel})` : "None"}\n` +
+                          (userData.salon.designer
+                            ? `Designer Multiplier: ${designer.levels[designerLevel].multiplier}x\n` +
+                              `Designer Salary Tax: ${(designer.levels[designerLevel].salaryTax * 100).toFixed(0)}%`
+                            : "Use 'salon recruit' to hire a designer.") + "\n";
+            if (!userData.salon.active || !userData.salon.startTime) {
+              message += "Status: Not currently operating. Use 'salon start' to begin.";
+              return await chat.reply(message);
+            }
+            const timeElapsed = (Date.now() - userData.salon.startTime) / 1000 / 60;
+            if (isNaN(timeElapsed) || timeElapsed < 0) {
+              await hoshinoDB.set(event.senderID, {
+                ...userData,
+                salon: {
+                  ...userData.salon,
+                  active: false,
+                  startTime: 0,
+                  earned: 0,
+                  lastCollectionTime: 0,
+                },
+              });
+              return await chat.reply(
+                "Salon session is invalid. Please start a new session with 'salon start'."
+              );
+            }
+            const collectionEvents = Math.floor(timeElapsed / 5) || 1;
+            let totalEarned = 0;
+            for (let i = 0; i < collectionEvents; i++) {
+              const earnings =
+                Math.floor(
+                  Math.random() * (shop.maxEarnings - shop.baseEarnings + 1)
+                ) + shop.baseEarnings;
+              totalEarned += earnings * (1 + 0.2 * (shopLevel - 1));
+            }
+            const designerMultiplier = userData.salon.designer
+              ? designer.levels[designerLevel].multiplier
+              : 1;
+            totalEarned *= designerMultiplier;
+            const taxAmount = userData.salon.designer
+              ? Math.floor(totalEarned * designer.levels[designerLevel].salaryTax)
+              : 0;
+            const netEarnings = totalEarned - taxAmount;
+            const timeDisplay =
+              timeElapsed < 1
+                ? `${Math.floor(timeElapsed * 60)} seconds`
+                : `${Math.floor(timeElapsed)} minutes`;
+            message += `Status: Operating for ${timeDisplay}\n` +
+                      `Estimated Earnings:\n` +
+                      `Gross: $${totalEarned.toLocaleString("en-US")}\n` +
+                      (taxAmount > 0
+                        ? `Designer Salary Tax: $${taxAmount.toLocaleString("en-US")}\n`
+                        : "") +
+                      `Net: $${netEarnings.toLocaleString("en-US")}\n` +
+                      `Use 'salon collect' to claim these earnings.`;
+            await chat.reply(message);
           },
         },
         {
