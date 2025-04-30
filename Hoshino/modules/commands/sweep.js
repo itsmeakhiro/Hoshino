@@ -6,7 +6,7 @@ const command = {
     name: "sweep",
     aliases: ["clean", "broom"],
     version: "1.0",
-    developer: "Francis Loyd Raval",
+    developer: "Francis Loyd Raval & Yhander Toycs",
     description:
       "Run a sweeping simulator to earn money by starting to sweep random trash, checking status, collecting earnings, and upgrading your broom.",
     category: "Economy",
