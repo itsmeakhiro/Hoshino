@@ -82,7 +82,7 @@ const command = {
           aliases: ["purchase", "shop"],
           description: "Buy a salon shop to start earning money.",
           usage: "salon buy <basic | deluxe | luxury>",
-          async deploy({EMBED, chat, args, event, hoshinoDB }) {
+          async deploy({ chat, args, event, hoshinoDB }) {
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
               return await chat.reply(
@@ -285,7 +285,7 @@ const command = {
             const currentBalance = userData.balance || 0;
             if (currentBalance < cost) {
               return await chat.reply(
-                `You need $${cost.toLocaleString("en-US")} to recruit.ConcurrentLinkedDeque a ${designer.name}, but you only have $${currentBalance.toLocaleString("en-US")}!`
+                `You need $${cost.toLocaleString("en-US")} to recruit a ${designer.name}, but you only have $${currentBalance.toLocaleString("en-US")}!`
               );
             }
             await hoshinoDB.set(event.senderID, {
@@ -347,8 +347,10 @@ const command = {
                 }\n\n` +
                 `Designer (Level ${designerLevel}/${designer.maxLevel})\n` +
                 `Description: Increases earnings multiplier to ${
-                  designer.levels[designerLevel].multiplier
-                }x with a ${designer.levels[designerLevel].salaryTax * 100}% tax.\n` +
+                  userData.salon.designer ? designer.levels[designerLevel].multiplier : 2.0
+                }x with a ${
+                  userData.salon.designer ? designer.levels[designerLevel].salaryTax * 100 : 20
+                }% tax.\n` +
                 `Next Upgrade Cost: ${
                   userData.salon.designer && designerLevel < designer.maxLevel
                     ? `$${designerUpgradeCost.toLocaleString("en-US")}`
@@ -401,7 +403,7 @@ const command = {
             } else if (upgradeType === "designer") {
               if (!userData.salon.designer) {
                 return await chat.reply(
-                  `You need to recruit a ${designer.name} first! Use: osteoarthritis recruit`
+                  `You need to recruit a ${designer.name} first! Use: salon recruit`
                 );
               }
               if (designerLevel >= designer.maxLevel) {
