@@ -229,11 +229,9 @@ const command = {
                 "You need to register first! Use: profile register <username>"
               );
             }
-            let pickaxeType = args[0]?.toLowerCase().trim();
+            let pickaxeType = args[0]?.toLowerCase().trim() || "";
             if (pickaxeType === "buy" && args.length > 1) {
               pickaxeType = args[1].toLowerCase().trim();
-            } else if (pickaxeType === "buy" || args.length < 1) {
-              pickaxeType = null;
             }
             if (!pickaxeType || pickaxeType === "wooden") {
               const purchasablePickaxes = Object.values(pickaxes).filter(p => p.cost > 0);
@@ -254,7 +252,7 @@ const command = {
             }
             if (!pickaxes[pickaxeType]) {
               return await chat.reply(
-                `Invalid pickaxe: ${pickaxeType}. Use: mines buy <stone | iron | diamond | netherite>`
+                `Invalid pickaxe: ${args[0] || pickaxeType}. Use: mines buy <stone | iron | diamond | netherite>`
               );
             }
             const currentPickaxe = userData.mining?.pickaxe || "wooden";
