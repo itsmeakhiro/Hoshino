@@ -1,4 +1,6 @@
-/** @type {HoshinoLia.Command} */
+/** 
+ * @type {HoshinoLia.Command} 
+ */
 const command = {
   manifest: {
     name: "mines",
