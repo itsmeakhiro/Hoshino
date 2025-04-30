@@ -8,9 +8,9 @@ const command = {
     version: "1.0",
     developer: "Francis Loyd Raval",
     description:
-      "Start a mining simulator to earn money, collect ores, or buy better pickaxes.",
+      "Start a mining simulator to earn money, collect ores, buy better pickaxes, or check status.",
     category: "Economy",
-    usage: "mines start | mines collect | mines buy <pickaxe>",
+    usage: "mines start | mines collect | mines buy <pickaxe> | mines status",
     config: {
       admin: false,
       moderator: false,
@@ -67,7 +67,7 @@ const command = {
                 message = "Mining session is invalid. Starting a new session.\n";
               } else if (timeElapsed > 0) {
                 const availableOres = pickaxes[userPickaxe].ores;
-                const collectedOres = {};
+                const collectedOres = userData.mining.collectedOres || {};
                 let totalEarned = 0;
                 const collectionEvents = Math.floor(timeElapsed / (Math.random() * 29 + 1)) || 1;
                 let durabilityCost = 0;
@@ -98,6 +98,7 @@ const command = {
                     pickaxe: userPickaxe,
                     durability: currentDurability,
                     lastCollectionTime: Date.now(),
+                    collectedOres: {},
                   },
                 });
                 const timeDisplay = timeElapsed < 1 ? `${Math.floor(timeElapsed * 60)} seconds` : `${Math.floor(timeElapsed)} minutes`;
@@ -118,6 +119,7 @@ const command = {
                 pickaxe: userPickaxe,
                 durability: currentDurability,
                 lastCollectionTime: userData.mining?.lastCollectionTime || 0,
+                collectedOres: {},
               },
             });
             message += `Mining started with your ${pickaxes[userPickaxe].name} (Durability: ${currentDurability})! Use 'mines collect' to collect your earnings.`;
@@ -152,6 +154,7 @@ const command = {
                   pickaxe: userData.mining?.pickaxe || "wooden",
                   durability: userData.mining?.durability || pickaxes[userData.mining?.pickaxe || "wooden"].durability,
                   lastCollectionTime: userData.mining?.lastCollectionTime || 0,
+                  collectedOres: {},
                 },
               });
               return await chat.reply(
@@ -172,7 +175,7 @@ const command = {
             let userPickaxe = userData.mining.pickaxe || "wooden";
             let currentDurability = userData.mining.durability || pickaxes[userPickaxe].durability;
             const availableOres = pickaxes[userPickaxe].ores;
-            const collectedOres = {};
+            const collectedOres = userData.mining.collectedOres || {};
             let totalEarned = 0;
             const collectionEvents = Math.floor(timeElapsed / (Math.random() * 29 + 1)) || 1;
             let durabilityCost = 0;
@@ -205,6 +208,7 @@ const command = {
                 pickaxe: userPickaxe,
                 durability: currentDurability,
                 lastCollectionTime: newStartTime,
+                collectedOres: {},
               },
             });
             const timeDisplay = timeElapsed < 1 ? `${Math.floor(timeElapsed * 60)} seconds` : `${Math.floor(timeElapsed)} minutes`;
@@ -280,10 +284,11 @@ const command = {
               mining: {
                 active: userData.mining?.active || false,
                 startTime: userData.mining?.startTime || 0,
-                earned: userData.mining?.earned || 0,
+                earned: 0,
                 pickaxe: pickaxeType,
                 durability: pickaxes[pickaxeType].durability,
                 lastCollectionTime: userData.mining?.lastCollectionTime || 0,
+                collectedOres: userData.mining?.collectedOres || {},
               },
             });
             await chat.reply(
@@ -291,6 +296,78 @@ const command = {
                 "en-US"
               )}! You can now mine: ${pickaxes[pickaxeType].ores.map(o => `${ores[o].name} ${ores[o].emoji}`).join(", ")}. Durability: ${pickaxes[pickaxeType].durability}.`
             );
+          },
+        },
+        {
+          subcommand: "status",
+          aliases: ["info", "progress"],
+          description: "Check your mining progress, pickaxe durability, and collected ores.",
+          usage: "mines status",
+          async deploy({ chat, event, hoshinoDB }) {
+            const userData = await hoshinoDB.get(event.senderID);
+            if (!userData || !userData.username) {
+              return await chat.reply(
+                "You need to register first! Use: profile register <username>"
+              );
+            }
+            const currentPickaxe = userData.mining?.pickaxe || "wooden";
+            const currentDurability = userData.mining?.durability || pickaxes[currentPickaxe].durability;
+            let message = `Current Pickaxe: ${pickaxes[currentPickaxe].name} (Durability: ${currentDurability})\n`;
+            if (!userData.mining || !userData.mining.active || !userData.mining.startTime) {
+              message += "Status: Not currently mining. Use 'mines start' to begin.\n";
+              return await chat.reply(message);
+            }
+            const timeElapsed = (Date.now() - userData.mining.startTime) / 1000 / 60;
+            if (isNaN(timeElapsed) || timeElapsed < 0) {
+              await hoshinoDB.set(event.senderID, {
+                ...userData,
+                mining: {
+                  active: false,
+                  startTime: 0,
+                  earned: 0,
+                  pickaxe: currentPickaxe,
+                  durability: currentDurability,
+                  lastCollectionTime: userData.mining?.lastCollectionTime || 0,
+                  collectedOres: {},
+                },
+              });
+              return await chat.reply(
+                "Mining session is invalid. Please start a new session with 'mines start'."
+              );
+            }
+            const availableOres = pickaxes[currentPickaxe].ores;
+            const collectedOres = userData.mining.collectedOres || {};
+            let totalEarned = 0;
+            const collectionEvents = Math.floor(timeElapsed / (Math.random() * 29 + 1)) || 1;
+            let durabilityCost = 0;
+            for (let i = 0; i < collectionEvents; i++) {
+              const numOres = Math.floor(Math.random() * availableOres.length) + 1;
+              const selectedOres = availableOres.sort(() => Math.random() - 0.5).slice(0, numOres);
+              for (const ore of selectedOres) {
+                const quantity = Math.floor(Math.random() * (pickaxes[currentPickaxe].maxYield - pickaxes[currentPickaxe].minYield + 1)) + pickaxes[currentPickaxe].minYield;
+                collectedOres[ore] = (collectedOres[ore] || 0) + quantity;
+                totalEarned += quantity * ores[ore].value;
+              }
+              durabilityCost += 1;
+            }
+            await hoshinoDB.set(event.senderID, {
+              ...userData,
+              mining: {
+                ...userData.mining,
+                collectedOres,
+                durability: currentDurability - durabilityCost,
+              },
+            });
+            const timeDisplay = timeElapsed < 1 ? `${Math.floor(timeElapsed * 60)} seconds` : `${Math.floor(timeElapsed)} minutes`;
+            message += `Status: Mining for ${timeDisplay}\n` +
+                      `Collected Ores:\n` +
+                      (Object.keys(collectedOres).length > 0
+                        ? Object.entries(collectedOres)
+                            .map(([ore, quantity]) => `${ores[ore].name} ${ores[ore].emoji}: ${quantity} pieces worth $${(quantity * ores[ore].value).toLocaleString("en-US")}`)
+                            .join("\n")
+                        : "No ores collected yet.") +
+                      `\nTotal Earnings: $${totalEarned.toLocaleString("en-US")}`;
+            await chat.reply(message);
           },
         },
       ],
