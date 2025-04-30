@@ -28,11 +28,11 @@ const command = {
   },
   async deploy(ctx) {
     const pickaxes = {
-      wooden: { name: "Wooden Pickaxe", cost: 0, ores: ["stone", "coal", "clay"], durability: 59, minYield: 50, maxYield: 150 },
-      stone: { name: "Stone Pickaxe", cost: 1000, ores: ["stone", "coal", "clay", "copper"], durability: 131, minYield: 100, maxYield: 200 },
-      iron: { name: "Iron Pickaxe", cost: 5000, ores: ["stone", "coal", "clay", "copper", "iron"], durability: 250, minYield: 150, maxYield: 300 },
-      diamond: { name: "Diamond Pickaxe", cost: 25000, ores: ["stone", "coal", "clay", "copper", "iron", "gold", "emerald"], durability: 1561, minYield: 200, maxYield: 400 },
-      netherite: { name: "Netherite Pickaxe", cost: 100000, ores: ["stone", "coal", "clay", "copper", "iron", "gold", "emerald", "diamond"], durability: 2031, minYield: 300, maxYield: 600 },
+      wooden: { name: "Wooden Pickaxe", description: "A basic pickaxe for mining common ores.", cost: 0, ores: ["stone", "coal", "clay"], durability: 59, minYield: 50, maxYield: 150 },
+      stone: { name: "Stone Pickaxe", description: "A sturdy pickaxe for mining basic and copper ores.", cost: 1000, ores: ["stone", "coal", "clay", "copper"], durability: 131, minYield: 100, maxYield: 200 },
+      iron: { name: "Iron Pickaxe", description: "A strong pickaxe for mining iron and other ores.", cost: 5000, ores: ["stone", "coal", "clay", "copper", "iron"], durability: 250, minYield: 150, maxYield: 300 },
+      diamond: { name: "Diamond Pickaxe", description: "A premium pickaxe for mining valuable gems.", cost: 25000, ores: ["stone", "coal", "clay", "copper", "iron", "gold", "emerald"], durability: 1561, minYield: 200, maxYield: 400 },
+      netherite: { name: "Netherite Pickaxe", description: "The ultimate pickaxe for mining all ores, including diamonds.", cost: 100000, ores: ["stone", "coal", "clay", "copper", "iron", "gold", "emerald", "diamond"], durability: 2031, minYield: 300, maxYield: 600 },
     };
     const ores = {
       stone: { name: "Stone", value: 2, emoji: "🪨" },
@@ -221,7 +221,7 @@ const command = {
           subcommand: "buy",
           aliases: ["purchase", "shop"],
           description: "Buy a better pickaxe to mine higher-value ores.",
-          usage: "mines buy <wooden | stone | iron | diamond | netherite>",
+          usage: "mines buy <stone | iron | diamond | netherite>",
           async deploy({ chat, args, event, hoshinoDB }) {
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
@@ -229,18 +229,32 @@ const command = {
                 "You need to register first! Use: profile register <username>"
               );
             }
-            if (args.length < 1) {
+            let pickaxeType = args[0]?.toLowerCase().trim();
+            if (pickaxeType === "buy" && args.length > 1) {
+              pickaxeType = args[1].toLowerCase().trim();
+            } else if (pickaxeType === "buy" || args.length < 1) {
+              pickaxeType = null;
+            }
+            if (!pickaxeType || pickaxeType === "wooden") {
+              const purchasablePickaxes = Object.values(pickaxes).filter(p => p.cost > 0);
               return await chat.reply(
-                `Please specify a pickaxe to buy. Usage: mines buy <wooden | stone | iron | diamond | netherite>\nAvailable pickaxes:\n` +
-                Object.values(pickaxes)
-                  .map(p => `${p.name}: $${p.cost.toLocaleString("en-US")} (Mines: ${p.ores.map(o => `${ores[o].name} ${ores[o].emoji}`).join(", ")}, Durability: ${p.durability})`)
-                  .join("\n")
+                `No pickaxe specified. Usage: mines buy <stone | iron | diamond | netherite>\n` +
+                `The Wooden Pickaxe is provided for free and does not need to be purchased.\n` +
+                `Available pickaxes for purchase:\n\n` +
+                purchasablePickaxes
+                  .map(p => 
+                    `${p.name}\n` +
+                    `Description: ${p.description}\n` +
+                    `Durability: ${p.durability}\n` +
+                    `Cost: $${p.cost.toLocaleString("en-US")}\n` +
+                    `Ores: ${p.ores.map(o => `${ores[o].name} ${ores[o].emoji}`).join(", ")}`
+                  )
+                  .join("\n\n")
               );
             }
-            const pickaxeType = args[0].toLowerCase().trim();
             if (!pickaxes[pickaxeType]) {
               return await chat.reply(
-                `Invalid pickaxe: ${args[0]}. Use: mines buy <wooden | stone | iron | diamond | netherite>`
+                `Invalid pickaxe: ${pickaxeType}. Use: mines buy <stone | iron | diamond | netherite>`
               );
             }
             const currentPickaxe = userData.mining?.pickaxe || "wooden";
