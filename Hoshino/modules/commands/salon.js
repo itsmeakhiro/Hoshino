@@ -10,7 +10,7 @@ const command = {
     developer: "Francis Loyd Raval",
     description:
       "Manage a beauty salon to earn money by offering services, upgrading your shop, and recruiting stylists.",
-    category: "Economy",
+    category: "Simulation",
     usage: "salon start | salon buy | salon recruit | salon status | salon collect | salon upgrade",
     config: {
       admin: false,

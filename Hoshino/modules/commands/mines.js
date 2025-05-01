@@ -10,7 +10,7 @@ const command = {
     developer: "Francis Loyd Raval",
     description:
       "Start a mining simulator to earn money, collect ores, buy better pickaxes, check status, or enchant pickaxes.",
-    category: "Economy",
+    category: "Simulation",
     usage: "mines start | mines collect | mines buy <pickaxe> | mines status | mines enchant <efficiency | unbreaking | fortune | mending | haste>",
     config: {
       admin: false,

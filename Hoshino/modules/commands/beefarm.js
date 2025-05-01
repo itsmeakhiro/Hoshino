@@ -10,7 +10,7 @@ const command = {
     developer: "Francis Loyd Raval",
     description:
       "Manage a bee farm to earn money by collecting honey, upgrading land, and recruiting helpers. Top farmer gets a trophy with 3x earnings!",
-    category: "Economy",
+    category: "Simulation",
     usage: "beefarm start | beefarm collect | beefarm buy | beefarm recruit | beefarm status | beefarm upgrade | beefarm leaderboard",
     config: {
       admin: false,
