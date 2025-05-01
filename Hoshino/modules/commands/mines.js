@@ -1,5 +1,5 @@
 /** 
- * @type {HoshinoLia.Command} 
+ " @type {HoshinoLia.Command} 
  */
 
 const command = {
