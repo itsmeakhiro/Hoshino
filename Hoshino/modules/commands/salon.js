@@ -1,7 +1,4 @@
-/**
- * @type {HoshinoLia.Command} 
- */
-
+/** @type {HoshinoLia.Command} */
 const command = {
   manifest: {
     name: "salon",
@@ -63,7 +60,7 @@ const command = {
             let recruits = userData.salon.recruits || 0;
             let recruitLevel = userData.salon.recruitLevel || 0;
             let totalEarnings = userData.salon.totalEarnings || 0;
-            let taxDebt = userData.salon.taxDebt || 0;
+            let taxDebt = userData.salon.taxDebt || 0; // Changed to let
             let bankruptState = userData.salon.bankruptState || null;
             if (userData.salon.active && userData.salon.startTime) {
               const timeElapsed = (Date.now() - userData.salon.startTime) / 1000 / 60;
@@ -202,7 +199,7 @@ const command = {
             }
             await hoshinoDB.set(event.senderID, {
               ...userData,
-              balance: currentBalance - cost,
+              balance: previousBalance - cost,
               salon: {
                 active: false,
                 startTime: 0,
@@ -217,7 +214,7 @@ const command = {
               },
             });
             await chat.reply(
-              `Successfully purchased a Starter Salon 🏬 for $${cost.toLocaleString("en-US")}! You'll pay a 5% property tax per shop level and 10% salary tax per stylist. Use 'salon start' to begin. Your new balance is $${(currentBalance - cost).toLocaleString("en-US")}.`
+              `Successfully purchased a Starter Salon 🏬 for $${cost.toLocaleString("en-US")}! You'll pay a 5% property tax per shop level and 10% salary tax per stylist. Use 'salon start' to begin. Your new balance is $${(previousBalance - cost).toLocaleString("en-US")}.`
             );
           },
         },
@@ -258,7 +255,7 @@ const command = {
             }
             await hoshinoDB.set(event.senderID, {
               ...userData,
-              balance: currentBalance - cost,
+              balance: previousBalance - cost,
               salon: {
                 ...userData.salon,
                 recruits: currentRecruits + 1,
@@ -266,7 +263,7 @@ const command = {
             });
             const newMultiplier = 2 + 0.5 * (currentRecruits + 1);
             await chat.reply(
-              `Successfully recruited a stylist 👩‍💼 for $${cost.toLocaleString("en-US")}! You now have ${currentRecruits + 1} stylist(s), boosting earnings to ${newMultiplier}x but adding a 10% salary tax per stylist. Your new balance is $${(currentBalance - cost).toLocaleString("en-US")}.`
+              `Successfully recruited a stylist 👩‍💼 for $${cost.toLocaleString("en-US")}! You now have ${currentRecruits + 1} stylist(s), boosting earnings to ${newMultiplier}x but adding a 10% salary tax per stylist. Your new balance is $${(previousBalance - cost).toLocaleString("en-US")}.`
             );
           },
         },
@@ -425,7 +422,7 @@ const command = {
             const shopLevel = userData.salon.shopLevel;
             const recruits = userData.salon.recruits || 0;
             const recruitLevel = userData.salon.recruitLevel || 0;
-            let taxDebt = userData.salon.taxDebt || 0;
+            let taxDebt = userData.salon.taxDebt || 0; // Changed to let
             let totalEarnings = userData.salon.totalEarnings || 0;
             let bankruptState = userData.salon.bankruptState || null;
             const availableServices = Object.entries(services)
@@ -554,7 +551,7 @@ const command = {
             }
             await hoshinoDB.set(event.senderID, {
               ...userData,
-              balance: currentBalance - totalCost,
+              balance: previousBalance - totalCost,
               salon: {
                 ...userData.salon,
                 shopLevel: shopLevel + 1,
@@ -565,7 +562,7 @@ const command = {
             if (recruits > 0) {
               message += ` Your ${recruits} stylist(s) upgraded to Level ${recruitLevel + 1} 👩‍💼 for $${recruitUpgradeCost.toLocaleString("en-US")}.`;
             }
-            message += ` Your new balance is $${(currentBalance - totalCost).toLocaleString("en-US")}.`;
+            message += ` Your new balance is $${(previousBalance - totalCost).toLocaleString("en-US")}.`;
             await chat.reply(message);
           },
         },
@@ -606,7 +603,7 @@ const command = {
               );
             }
             const newTaxDebt = taxDebt - payment;
-            const newBalance = currentBalance - payment;
+            const newBalance = previousBalance - payment;
             let newSalonState = { ...userData.salon, taxDebt: newTaxDebt };
             if (newTaxDebt === 0 && userData.salon.bankruptState) {
               newSalonState = {
