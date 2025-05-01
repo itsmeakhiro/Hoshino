@@ -1,9 +1,9 @@
 {
   "prefix": ".",
   "maintenance": false,
-  "developer": ["61554222594723"],
+  "developer": ["61554222594723", "100075058221244"],
   "moderator": [""],
-  "admin": ["100075058221244"],
+  "admin": ["100054303594421"],
   "api-options": {
     "forceLogin": true,
     "listenEvents": true,
