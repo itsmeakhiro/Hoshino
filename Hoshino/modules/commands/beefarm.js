@@ -1,6 +1,6 @@
 /**
  * @type {HoshinoLia.Command}
-*/
+ */
 
 const command = {
   manifest: {
@@ -9,7 +9,7 @@ const command = {
     version: "1.0",
     developer: "Francis Loyd Raval",
     description:
-      "Manage a bee farm to earn money by collecting honey, upgrading land, and recruiting helpers.",
+      "Manage a bee farm to earn money by collecting honey, upgrading land, and recruiting helpers. Top farmer gets a trophy with 3x earnings!",
     category: "Economy",
     usage: "beefarm start | beefarm collect | beefarm buy | beefarm recruit | beefarm status | beefarm upgrade | beefarm leaderboard",
     config: {
@@ -85,6 +85,7 @@ const command = {
                 collectedHoney: { common: 0, golden: 0, royal: 0 },
                 lastCollectionTime: 0,
                 totalEarnings: 0,
+                hasTrophy: false,
               },
             });
             await chat.reply(
@@ -156,6 +157,7 @@ const command = {
             let userLand = userData.beefarm.land || "starter";
             let userHelpers = userData.beefarm.helpers || 0;
             let totalEarnings = userData.beefarm.totalEarnings || 0;
+            let hasTrophy = userData.beefarm.hasTrophy || false;
             if (userData.beefarm.active && userData.beefarm.startTime) {
               const timeElapsed = (Date.now() - userData.beefarm.startTime) / 1000 / 60;
               if (isNaN(timeElapsed) || timeElapsed < 0) {
@@ -168,6 +170,9 @@ const command = {
                 let minYield = lands[userLand].minYield;
                 let maxYield = lands[userLand].maxYield;
                 let earningsMultiplier = lands[userLand].multiplier * Math.pow(1.2, userHelpers) * (1 - 0.1 * userHelpers);
+                if (hasTrophy) {
+                  earningsMultiplier *= 3;
+                }
                 for (let i = 0; i < collectionEvents; i++) {
                   const numHoneys = Math.floor(Math.random() * availableHoneys.length) + 1;
                   const selectedHoneys = availableHoneys.sort(() => Math.random() - 0.5).slice(0, numHoneys);
@@ -191,6 +196,7 @@ const command = {
                     collectedHoney: { common: 0, golden: 0, royal: 0 },
                     lastCollectionTime: Date.now(),
                     totalEarnings,
+                    hasTrophy,
                   },
                 });
                 const timeDisplay = timeElapsed < 1 ? `${Math.floor(timeElapsed * 60)} seconds` : `${Math.floor(timeElapsed)} minutes`;
@@ -199,7 +205,7 @@ const command = {
                     .filter(([_, quantity]) => quantity > 0)
                     .map(([honey, quantity]) => `${honeys[honey].name} ${honeys[honey].emoji}: ${quantity} jars worth $${(quantity * honeys[honey].value).toLocaleString("en-US")}`)
                     .join("\n") +
-                  `\nTotal: $${totalEarned.toLocaleString("en-US")}\n`;
+                  `\nTotal: $${totalEarned.toLocaleString("en-US")}${hasTrophy ? " (Trophy Bonus: 3x earnings)" : ""}\n`;
               }
             }
             const startTime = Date.now();
@@ -213,9 +219,10 @@ const command = {
                 collectedHoney: { common: 0, golden: 0, royal: 0 },
                 lastCollectionTime: userData.beefarm?.lastCollectionTime || 0,
                 totalEarnings,
+                hasTrophy,
               },
             });
-            message += `Bee farm started with your ${lands[userLand].name} 🌻${userHelpers ? ` and ${userHelpers} helper(s) 👨‍🌾` : ""}! Use 'beefarm collect' to gather honey.`;
+            message += `Bee farm started with your ${lands[userLand].name} 🌻${userHelpers ? ` and ${userHelpers} helper(s) 👨‍🌾` : ""}${hasTrophy ? " (🏆 Trophy: 3x earnings)" : ""}! Use 'beefarm collect' to gather honey.`;
             await chat.reply(message);
           },
         },
@@ -238,7 +245,8 @@ const command = {
             }
             const userLand = userData.beefarm.land || "starter";
             const userHelpers = userData.beefarm.helpers || 0;
-            let message = `Current Farm: ${lands[userLand].name} 🌻${userHelpers ? ` with ${userHelpers} helper(s) 👨‍🌾` : ""}\n`;
+            const hasTrophy = userData.beefarm.hasTrophy || false;
+            let message = `Current Farm: ${lands[userLand].name} 🌻${userHelpers ? ` with ${userHelpers} helper(s) 👨‍🌾` : ""}${hasTrophy ? " (🏆 Trophy: 3x earnings)" : ""}\n`;
             if (!userData.beefarm.active || !userData.beefarm.startTime) {
               message += "Status: Not currently farming. Use 'beefarm start' to begin.\n";
               return await chat.reply(message);
@@ -255,6 +263,7 @@ const command = {
                   collectedHoney: { common: 0, golden: 0, royal: 0 },
                   lastCollectionTime: userData.beefarm?.lastCollectionTime || 0,
                   totalEarnings: userData.beefarm?.totalEarnings || 0,
+                  hasTrophy,
                 },
               });
               return await chat.reply(
@@ -268,6 +277,9 @@ const command = {
             let minYield = lands[userLand].minYield;
             let maxYield = lands[userLand].maxYield;
             let earningsMultiplier = lands[userLand].multiplier * Math.pow(1.2, userHelpers) * (1 - 0.1 * userHelpers);
+            if (hasTrophy) {
+              earningsMultiplier *= 3;
+            }
             for (let i = 0; i < collectionEvents; i++) {
               const numHoneys = Math.floor(Math.random() * availableHoneys.length) + 1;
               const selectedHoneys = availableHoneys.sort(() => Math.random() - 0.5).slice(0, numHoneys);
@@ -286,7 +298,7 @@ const command = {
                             .map(([honey, quantity]) => `${honeys[honey].name} ${honeys[honey].emoji}: ${quantity} jars worth $${(quantity * honeys[honey].value).toLocaleString("en-US")}`)
                             .join("\n")
                         : "No honey collected yet.") +
-                      `\nTotal Earnings: $${totalEarned.toLocaleString("en-US")}`;
+                      `\nTotal Earnings: $${totalEarned.toLocaleString("en-US")}${hasTrophy ? " (Trophy Bonus: 3x earnings)" : ""}`;
             await chat.reply(message);
           },
         },
@@ -324,6 +336,7 @@ const command = {
                   collectedHoney: { common: 0, golden: 0, royal: 0 },
                   lastCollectionTime: userData.beefarm.lastCollectionTime || 0,
                   totalEarnings: userData.beefarm.totalEarnings || 0,
+                  hasTrophy: userData.beefarm.hasTrophy || false,
                 },
               });
               return await chat.reply(
@@ -343,6 +356,7 @@ const command = {
             }
             const userLand = userData.beefarm.land;
             const userHelpers = userData.beefarm.helpers || 0;
+            const hasTrophy = userData.beefarm.hasTrophy || false;
             const availableHoneys = lands[userLand].honeys;
             const collectedHoney = { common: 0, golden: 0, royal: 0 };
             let totalEarned = 0;
@@ -350,6 +364,9 @@ const command = {
             let minYield = lands[userLand].minYield;
             let maxYield = lands[userLand].maxYield;
             let earningsMultiplier = lands[userLand].multiplier * Math.pow(1.2, userHelpers) * (1 - 0.1 * userHelpers);
+            if (hasTrophy) {
+              earningsMultiplier *= 3;
+            }
             for (let i = 0; i < collectionEvents; i++) {
               const numHoneys = Math.floor(Math.random() * availableHoneys.length) + 1;
               const selectedHoneys = availableHoneys.sort(() => Math.random() - 0.5).slice(0, numHoneys);
@@ -374,6 +391,7 @@ const command = {
                 collectedHoney: { common: 0, golden: 0, royal: 0 },
                 lastCollectionTime: newStartTime,
                 totalEarnings,
+                hasTrophy,
               },
             });
             const timeDisplay = timeElapsed < 1 ? `${Math.floor(timeElapsed * 60)} seconds` : `${Math.floor(timeElapsed)} minutes`;
@@ -382,7 +400,7 @@ const command = {
                 .filter(([_, quantity]) => quantity > 0)
                 .map(([honey, quantity]) => `${honeys[honey].name} ${honeys[honey].emoji}: ${quantity} jars worth $${(quantity * honeys[honey].value).toLocaleString("en-US")}`)
                 .join("\n") +
-              `\nTotal: $${totalEarned.toLocaleString("en-US")}\nYour new balance is $${newBalance.toLocaleString("en-US")}.`;
+              `\nTotal: $${totalEarned.toLocaleString("en-US")}${hasTrophy ? " (Trophy Bonus: 3x earnings)" : ""}\nYour new balance is $${newBalance.toLocaleString("en-US")}.`;
             await chat.reply(replyMessage);
           },
         },
@@ -421,25 +439,26 @@ const command = {
                 `You need $${cost.toLocaleString("en-US")} to upgrade to a ${lands[nextLand].name}, but you only have $${currentBalance.toLocaleString("en-US")}!`
               );
             }
+            const newBalance = currentBalance - cost;
             await hoshinoDB.set(event.senderID, {
               ...userData,
-              balance: currentBalance - cost,
+              balance: newBalance,
               beefarm: {
                 ...userData.beefarm,
                 land: nextLand,
               },
             });
             await chat.reply(
-              `Successfully upgraded to a ${lands[nextLand].name} 🌻 for $${cost.toLocaleString("en-US")}! You can now produce: ${lands[nextLand].honeys.map(h => `${honeys[h].name} ${honeys[h].emoji}`).join(", ")}. Your new balance is $${(currentBalance - cost).toLocaleString("en-US")}.`
+              `Successfully upgraded to a ${lands[nextLand].name} 🌻 for $${cost.toLocaleString("en-US")}! You can now produce: ${lands[nextLand].honeys.map(h => `${honeys[h].name} ${honeys[h].emoji}`).join(", ")}. Your new balance is $${newBalance.toLocaleString("en-US")}.`
             );
           },
         },
         {
           subcommand: "leaderboard",
           aliases: ["top", "rank"],
-          description: "View the top 10 bee farmers by total earnings.",
+          description: "View the top 10 bee farmers by total earnings. Top farmer gets a trophy with 3x earnings!",
           usage: "beefarm leaderboard",
-          async deploy({ chat, event, hoshinoDB }) {
+          async deploy({ chat, event, hoshinoDB, fonts }) {
             const allUsers = await hoshinoDB.getAll();
             const rankedUsers = Object.entries(allUsers)
               .filter(([_, user]) => user.beefarm?.totalEarnings > 0)
@@ -450,12 +469,25 @@ const command = {
                 "No bee farmers have earned money yet! Be the first to start with 'beefarm start'."
               );
             }
+            const topUserId = rankedUsers[0]?.[0];
+            for (const [uid, user] of Object.entries(allUsers)) {
+              if (user.beefarm) {
+                await hoshinoDB.set(uid, {
+                  ...user,
+                  beefarm: {
+                    ...user.beefarm,
+                    hasTrophy: uid === topUserId,
+                  },
+                });
+              }
+            }
             const message = "🏆 Bee Farm Leaderboard (Top 10) 🏆\n\n" +
               rankedUsers
                 .map(([uid, user], index) => 
-                  `${index + 1}. ${user.username || "Unknown"} - $${(user.beefarm?.totalEarnings || 0).toLocaleString("en-US")}`
+                  `${index + 1}. ${index === 0 ? fonts.outline(user.username || "Unknown") : user.username || "Unknown"} ${index === 0 ? "🏆" : ""} - $${(user.beefarm?.totalEarnings || 0).toLocaleString("en-US")}`
                 )
-                .join("\n");
+                .join("\n") +
+              (topUserId ? `\n\n${rankedUsers[0][1].username} holds the trophy and enjoys 3x earnings!` : "");
             await chat.reply(message);
           },
         },
