@@ -1,5 +1,5 @@
 /**
- * @type {HoshinoLia.Command} 
+ * @type {HoshinoLia.Command}
  */
 
 const command = {
@@ -11,7 +11,7 @@ const command = {
     description:
       "Manage a beauty salon to earn money by offering services, upgrading your shop, and recruiting stylists.",
     category: "Economy",
-    usage: "salon buy | salon recruit | salon status | salon collect | salon upgrade",
+    usage: "salon start | salon buy | salon recruit | salon status | salon collect | salon upgrade",
     config: {
       admin: false,
       moderator: false,
@@ -35,6 +35,97 @@ const command = {
     };
     const home = new ctx.HoshinoHM(
       [
+        {
+          subcommand: "start",
+          aliases: ["begin", "open"],
+          description: "Start your salon to begin earning money.",
+          usage: "salon start",
+          async deploy({ chat, event, hoshinoDB }) {
+            const userData = await hoshinoDB.get(event.senderID);
+            if (!userData || !userData.username) {
+              return await chat.reply(
+                "You need to register first! Use: profile register <username>"
+              );
+            }
+            if (!userData.salon || userData.salon.shopLevel === 0) {
+              return await chat.reply(
+                "You need to buy a salon first! Use 'salon buy' to purchase a Starter Salon."
+              );
+            }
+            let message = "";
+            let shopLevel = userData.salon.shopLevel || 1;
+            let recruits = userData.salon.recruits || 0;
+            let recruitLevel = userData.salon.recruitLevel || 0;
+            let totalEarnings = userData.salon.totalEarnings || 0;
+            if (userData.salon.active && userData.salon.startTime) {
+              const timeElapsed = (Date.now() - userData.salon.startTime) / 1000 / 60;
+              if (isNaN(timeElapsed) || timeElapsed < 0) {
+                message = "Salon session is invalid. Starting a new session.\n";
+              } else if (timeElapsed > 0) {
+                const availableServices = Object.entries(services)
+                  .filter(([_, service]) => shopLevel >= service.minLevel)
+                  .map(([key]) => key);
+                const collectedServices = { basic: 0, premium: 0, luxury: 0 };
+                let totalEarned = 0;
+                let serviceEvents = Math.floor(timeElapsed / (Math.random() * 29 + 1)) || 1;
+                let minYield = 50 * shopLevel;
+                let maxYield = 100 * shopLevel;
+                let earningsMultiplier = shopLevel * (2 + 0.5 * recruits) * (1 + 0.2 * recruitLevel);
+                let taxMultiplier = (1 - 0.05 * shopLevel) * (1 - 0.1 * recruits);
+                for (let i = 0; i < serviceEvents; i++) {
+                  const numServices = Math.floor(Math.random() * availableServices.length) + 1;
+                  const selectedServices = availableServices.sort(() => Math.random() - 0.5).slice(0, numServices);
+                  for (const service of selectedServices) {
+                    const quantity = Math.floor(Math.random() * (maxYield - minYield + 1)) + minYield;
+                    collectedServices[service] = (collectedServices[service] || 0) + quantity;
+                    totalEarned += quantity * services[service].value;
+                  }
+                }
+                totalEarned *= earningsMultiplier * taxMultiplier;
+                const newBalance = (userData.balance || 0) + totalEarned;
+                totalEarnings += totalEarned;
+                await hoshinoDB.set(event.senderID, {
+                  ...userData,
+                  balance: newBalance,
+                  salon: {
+                    active: false,
+                    startTime: 0,
+                    shopLevel,
+                    recruits,
+                    recruitLevel,
+                    collectedServices: { basic: 0, premium: 0, luxury: 0 },
+                    lastCollectionTime: Date.now(),
+                    totalEarnings,
+                  },
+                });
+                const timeDisplay = timeElapsed < 1 ? `${Math.floor(timeElapsed * 60)} seconds` : `${Math.floor(timeElapsed)} minutes`;
+                message += `Operated for ${timeDisplay}:\n` +
+                  Object.entries(collectedServices)
+                    .filter(([_, quantity]) => quantity > 0)
+                    .map(([service, quantity]) => `${services[service].name} ${services[service].emoji}: ${quantity} services worth $${(quantity * services[service].value).toLocaleString("en-US")}`)
+                    .join("\n") +
+                  `\nTaxes: ${Math.round((1 - (1 - 0.05 * shopLevel)) * 100)}% property tax, ${Math.round((1 - (1 - 0.1 * recruits)) * 100)}% salary tax` +
+                  `\nTotal: $${totalEarned.toLocaleString("en-US")}\n`;
+              }
+            }
+            const startTime = Date.now();
+            await hoshinoDB.set(event.senderID, {
+              ...userData,
+              salon: {
+                active: true,
+                startTime,
+                shopLevel,
+                recruits,
+                recruitLevel,
+                collectedServices: { basic: 0, premium: 0, luxury: 0 },
+                lastCollectionTime: userData.salon?.lastCollectionTime || 0,
+                totalEarnings,
+              },
+            });
+            message += `Salon opened at Level ${shopLevel} 🏬${recruits ? ` with ${recruits} Level ${recruitLevel} stylist(s) 👩‍💼` : ""}! Use 'salon collect' to gather earnings.`;
+            await chat.reply(message);
+          },
+        },
         {
           subcommand: "buy",
           aliases: ["purchase", "property"],
@@ -74,7 +165,7 @@ const command = {
               },
             });
             await chat.reply(
-              `Successfully purchased a Starter Salon 🏬 for $${cost.toLocaleString("en-US")}! You'll pay a 5% property tax per shop level. Use 'salon status' to begin. Your new balance is $${(currentBalance - cost).toLocaleString("en-US")}.`
+              `Successfully purchased a Starter Salon 🏬 for $${cost.toLocaleString("en-US")}! You'll pay a 5% property tax per shop level. Use 'salon start' to begin. Your new balance is $${(currentBalance - cost).toLocaleString("en-US")}.`
             );
           },
         },
@@ -144,7 +235,7 @@ const command = {
             const recruitLevel = userData.salon.recruitLevel || 0;
             let message = `Current Salon: Level ${shopLevel} 🏬${recruits ? ` with ${recruits} Level ${recruitLevel} stylist(s) 👩‍💼` : ""}\n`;
             if (!userData.salon.active || !userData.salon.startTime) {
-              message += "Status: Not currently operating. Use 'salon status' to begin.\n";
+              message += "Status: Not currently operating. Use 'salon start' to begin.\n";
               return await chat.reply(message);
             }
             const timeElapsed = (Date.now() - userData.salon.startTime) / 1000 / 60;
@@ -163,7 +254,7 @@ const command = {
                 },
               });
               return await chat.reply(
-                "Salon session is invalid. Please start a new session with 'salon status'."
+                "Salon session is invalid. Please start a new session with 'salon start'."
               );
             }
             const availableServices = Object.entries(services)
@@ -213,7 +304,7 @@ const command = {
             }
             if (!userData.salon || !userData.salon.active || !userData.salon.startTime) {
               return await chat.reply(
-                "You haven't started your salon! Use 'salon status' to begin."
+                "You haven't started your salon! Use 'salon start' to begin."
               );
             }
             if (userData.salon.shopLevel === 0) {
@@ -237,7 +328,7 @@ const command = {
                 },
               });
               return await chat.reply(
-                "Salon session is invalid. Please start a new session with 'salon status'."
+                "Salon session is invalid. Please start a new session with 'salon start'."
               );
             }
             const lastCollectionTime = userData.salon.lastCollectionTime || 0;
