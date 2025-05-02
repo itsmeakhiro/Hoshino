@@ -1,5 +1,5 @@
 /**
- * @type {HoshinoLia.Command}
+ * @type {HoshinoLia.Command} 
  */
 
 const command = {
@@ -10,7 +10,7 @@ const command = {
     developer: "Francis Loyd Raval",
     description:
       "Manage your resort: buy land, start operations, check status, collect earnings, construct facilities, recruit staff, and upgrade for more popularity and faster earnings.",
-    category: "Simulation",
+    category: "Economy",
     usage:
       "resort buy | resort start | resort status | resort collect | resort construct <facility> | resort recruit <role> | resort upgrade [targetLevel]",
     config: {
@@ -36,7 +36,7 @@ const command = {
           aliases: ["purchase"],
           description: "Buy a land for your resort with a 10% tax.",
           usage: "resort buy",
-          async deploy({ chat, event, hoshinoDB }) {
+          async deploy({ chat, event, hoshinoDB, HoshinoUser }) {
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
               return await chat.reply(
@@ -308,7 +308,7 @@ const command = {
             }
             const currentLevel = userData.resort.level;
             const targetLevelInput = args.length > 0 ? args[0].trim() : "";
-            const targetLevel = targetLevelInput && !isNaN(targetLevelInput) ? parseInt(targetLevelInput, 10) : currentLevel + 1;
+            const targetLevel = targetLevelInput && !isNaN(parseFloat(targetLevelInput)) ? parseInt(targetLevelInput, 10) : currentLevel + 1;
             if (targetLevel <= currentLevel) {
               return await chat.reply(
                 `Target level must be higher than current level (${currentLevel})!`
