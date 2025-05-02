@@ -58,6 +58,23 @@ const command = {
       totalEarned *= earningsMultiplier;
       return { totalEarned, collectedServices };
     };
+    const validateBranchId = (args, branches, subcommand) => {
+      if (!args || args.length === 0 || !args[0] || typeof args[0] !== "string") {
+        return {
+          valid: false,
+          message: `No branch ID provided. Please specify a branch ID (e.g., salon ${subcommand} 1). Available branches: ${branches.map(b => b.branchId).join(", ")}.`,
+        };
+      }
+      const branchIdStr = args[0].trim();
+      const branchId = parseInt(branchIdStr);
+      if (isNaN(branchId) || branchId < 1 || branchId > branches.length) {
+        return {
+          valid: false,
+          message: `Invalid branch ID '${branchIdStr}'. Please use a number between 1 and ${branches.length}. Available branches: ${branches.map(b => b.branchId).join(", ")}.`,
+        };
+      }
+      return { valid: true, branchId };
+    };
     const home = new ctx.HoshinoHM(
       [
         {
@@ -77,11 +94,11 @@ const command = {
                 "You need to buy a salon first! Use 'salon buy' to purchase a Starter Salon."
               );
             }
-            const branchId = parseInt(args[0]) || 0;
+            const branchId = args && args[0] ? parseInt(args[0].trim()) : 0;
             const branches = userData.salon.branches;
             if (branchId && !branches.find(b => b.branchId === branchId)) {
               return await chat.reply(
-                `Invalid branch ID. Please use a number between 1 and ${branches.length}. Available branches: ${branches.map(b => b.branchId).join(", ")}.`
+                `Invalid branch ID '${args[0]}'. Please use a number between 1 and ${branches.length}. Available branches: ${branches.map(b => b.branchId).join(", ")}.`
               );
             }
             let message = "";
@@ -256,18 +273,12 @@ const command = {
                 "You need to buy a salon first! Use 'salon buy' to purchase a Starter Salon."
               );
             }
-            if (!args[0] || isNaN(parseInt(args[0]))) {
-              return await chat.reply(
-                `Please specify a valid branch ID (e.g., salon recruit 1). Available branches: ${userData.salon.branches.map(b => b.branchId).join(", ")}.`
-              );
+            const validation = validateBranchId(args, userData.salon.branches, "recruit");
+            if (!validation.valid) {
+              return await chat.reply(validation.message);
             }
-            const branchId = parseInt(args[0]);
+            const branchId = validation.branchId;
             const branch = userData.salon.branches.find(b => b.branchId === branchId);
-            if (!branch) {
-              return await chat.reply(
-                `Invalid branch ID. Please use a number between 1 and ${userData.salon.branches.length}. Available branches: ${userData.salon.branches.map(b => b.branchId).join(", ")}.`
-              );
-            }
             const currentRecruits = branch.recruits || 0;
             if (currentRecruits >= 10) {
               return await chat.reply(
@@ -313,11 +324,11 @@ const command = {
                 "You need to buy a salon first! Use 'salon buy' to purchase a Starter Salon."
               );
             }
-            const branchId = parseInt(args[0]) || 0;
+            const branchId = args && args[0] ? parseInt(args[0].trim()) : 0;
             const branches = userData.salon.branches;
             if (branchId && !branches.find(b => b.branchId === branchId)) {
               return await chat.reply(
-                `Invalid branch ID. Please use a number between 1 and ${branches.length}. Available branches: ${branches.map(b => b.branchId).join(", ")}.`
+                `Invalid branch ID '${args[0]}'. Please use a number between 1 and ${branches.length}. Available branches: ${branches.map(b => b.branchId).join(", ")}.`
               );
             }
             const targetBranches = branchId ? branches.filter(b => b.branchId === branchId) : branches;
@@ -385,11 +396,11 @@ const command = {
                 "You need to buy a salon first! Use 'salon buy' to purchase a Starter Salon."
               );
             }
-            const branchId = parseInt(args[0]) || 0;
+            const branchId = args && args[0] ? parseInt(args[0].trim()) : 0;
             const branches = userData.salon.branches;
             if (branchId && !branches.find(b => b.branchId === branchId)) {
               return await chat.reply(
-                `Invalid branch ID. Please use a number between 1 and ${branches.length}. Available branches: ${branches.map(b => b.branchId).join(", ")}.`
+                `Invalid branch ID '${args[0]}'. Please use a number between 1 and ${branches.length}. Available branches: ${branches.map(b => b.branchId).join(", ")}.`
               );
             }
             const lastCollectionTime = userData.salon.lastCollectionTime || 0;
@@ -469,18 +480,12 @@ const command = {
                 "You need to buy a salon first! Use 'salon buy' to purchase a Starter Salon."
               );
             }
-            if (!args[0] || isNaN(parseInt(args[0]))) {
-              return await chat.reply(
-                `Please specify a valid branch ID (e.g., salon upgrade 1). Available branches: ${userData.salon.branches.map(b => b.branchId).join(", ")}.`
-              );
+            const validation = validateBranchId(args, userData.salon.branches, "upgrade");
+            if (!validation.valid) {
+              return await chat.reply(validation.message);
             }
-            const branchId = parseInt(args[0]);
+            const branchId = validation.branchId;
             const branch = userData.salon.branches.find(b => b.branchId === branchId);
-            if (!branch) {
-              return await chat.reply(
-                `Invalid branch ID. Please use a number between 1 and ${userData.salon.branches.length}. Available branches: ${userData.salon.branches.map(b => b.branchId).join(", ")}.`
-              );
-            }
             const shopLevel = branch.shopLevel;
             const recruits = branch.recruits || 0;
             const recruitLevel = branch.recruitLevel || 0;
