@@ -1,16 +1,13 @@
-/** 
- * @type {HoshinoLia.Command}
- */
-
+/** @type {HoshinoLia.Command} */
 const command = {
   manifest: {
     name: "resort",
     aliases: ["rsrt"],
-    version: "1.5.1",
+    version: "1.5.2",
     developer: "Francis Loyd Raval",
     description:
       "Manage your resort: buy land, start operations, check status, collect earnings, construct facilities, recruit staff, and upgrade for more popularity and faster earnings.",
-    category: "Simulation",
+    category: "Economy",
     usage:
       "resort buy | resort start | resort status | resort collect | resort construct <facility> | resort recruit <role> | resort upgrade [levelsToAdd]",
     config: {
@@ -308,14 +305,16 @@ const command = {
             }
             const currentLevel = userData.resort.level;
             const levelsToAddInput = args.length > 0 ? args[0].trim() : "";
+            console.log(`User ${event.senderID} upgrade raw args: ${JSON.stringify(args)}, levelsToAddInput: ${levelsToAddInput}`);
             const levelsToAdd = levelsToAddInput && !isNaN(parseFloat(levelsToAddInput)) ? parseInt(levelsToAddInput, 10) : 1;
-            console.log(`User ${event.senderID} upgrade input: ${levelsToAddInput}, parsed: ${levelsToAdd}`);
+            console.log(`User ${event.senderID} upgrade parsed: levelsToAdd=${levelsToAdd}`);
             if (levelsToAdd < 1) {
               return await chat.reply(
                 `Number of levels to add must be a positive number!`
               );
             }
             const targetLevel = currentLevel + levelsToAdd;
+            console.log(`User ${event.senderID} upgrade: currentLevel=${currentLevel}, levelsToAdd=${levelsToAdd}, targetLevel=${targetLevel}`);
             let totalCost = 0;
             for (let i = currentLevel; i < targetLevel; i++) {
               const upgradeCost = 10000 * i;
@@ -323,14 +322,14 @@ const command = {
               totalCost += upgradeCost + tax;
               console.log(`Level ${i} to ${i + 1}: cost=${upgradeCost}, tax=${tax}, total=${upgradeCost + tax}`);
             }
-            console.log(`User ${event.senderID} upgrade: currentLevel=${currentLevel}, levelsToAdd=${levelsToAdd}, targetLevel=${targetLevel}, totalCost=${totalCost}`);
+            console.log(`User ${event.senderID} upgrade: totalCost=${totalCost}, balance=${userData.balance}`);
             if (userData.balance < totalCost) {
               return await chat.reply(
                 `You need $${totalCost.toLocaleString()} to upgrade ${levelsToAdd} levels to reach level ${targetLevel}!`
               );
             }
             const newMultiplier = 1.0 + (targetLevel - 1) * 0.5;
-            await hoshinoDB.set(event.senderID, {
+            const newUserData = {
               ...userData,
               balance: userData.balance - totalCost,
               resort: {
@@ -338,8 +337,10 @@ const command = {
                 level: targetLevel,
                 multiplier: newMultiplier,
               },
-            });
-            console.log(`User ${event.senderID} upgraded resort by ${levelsToAdd} levels from level ${currentLevel} to level ${targetLevel} with ${newMultiplier}x multiplier for $${totalCost}`);
+            };
+            console.log(`User ${event.senderID} upgrade: before DB update - level=${userData.resort.level}, multiplier=${userData.resort.multiplier}, balance=${userData.balance}`);
+            await hoshinoDB.set(event.senderID, newUserData);
+            console.log(`User ${event.senderID} upgrade: after DB update - level=${newUserData.resort.level}, multiplier=${newUserData.resort.multiplier}, balance=${newUserData.balance}`);
             await chat.reply(
               `Upgraded your resort by ${levelsToAdd} levels from level ${currentLevel}, now your resort is at level ${targetLevel} for $${totalCost.toLocaleString()}! Earnings increased and process sped up to ${newMultiplier.toFixed(1)}x.`
             );
