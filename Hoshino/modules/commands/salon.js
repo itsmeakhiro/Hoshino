@@ -1,4 +1,4 @@
-/** 
+/**
  * @type {HoshinoLia.Command}
  */
 
@@ -59,10 +59,11 @@ const command = {
       return { totalEarned, collectedServices };
     };
     const validateBranchId = (args, branches, subcommand) => {
-      if (!args || args.length === 0 || !args[0] || typeof args[0] !== "string") {
+      console.log(`[DEBUG] validateBranchId: args=${JSON.stringify(args)}, subcommand=${subcommand}`);
+      if (!args || args.length === 0 || !args[0] || typeof args[0] !== "string" || args[0].trim() === "") {
         return {
           valid: false,
-          message: `No branch ID provided. Please specify a branch ID (e.g., salon ${subcommand} 1). Available branches: ${branches.map(b => b.branchId).join(", ")}.`,
+          message: `No branch ID provided. Use: salon ${subcommand} <1-${branches.length}>. Available branches: ${branches.map(b => b.branchId).join(", ")}.`,
         };
       }
       const branchIdStr = args[0].trim();
@@ -70,10 +71,10 @@ const command = {
       if (isNaN(branchId) || branchId < 1 || branchId > branches.length) {
         return {
           valid: false,
-          message: `Invalid branch ID '${branchIdStr}'. Please use a number between 1 and ${branches.length}. Available branches: ${branches.map(b => b.branchId).join(", ")}.`,
+          message: `Invalid branch ID '${branchIdStr}'. Use: salon ${subcommand} <1-${branches.length}>. Available branches: ${branches.map(b => b.branchId).join(", ")}.`,
         };
       }
-      return { valid: true, branchId };
+      return { valid: true, branchId, message: "" };
     };
     const home = new ctx.HoshinoHM(
       [
@@ -83,6 +84,7 @@ const command = {
           description: "Start one or all salon branches to begin earning money.",
           usage: "salon start [branchId]",
           async deploy({ chat, event, hoshinoDB, args }) {
+            console.log(`[DEBUG] start: args=${JSON.stringify(args)}`);
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
               return await chat.reply(
@@ -94,11 +96,11 @@ const command = {
                 "You need to buy a salon first! Use 'salon buy' to purchase a Starter Salon."
               );
             }
-            const branchId = args && args[0] ? parseInt(args[0].trim()) : 0;
+            const branchId = args && args[0] && typeof args[0] === "string" ? parseInt(args[0].trim()) : 0;
             const branches = userData.salon.branches;
             if (branchId && !branches.find(b => b.branchId === branchId)) {
               return await chat.reply(
-                `Invalid branch ID '${args[0]}'. Please use a number between 1 and ${branches.length}. Available branches: ${branches.map(b => b.branchId).join(", ")}.`
+                `Invalid branch ID '${args[0]}'. Use: salon start <1-${branches.length}>. Available branches: ${branches.map(b => b.branchId).join(", ")}.`
               );
             }
             let message = "";
@@ -162,6 +164,7 @@ const command = {
           description: "Buy your first Starter Salon to start your business.",
           usage: "salon buy",
           async deploy({ chat, event, hoshinoDB }) {
+            console.log(`[DEBUG] buy: no args expected`);
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
               return await chat.reply(
@@ -208,6 +211,7 @@ const command = {
           description: "Open a new salon branch to increase earnings.",
           usage: "salon branch",
           async deploy({ chat, event, hoshinoDB }) {
+            console.log(`[DEBUG] branch: no args expected`);
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
               return await chat.reply(
@@ -262,6 +266,7 @@ const command = {
           description: "Recruit a stylist for a specific branch to boost earnings.",
           usage: "salon recruit <branchId>",
           async deploy({ chat, event, hoshinoDB, args }) {
+            console.log(`[DEBUG] recruit: args=${JSON.stringify(args)}`);
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
               return await chat.reply(
@@ -313,6 +318,7 @@ const command = {
           description: "Check progress and estimated earnings for one or all salon branches.",
           usage: "salon status [branchId]",
           async deploy({ chat, event, hoshinoDB, args }) {
+            console.log(`[DEBUG] status: args=${JSON.stringify(args)}`);
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
               return await chat.reply(
@@ -324,11 +330,11 @@ const command = {
                 "You need to buy a salon first! Use 'salon buy' to purchase a Starter Salon."
               );
             }
-            const branchId = args && args[0] ? parseInt(args[0].trim()) : 0;
+            const branchId = args && args[0] && typeof args[0] === "string" ? parseInt(args[0].trim()) : 0;
             const branches = userData.salon.branches;
             if (branchId && !branches.find(b => b.branchId === branchId)) {
               return await chat.reply(
-                `Invalid branch ID '${args[0]}'. Please use a number between 1 and ${branches.length}. Available branches: ${branches.map(b => b.branchId).join(", ")}.`
+                `Invalid branch ID '${args[0]}'. Use: salon status <1-${branches.length}>. Available branches: ${branches.map(b => b.branchId).join(", ")}.`
               );
             }
             const targetBranches = branchId ? branches.filter(b => b.branchId === branchId) : branches;
@@ -385,6 +391,7 @@ const command = {
           description: "Collect earnings from one or all salon branches.",
           usage: "salon collect [branchId]",
           async deploy({ chat, event, hoshinoDB, args }) {
+            console.log(`[DEBUG] collect: args=${JSON.stringify(args)}`);
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
               return await chat.reply(
@@ -396,11 +403,11 @@ const command = {
                 "You need to buy a salon first! Use 'salon buy' to purchase a Starter Salon."
               );
             }
-            const branchId = args && args[0] ? parseInt(args[0].trim()) : 0;
+            const branchId = args && args[0] && typeof args[0] === "string" ? parseInt(args[0].trim()) : 0;
             const branches = userData.salon.branches;
             if (branchId && !branches.find(b => b.branchId === branchId)) {
               return await chat.reply(
-                `Invalid branch ID '${args[0]}'. Please use a number between 1 and ${branches.length}. Available branches: ${branches.map(b => b.branchId).join(", ")}.`
+                `Invalid branch ID '${args[0]}'. Use: salon collect <1-${branches.length}>. Available branches: ${branches.map(b => b.branchId).join(", ")}.`
               );
             }
             const lastCollectionTime = userData.salon.lastCollectionTime || 0;
@@ -469,6 +476,7 @@ const command = {
           description: "Upgrade a specific salon branch and its stylists for higher earnings.",
           usage: "salon upgrade <branchId>",
           async deploy({ chat, event, hoshinoDB, args }) {
+            console.log(`[DEBUG] upgrade: args=${JSON.stringify(args)}`);
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
               return await chat.reply(
