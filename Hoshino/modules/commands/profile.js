@@ -53,7 +53,7 @@ const command = {
             await hoshinoDB.set(event.senderID, {
               username,
               balance: 0,
-              diamonds: 0, // Initialize diamonds to 0
+              diamonds: 0, 
               expData: exp.raw(),
             });
             await chat.reply(`Successfully registered as ${username}!`);
