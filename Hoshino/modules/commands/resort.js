@@ -6,13 +6,13 @@ const command = {
   manifest: {
     name: "resort",
     aliases: ["rsrt"],
-    version: "1.4",
+    version: "1.5",
     developer: "Francis Loyd Raval",
     description:
       "Manage your resort: buy land, start operations, check status, collect earnings, construct facilities, recruit staff, and upgrade for more popularity and faster earnings.",
-    category: "Economy",
+    category: "Simulation",
     usage:
-      "resort buy | resort start | resort status | resort collect | resort construct <facility> | resort recruit <role> | resort upgrade [targetLevel]",
+      "resort buy | resort start | resort status | resort collect | resort construct <facility> | resort recruit <role> | resort upgrade [levelsToAdd]",
     config: {
       admin: false,
       moderator: false,
@@ -20,7 +20,7 @@ const command = {
   },
   style: {
     type: "lines1",
-    title: "〘 🏝️ 〙 RESORT SIMULATION",
+    title: "〘 🏝️ 〙 RESORT",
     footer: "**Developed by**: Francis Loyd Raval",
   },
   font: {
@@ -297,8 +297,8 @@ const command = {
         {
           subcommand: "upgrade",
           aliases: ["lvlup"],
-          description: "Upgrade your resort to a target level to increase earnings and speed up the process.",
-          usage: "resort upgrade [targetLevel]",
+          description: "Upgrade your resort by a number of levels to increase earnings and speed up the process.",
+          usage: "resort upgrade [levelsToAdd]",
           async deploy({ chat, args, event, hoshinoDB }) {
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.resort) {
@@ -307,18 +307,14 @@ const command = {
               );
             }
             const currentLevel = userData.resort.level;
-            const targetLevelInput = args.length > 0 ? args[0].trim() : "";
-            const targetLevel = targetLevelInput && !isNaN(parseFloat(targetLevelInput)) ? parseInt(targetLevelInput, 10) : currentLevel + 1;
-            if (targetLevel <= currentLevel) {
+            const levelsToAddInput = args.length > 0 ? args[0].trim() : "";
+            const levelsToAdd = levelsToAddInput && !isNaN(parseFloat(levelsToAddInput)) ? parseInt(levelsToAddInput, 10) : 1;
+            if (levelsToAdd < 1) {
               return await chat.reply(
-                `Target level must be higher than current level (${currentLevel})!`
+                `Number of levels to add must be a positive number!`
               );
             }
-            if (targetLevel < 1) {
-              return await chat.reply(
-                `Target level must be a positive number!`
-              );
-            }
+            const targetLevel = currentLevel + levelsToAdd;
             let totalCost = 0;
             for (let i = currentLevel; i < targetLevel; i++) {
               const upgradeCost = 10000 * i;
@@ -327,7 +323,7 @@ const command = {
             }
             if (userData.balance < totalCost) {
               return await chat.reply(
-                `You need $${totalCost.toLocaleString()} to upgrade to level ${targetLevel}!`
+                `You need $${totalCost.toLocaleString()} to upgrade ${levelsToAdd} levels to reach level ${targetLevel}!`
               );
             }
             const newMultiplier = 1.0 + (targetLevel - 1) * 0.5;
@@ -340,9 +336,9 @@ const command = {
                 multiplier: newMultiplier,
               },
             });
-            console.log(`User ${event.senderID} upgraded resort to level ${targetLevel} with ${newMultiplier}x multiplier for $${totalCost}`);
+            console.log(`User ${event.senderID} upgraded resort by ${levelsToAdd} levels to level ${targetLevel} with ${newMultiplier}x multiplier for $${totalCost}`);
             await chat.reply(
-              `Upgraded your resort to level ${targetLevel} for $${totalCost.toLocaleString()}! Earnings increased and process sped up to ${newMultiplier.toFixed(1)}x.`
+              `Upgraded your resort by ${levelsToAdd} levels to level ${targetLevel} for $${totalCost.toLocaleString()}! Earnings increased and process sped up to ${newMultiplier.toFixed(1)}x.`
             );
           },
         },
