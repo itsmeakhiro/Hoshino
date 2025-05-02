@@ -8,7 +8,7 @@ const command = {
     version: "1.0",
     developer: "Francis Loyd Raval",
     description:
-      "Check your profile info (balance), register, or change your username.",
+      "Check your profile info (balance, diamonds), register, or change your username.",
     category: "Economy",
     usage:
       "profile info | profile register <username> | profile changeusername <newusername>",
@@ -53,6 +53,7 @@ const command = {
             await hoshinoDB.set(event.senderID, {
               username,
               balance: 0,
+              diamonds: 0, // Initialize diamonds to 0
               expData: exp.raw(),
             });
             await chat.reply(`Successfully registered as ${username}!`);
@@ -61,7 +62,7 @@ const command = {
         {
           subcommand: "info",
           aliases: ["me", "i"],
-          description: "Check your balance.",
+          description: "Check your balance and diamonds.",
           usage: "profile info",
           async deploy({ chat, args, event, hoshinoDB, HoshinoUser, HoshinoEXP }) {
             const userData = await hoshinoDB.get(event.senderID);
@@ -70,12 +71,14 @@ const command = {
                 "You need to register first! Use: profile register <username>"
               );
             }
-            const { balance = 0, username, expData = { exp: 0, mana: 100, health: 100 } } = userData;
+            const { balance = 0, diamonds = 0, username, expData = { exp: 0, mana: 100, health: 100 } } = userData;
             const exp = new HoshinoEXP(expData);
             const formattedBalance = balance.toLocaleString("en-US");
+            const formattedDiamonds = diamonds.toLocaleString("en-US");
             const profileInfo = [
               `Username: ${username}`,
               `Balance: $${formattedBalance}`,
+              `Diamonds: 💎${formattedDiamonds}`, 
               `Level: ${exp.getLevel()}`,
               `Rank: ${exp.getRankString()}`,
               `EXP: ${exp.getEXP()} (Next: ${exp.getNextRemaningEXP()})`,
@@ -117,6 +120,7 @@ const command = {
               ...userData,
               username: newUsername,
               balance: userData.balance - 5000,
+              diamonds: userData.diamonds || 0, 
             });
             await chat.reply(
               `Username changed to ${newUsername}! 5,000 has been deducted from your balance.`
