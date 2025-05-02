@@ -10,7 +10,7 @@ const command = {
     developer: "Francis Loyd Raval",
     description:
       "Manage your resort: buy land, start operations, check status, collect earnings, construct facilities, recruit staff, and upgrade for more popularity and faster earnings.",
-    category: "Economy",
+    category: "Simulation",
     usage:
       "resort buy | resort start | resort status | resort collect | resort construct <facility> | resort recruit <role> | resort upgrade",
     config: {
@@ -20,7 +20,7 @@ const command = {
   },
   style: {
     type: "lines1",
-    title: "〘 🏝️ 〙 RESORT SIMULATION",
+    title: "〘 🏝️ 〙 RESORT",
     footer: "**Developed by**: Francis Loyd Raval",
   },
   font: {
