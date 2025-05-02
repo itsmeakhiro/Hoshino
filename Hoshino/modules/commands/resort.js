@@ -1,12 +1,12 @@
-/**
- * @type {HoshinoLia.Command} 
+/** 
+ * @type {HoshinoLia.Command}
  */
 
 const command = {
   manifest: {
     name: "resort",
     aliases: ["rsrt"],
-    version: "1.5",
+    version: "1.5.1",
     developer: "Francis Loyd Raval",
     description:
       "Manage your resort: buy land, start operations, check status, collect earnings, construct facilities, recruit staff, and upgrade for more popularity and faster earnings.",
@@ -20,7 +20,7 @@ const command = {
   },
   style: {
     type: "lines1",
-    title: "〘 🏝️ 〙 RESORT",
+    title: "〘 🏝️ 〙 RESORT SIMULATION",
     footer: "**Developed by**: Francis Loyd Raval",
   },
   font: {
@@ -309,6 +309,7 @@ const command = {
             const currentLevel = userData.resort.level;
             const levelsToAddInput = args.length > 0 ? args[0].trim() : "";
             const levelsToAdd = levelsToAddInput && !isNaN(parseFloat(levelsToAddInput)) ? parseInt(levelsToAddInput, 10) : 1;
+            console.log(`User ${event.senderID} upgrade input: ${levelsToAddInput}, parsed: ${levelsToAdd}`);
             if (levelsToAdd < 1) {
               return await chat.reply(
                 `Number of levels to add must be a positive number!`
@@ -320,7 +321,9 @@ const command = {
               const upgradeCost = 10000 * i;
               const tax = Math.round(upgradeCost * 0.1);
               totalCost += upgradeCost + tax;
+              console.log(`Level ${i} to ${i + 1}: cost=${upgradeCost}, tax=${tax}, total=${upgradeCost + tax}`);
             }
+            console.log(`User ${event.senderID} upgrade: currentLevel=${currentLevel}, levelsToAdd=${levelsToAdd}, targetLevel=${targetLevel}, totalCost=${totalCost}`);
             if (userData.balance < totalCost) {
               return await chat.reply(
                 `You need $${totalCost.toLocaleString()} to upgrade ${levelsToAdd} levels to reach level ${targetLevel}!`
@@ -336,9 +339,9 @@ const command = {
                 multiplier: newMultiplier,
               },
             });
-            console.log(`User ${event.senderID} upgraded resort by ${levelsToAdd} levels to level ${targetLevel} with ${newMultiplier}x multiplier for $${totalCost}`);
+            console.log(`User ${event.senderID} upgraded resort by ${levelsToAdd} levels from level ${currentLevel} to level ${targetLevel} with ${newMultiplier}x multiplier for $${totalCost}`);
             await chat.reply(
-              `Upgraded your resort by ${levelsToAdd} levels to level ${targetLevel} for $${totalCost.toLocaleString()}! Earnings increased and process sped up to ${newMultiplier.toFixed(1)}x.`
+              `Upgraded your resort by ${levelsToAdd} levels from level ${currentLevel}, now your resort is at level ${targetLevel} for $${totalCost.toLocaleString()}! Earnings increased and process sped up to ${newMultiplier.toFixed(1)}x.`
             );
           },
         },
