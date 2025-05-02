@@ -10,7 +10,7 @@ const command = {
     developer: "Francis Loyd Raval",
     description:
       "Manage beauty salons to earn money by offering services, upgrading shops, recruiting stylists, and opening branches.",
-    category: "Simulation",
+    category: "Economy",
     usage: "salon start [branchId] | salon buy | salon branch | salon recruit <branchId> | salon status [branchId] | salon collect [branchId] | salon upgrade <branchId>",
     config: {
       admin: false,
@@ -81,7 +81,7 @@ const command = {
             const branches = userData.salon.branches;
             if (branchId && !branches.find(b => b.branchId === branchId)) {
               return await chat.reply(
-                `Branch ${branchId} does not exist! You have ${branches.length} branch(es).`
+                `Invalid branch ID. Please use a number between 1 and ${branches.length}. Available branches: ${branches.map(b => b.branchId).join(", ")}.`
               );
             }
             let message = "";
@@ -256,11 +256,16 @@ const command = {
                 "You need to buy a salon first! Use 'salon buy' to purchase a Starter Salon."
               );
             }
+            if (!args[0] || isNaN(parseInt(args[0]))) {
+              return await chat.reply(
+                `Please specify a valid branch ID (e.g., salon recruit 1). Available branches: ${userData.salon.branches.map(b => b.branchId).join(", ")}.`
+              );
+            }
             const branchId = parseInt(args[0]);
             const branch = userData.salon.branches.find(b => b.branchId === branchId);
             if (!branch) {
               return await chat.reply(
-                `Branch ${branchId} does not exist! You have ${userData.salon.branches.length} branch(es).`
+                `Invalid branch ID. Please use a number between 1 and ${userData.salon.branches.length}. Available branches: ${userData.salon.branches.map(b => b.branchId).join(", ")}.`
               );
             }
             const currentRecruits = branch.recruits || 0;
@@ -312,7 +317,7 @@ const command = {
             const branches = userData.salon.branches;
             if (branchId && !branches.find(b => b.branchId === branchId)) {
               return await chat.reply(
-                `Branch ${branchId} does not exist! You have ${branches.length} branch(es).`
+                `Invalid branch ID. Please use a number between 1 and ${branches.length}. Available branches: ${branches.map(b => b.branchId).join(", ")}.`
               );
             }
             const targetBranches = branchId ? branches.filter(b => b.branchId === branchId) : branches;
@@ -384,7 +389,7 @@ const command = {
             const branches = userData.salon.branches;
             if (branchId && !branches.find(b => b.branchId === branchId)) {
               return await chat.reply(
-                `Branch ${branchId} does not exist! You have ${branches.length} branch(es).`
+                `Invalid branch ID. Please use a number between 1 and ${branches.length}. Available branches: ${branches.map(b => b.branchId).join(", ")}.`
               );
             }
             const lastCollectionTime = userData.salon.lastCollectionTime || 0;
@@ -464,11 +469,16 @@ const command = {
                 "You need to buy a salon first! Use 'salon buy' to purchase a Starter Salon."
               );
             }
+            if (!args[0] || isNaN(parseInt(args[0]))) {
+              return await chat.reply(
+                `Please specify a valid branch ID (e.g., salon upgrade 1). Available branches: ${userData.salon.branches.map(b => b.branchId).join(", ")}.`
+              );
+            }
             const branchId = parseInt(args[0]);
             const branch = userData.salon.branches.find(b => b.branchId === branchId);
             if (!branch) {
               return await chat.reply(
-                `Branch ${branchId} does not exist! You have ${userData.salon.branches.length} branch(es).`
+                `Invalid branch ID. Please use a number between 1 and ${userData.salon.branches.length}. Available branches: ${userData.salon.branches.map(b => b.branchId).join(", ")}.`
               );
             }
             const shopLevel = branch.shopLevel;
