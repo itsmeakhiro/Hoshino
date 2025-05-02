@@ -1,4 +1,7 @@
-/** @type {HoshinoLia.Command} */
+/** 
+ * @type {HoshinoLia.Command}
+ */
+
 const command = {
   manifest: {
     name: "resort",
@@ -7,9 +10,9 @@ const command = {
     developer: "Francis Loyd Raval",
     description:
       "Manage your resort: buy land, start operations, check status, collect earnings, construct facilities, recruit staff, and upgrade for more popularity and faster earnings.",
-    category: "Economy",
+    category: "Simulation",
     usage:
-      "resort buy | resort start | resort status | resort collect | resort construct <facility> | resort recruit <role> | resort upgrade [levelsToAdd]",
+      "resort buy | resort start | resort status | resort collect | resort construct <facility> | resort recruit <role> | resort upgrade",
     config: {
       admin: false,
       moderator: false,
@@ -17,7 +20,7 @@ const command = {
   },
   style: {
     type: "lines1",
-    title: "〘 🏝️ 〙 RESORT SIMULATION",
+    title: "〘 🏝️ 〙 RESORT",
     footer: "**Developed by**: Francis Loyd Raval",
   },
   font: {
@@ -295,7 +298,7 @@ const command = {
           subcommand: "upgrade",
           aliases: ["lvlup"],
           description: "Upgrade your resort by a number of levels to increase earnings and speed up the process.",
-          usage: "resort upgrade [levelsToAdd]",
+          usage: "resort upgrade",
           async deploy({ chat, args, event, hoshinoDB }) {
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.resort) {
