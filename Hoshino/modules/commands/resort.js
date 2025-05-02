@@ -1,16 +1,13 @@
-/**
- * @type {HoshinoLia.Command}
- */
-
+/** @type {HoshinoLia.Command} */
 const command = {
   manifest: {
     name: "resort",
     aliases: ["rsrt"],
-    version: "1.2",
+    version: "1.3",
     developer: "Francis Loyd Raval",
     description:
       "Manage your resort: buy land, start operations, check status, collect earnings, construct facilities, recruit staff, and upgrade for more popularity and faster earnings.",
-    category: "Simulation",
+    category: "Economy",
     usage:
       "resort buy | resort start | resort status | resort collect | resort construct <facility> | resort recruit <role> | resort upgrade",
     config: {
@@ -20,7 +17,7 @@ const command = {
   },
   style: {
     type: "lines1",
-    title: "〘 🏝️ 〙 RESORT",
+    title: "〘 🏝️ 〙 RESORT SIMULATION",
     footer: "**Developed by**: Francis Loyd Raval",
   },
   font: {
@@ -122,11 +119,13 @@ const command = {
             const totalEarningsPerHour = Math.round(
               (baseEarningsPerHour + facilityBonus + staffBonus) * resort.multiplier
             );
-            const referenceTime = resort.lastCollected > 0 ? resort.lastCollected : resort.startedAt;
+            const now = Date.now();
+            const referenceTime = resort.lastCollected > 0 && resort.lastCollected <= now ? resort.lastCollected : resort.startedAt;
             const hoursSinceLastCollect =
-              resort.status === "running" && referenceTime > 0
-                ? (Date.now() - referenceTime) / (1000 * 60 * 60)
+              resort.status === "running" && referenceTime > 0 && referenceTime <= now
+                ? (now - referenceTime) / (1000 * 60 * 60)
                 : 0;
+            console.log(`User ${event.senderID} status: hoursSinceLastCollect=${hoursSinceLastCollect}, referenceTime=${referenceTime}`);
             const pendingEarnings = resort.status === "running"
               ? Math.round(totalEarningsPerHour * hoursSinceLastCollect)
               : 0;
@@ -168,11 +167,13 @@ const command = {
             const totalEarningsPerHour = Math.round(
               (baseEarningsPerHour + facilityBonus + staffBonus) * resort.multiplier
             );
-            const referenceTime = resort.lastCollected > 0 ? resort.lastCollected : resort.startedAt;
+            const now = Date.now();
+            const referenceTime = resort.lastCollected > 0 && resort.lastCollected <= now ? resort.lastCollected : resort.startedAt;
             const hoursSinceLastCollect =
-              referenceTime > 0
-                ? (Date.now() - referenceTime) / (1000 * 60 * 60)
+              referenceTime > 0 && referenceTime <= now
+                ? (now - referenceTime) / (1000 * 60 * 60)
                 : 0;
+            console.log(`User ${event.senderID} collect: hoursSinceLastCollect=${hoursSinceLastCollect}, referenceTime=${referenceTime}`);
             const earnings = Math.round(totalEarningsPerHour * hoursSinceLastCollect);
             if (earnings <= 0) {
               return await chat.reply("No earnings to collect yet! Wait a bit longer.");
@@ -180,7 +181,7 @@ const command = {
             await hoshinoDB.set(event.senderID, {
               ...userData,
               balance: userData.balance + earnings,
-              resort: { ...resort, lastCollected: Date.now() },
+              resort: { ...resort, lastCollected: now },
             });
             console.log(`User ${event.senderID} collected $${earnings} from resort`);
             await chat.reply(
@@ -202,26 +203,27 @@ const command = {
               pool: { cost: 4000, tax: 80 },
               restaurant: { cost: 7000, tax: 140 },
             };
-            if (args.length < 1 || !facilities[args[0].toLowerCase()]) {
+            const facilityInput = args.length > 0 ? args[0].trim().toLowerCase() : "";
+            console.log(`User ${event.senderID} construct input: ${facilityInput}`);
+            if (!facilityInput || !facilities[facilityInput]) {
               return await chat.reply(
                 `Please specify a valid facility: hotel, golf, bar, spa, pool, or restaurant. Usage: resort construct <facility>`
               );
             }
-            const facility = args[0].toLowerCase();
-            const { cost, tax } = facilities[facility];
+            const { cost, tax } = facilities[facilityInput];
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.resort) {
               return await chat.reply(
                 "You need to buy a resort first! Use: resort buy"
               );
             }
-            if (userData.resort.facilities.includes(facility)) {
-              return await chat.reply(`You already have a ${facility}!`);
+            if (userData.resort.facilities.includes(facilityInput)) {
+              return await chat.reply(`You already have a ${facilityInput}!`);
             }
             const totalCost = cost + tax;
             if (userData.balance < totalCost) {
               return await chat.reply(
-                `You need $${totalCost.toLocaleString()} ($${cost.toLocaleString()} + $${tax.toLocaleString()} tax) to construct a ${facility}!`
+                `You need $${totalCost.toLocaleString()} ($${cost.toLocaleString()} + $${tax.toLocaleString()} tax) to construct a ${facilityInput}!`
               );
             }
             await hoshinoDB.set(event.senderID, {
@@ -229,12 +231,12 @@ const command = {
               balance: userData.balance - totalCost,
               resort: {
                 ...userData.resort,
-                facilities: [...userData.resort.facilities, facility],
+                facilities: [...userData.resort.facilities, facilityInput],
               },
             });
-            console.log(`User ${event.senderID} constructed a ${facility} for $${totalCost}`);
+            console.log(`User ${event.senderID} constructed a ${facilityInput} for $${totalCost}`);
             await chat.reply(
-              `Constructed a ${facility} for $${totalCost.toLocaleString()} (including $${tax.toLocaleString()} tax)! Earnings increased.`
+              `Constructed a ${facilityInput} for $${totalCost.toLocaleString()} (including $${tax.toLocaleString()} tax)! Earnings increased.`
             );
           },
         },
@@ -252,26 +254,27 @@ const command = {
               security: { cost: 2200, tax: 55 },
               entertainer: { cost: 2700, tax: 65 },
             };
-            if (args.length < 1 || !staffRoles[args[0].toLowerCase()]) {
+            const roleInput = args.length > 0 ? args[0].trim().toLowerCase() : "";
+            console.log(`User ${event.senderID} recruit input: ${roleInput}`);
+            if (!roleInput || !staffRoles[roleInput]) {
               return await chat.reply(
                 `Please specify a valid role: cashier, janitor, housekeeper, chef, security, or entertainer. Usage: resort recruit <role>`
               );
             }
-            const role = args[0].toLowerCase();
-            const { cost, tax } = staffRoles[role];
+            const { cost, tax } = staffRoles[roleInput];
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.resort) {
               return await chat.reply(
                 "You need to buy a resort first! Use: resort buy"
               );
             }
-            if (userData.resort.staff.includes(role)) {
-              return await chat.reply(`You already have a ${role}!`);
+            if (userData.resort.staff.includes(roleInput)) {
+              return await chat.reply(`You already have a ${roleInput}!`);
             }
             const totalCost = cost + tax;
             if (userData.balance < totalCost) {
               return await chat.reply(
-                `You need $${totalCost.toLocaleString()} ($${cost.toLocaleString()} + $${tax.toLocaleString()} salary) to recruit a ${role}!`
+                `You need $${totalCost.toLocaleString()} ($${cost.toLocaleString()} + $${tax.toLocaleString()} salary) to recruit a ${roleInput}!`
               );
             }
             await hoshinoDB.set(event.senderID, {
@@ -279,12 +282,12 @@ const command = {
               balance: userData.balance - totalCost,
               resort: {
                 ...userData.resort,
-                staff: [...userData.resort.staff, role],
+                staff: [...userData.resort.staff, roleInput],
               },
             });
-            console.log(`User ${event.senderID} recruited a ${role} for $${totalCost}`);
+            console.log(`User ${event.senderID} recruited a ${roleInput} for $${totalCost}`);
             await chat.reply(
-              `Recruited a ${role} for $${totalCost.toLocaleString()} (including $${tax.toLocaleString()} salary)! Earnings increased.`
+              `Recruited a ${roleInput} for $${totalCost.toLocaleString()} (including $${tax.toLocaleString()} salary)! Earnings increased.`
             );
           },
         },
