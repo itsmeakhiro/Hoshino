@@ -1,15 +1,18 @@
-/** @type {HoshinoLia.Command} */
+/**
+ * @type {HoshinoLia.Command} 
+ */
+
 const command = {
   manifest: {
     name: "resort",
     aliases: ["rsrt"],
-    version: "1.3",
+    version: "1.4",
     developer: "Francis Loyd Raval",
     description:
       "Manage your resort: buy land, start operations, check status, collect earnings, construct facilities, recruit staff, and upgrade for more popularity and faster earnings.",
-    category: "Economy",
+    category: "Simulation",
     usage:
-      "resort buy | resort start | resort status | resort collect | resort construct <facility> | resort recruit <role> | resort upgrade",
+      "resort buy | resort start | resort status | resort collect | resort construct <facility> | resort recruit <role> | resort upgrade [targetLevel]",
     config: {
       admin: false,
       moderator: false,
@@ -294,37 +297,51 @@ const command = {
         {
           subcommand: "upgrade",
           aliases: ["lvlup"],
-          description: "Upgrade your resort to increase earnings and speed up the process.",
-          usage: "resort upgrade",
-          async deploy({ chat, event, hoshinoDB }) {
+          description: "Upgrade your resort to a target level to increase earnings and speed up the process.",
+          usage: "resort upgrade [targetLevel]",
+          async deploy({ chat, args, event, hoshinoDB }) {
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.resort) {
               return await chat.reply(
                 "You need to buy a resort first! Use: resort buy"
               );
             }
-            const upgradeCost = 10000 * userData.resort.level;
-            const tax = Math.round(upgradeCost * 0.1);
-            const totalCost = upgradeCost + tax;
-            if (userData.balance < totalCost) {
+            const currentLevel = userData.resort.level;
+            const targetLevel = args.length > 0 && !isNaN(args[0]) ? parseInt(args[0], 10) : currentLevel + 1;
+            if (targetLevel <= currentLevel) {
               return await chat.reply(
-                `You need $${totalCost.toLocaleString()} ($${upgradeCost.toLocaleString()} + $${tax.toLocaleString()} tax) to upgrade your resort!`
+                `Target level must be higher than current level (${currentLevel})!`
               );
             }
-            const newLevel = userData.resort.level + 1;
-            const newMultiplier = 1.0 + (newLevel - 1) * 0.5;
+            if (targetLevel < 1) {
+              return await chat.reply(
+                `Target level must be a positive number!`
+              );
+            }
+            let totalCost = 0;
+            for (let i = currentLevel; i < targetLevel; i++) {
+              const upgradeCost = 10000 * i;
+              const tax = Math.round(upgradeCost * 0.1);
+              totalCost += upgradeCost + tax;
+            }
+            if (userData.balance < totalCost) {
+              return await chat.reply(
+                `You need $${totalCost.toLocaleString()} to upgrade to level ${targetLevel}!`
+              );
+            }
+            const newMultiplier = 1.0 + (targetLevel - 1) * 0.5;
             await hoshinoDB.set(event.senderID, {
               ...userData,
               balance: userData.balance - totalCost,
               resort: {
                 ...userData.resort,
-                level: newLevel,
+                level: targetLevel,
                 multiplier: newMultiplier,
               },
             });
-            console.log(`User ${event.senderID} upgraded resort to level ${newLevel} with ${newMultiplier}x multiplier for $${totalCost}`);
+            console.log(`User ${event.senderID} upgraded resort to level ${targetLevel} with ${newMultiplier}x multiplier for $${totalCost}`);
             await chat.reply(
-              `Upgraded your resort to level ${newLevel} for $${totalCost.toLocaleString()} (including $${tax.toLocaleString()} tax)! Earnings increased and process sped up to ${newMultiplier.toFixed(1)}x.`
+              `Upgraded your resort to level ${targetLevel} for $${totalCost.toLocaleString()}! Earnings increased and process sped up to ${newMultiplier.toFixed(1)}x.`
             );
           },
         },
