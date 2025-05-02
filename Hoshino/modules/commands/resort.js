@@ -1,5 +1,5 @@
 /**
- * @type {HoshinoLia.Command} 
+ * @type {HoshinoLia.Command}
  */
 
 const command = {
@@ -36,7 +36,7 @@ const command = {
           aliases: ["purchase"],
           description: "Buy a land for your resort with a 10% tax.",
           usage: "resort buy",
-          async deploy({ chat, event, hoshinoDB, HoshinoUser }) {
+          async deploy({ chat, event, hoshinoDB }) {
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
               return await chat.reply(
@@ -307,7 +307,8 @@ const command = {
               );
             }
             const currentLevel = userData.resort.level;
-            const targetLevel = args.length > 0 && !isNaN(args[0]) ? parseInt(args[0], 10) : currentLevel + 1;
+            const targetLevelInput = args.length > 0 ? args[0].trim() : "";
+            const targetLevel = targetLevelInput && !isNaN(targetLevelInput) ? parseInt(targetLevelInput, 10) : currentLevel + 1;
             if (targetLevel <= currentLevel) {
               return await chat.reply(
                 `Target level must be higher than current level (${currentLevel})!`
