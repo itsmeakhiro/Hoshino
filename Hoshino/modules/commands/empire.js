@@ -45,7 +45,7 @@ const command = {
             if (userData.empire && userData.empire.hasLand) {
               return await chat.reply("You already own land!");
             }
-            const success = Math.random() < 0.5; // 50% chance
+            const success = Math.random() < 0.5; 
             if (!success) {
               return await chat.reply(
                 "Failed to find suitable land. Try again!"
@@ -79,7 +79,7 @@ const command = {
                 "Specify what to recruit. Usage: empire recruit <worker|soldier>"
               );
             }
-            const type = args[0].toLowerCase();
+            const type = (args[0].toLowerCase() === "recruit" ? args[1] : args[0]).toLowerCase();
             if (!["worker", "soldier"].includes(type)) {
               return await chat.reply(
                 "Invalid type! Use: empire recruit <worker|soldier>"
@@ -307,10 +307,10 @@ const command = {
               return await chat.reply("No other user joined the game yet.");
             }
             const [targetUID, targetData] = otherUsers[Math.floor(Math.random() * otherUsers.length)];
-            const success = Math.random() < 0.5; // 50% chance
-            const randomDiamonds = Math.floor(Math.random() * 5) + 1; // 1-5 diamonds
+            const success = Math.random() < 0.5; 
+            const randomDiamonds = Math.floor(Math.random() * 5) + 1; 
             if (success) {
-              const loot = Math.floor((targetData.balance || 0) * 0.5); // Steal 50% of balance
+              const loot = Math.floor((targetData.balance || 0) * 0.5); 
               await hoshinoDB.set(event.senderID, {
                 ...userData,
                 balance: (userData.balance || 0) + loot,
@@ -325,7 +325,7 @@ const command = {
                     ...targetData.empire.castle,
                     health: Math.max(0, targetData.empire.castle.health - 20),
                   },
-                  soldiers: targetData.empire.soldiers.slice(1), // Lose 1 soldier
+                  soldiers: targetData.empire.soldiers.slice(1),
                 },
                 balance: Math.max(0, (targetData.balance || 0) - loot),
               });
@@ -341,7 +341,7 @@ const command = {
                     ...userData.empire.castle,
                     health: Math.max(0, userData.empire.castle.health - 20),
                   },
-                  soldiers: userData.empire.soldiers.slice(1), // Lose 1 soldier
+                  soldiers: userData.empire.soldiers.slice(1), 
                   lastConquer: now,
                 },
                 balance: 0,
