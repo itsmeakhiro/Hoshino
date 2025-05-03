@@ -287,7 +287,7 @@ const command = {
           aliases: ["raid"],
           description: "Attempt to conquer another player's castle (50% chance, 30-min cooldown).",
           usage: "empire conquer",
-          async deploy({ chat, event, hoshinoDB, HoshinoExp }) {
+          async deploy({ chat, event, hoshinoDB, HoshinoEXP }) {
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.empire || !userData.empire.hasLand) {
               return await chat.reply(
