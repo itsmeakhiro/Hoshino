@@ -1,4 +1,4 @@
-/** 
+/**
  * @type {HoshinoLia.Command}
  */
 
@@ -13,7 +13,7 @@ const command = {
     description: "Manage and battle digital roosters in a fun, cruelty-free game.",
     category: "Game",
     usage:
-      "sabong buy | sabong uncage <index> | sabong feed | sabong breed <index1> <index2> | sabong trade <username> <index> | sabong battle <bet> | sabong status",
+      "sabong buy | sabong uncage | sabong feed | sabong breed <index1> <index2> | sabong trade <username> <index> | sabong battle <bet> | sabong status",
     config: {
       admin: false,
       moderator: false,
@@ -69,15 +69,15 @@ const command = {
             });
             console.log(`Buy: Added rooster to roosters=${JSON.stringify(roosters)}`);
             await chat.reply(
-              `Bought a ${rooster.breed} rooster with ${rooster.ability} ability (Power: ${rooster.power}) for $${price.toLocaleString()}! Uncage it with: sabong uncage ${roosters.length}`
+              `Bought a ${rooster.breed} rooster with ${rooster.ability} ability (Power: ${rooster.power}) for $${price.toLocaleString()}! Uncage it with: sabong uncage`
             );
           },
         },
         {
           subcommand: "uncage",
           aliases: ["claim"],
-          description: "Set a rooster as your active fighter.",
-          usage: "sabong uncage <index>",
+          description: "Uncage your first rooster as the active fighter.",
+          usage: "sabong uncage",
           async deploy({ chat, args, event, hoshinoDB, HoshinoEXP }) {
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
@@ -88,23 +88,12 @@ const command = {
             if (!Array.isArray(userData.roosters) || userData.roosters.length === 0) {
               return await chat.reply("You don't own any roosters! Use: sabong buy");
             }
-            if (!args[0]) {
-              return await chat.reply(
-                "Please provide a rooster index. Usage: sabong uncage <index>"
-              );
-            }
-            const index = parseInt(args[0]) - 1;
-            console.log(`Uncage: args=${JSON.stringify(args)}, index=${index}, roosters.length=${userData.roosters.length}, roosters=${JSON.stringify(userData.roosters)}`);
-            if (isNaN(index) || index < 0 || index >= userData.roosters.length) {
-              return await chat.reply(
-                `Invalid rooster index. You have ${userData.roosters.length} rooster${userData.roosters.length === 1 ? '' : 's'}. Use an index from 1 to ${userData.roosters.length}.`
-              );
-            }
+            console.log(`Uncage: args=${JSON.stringify(args)}, roosters.length=${userData.roosters.length}, roosters=${JSON.stringify(userData.roosters)}`);
             await hoshinoDB.set(event.senderID, {
               ...userData,
-              activeRooster: index,
+              activeRooster: 0,
             });
-            const rooster = userData.roosters[index];
+            const rooster = userData.roosters[0];
             await chat.reply(
               `Uncaged your ${rooster.breed} rooster with ${rooster.ability} ability (Power: ${rooster.power}) as your active fighter!`
             );
@@ -126,7 +115,7 @@ const command = {
               return await chat.reply("You don't own any roosters! Use: sabong buy");
             }
             if (userData.activeRooster == null) {
-              return await chat.reply("You need to uncage a rooster first! Use: sabong uncage <index>");
+              return await chat.reply("You need to uncage a rooster first! Use: sabong uncage");
             }
             const roosters = [...userData.roosters];
             const rooster = roosters[userData.activeRooster];
@@ -274,7 +263,7 @@ const command = {
               return await chat.reply("You don't own any roosters! Use: sabong buy");
             }
             if (userData.activeRooster == null) {
-              return await chat.reply("You need to uncage a rooster first! Use: sabong uncage <index>");
+              return await chat.reply("You need to uncage a rooster first! Use: sabong uncage");
             }
             const bet = parseInt(args[0]);
             if (isNaN(bet) || bet <= 0) {
