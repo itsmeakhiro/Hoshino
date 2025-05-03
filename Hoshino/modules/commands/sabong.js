@@ -1,4 +1,4 @@
-/**
+/** 
  * @type {HoshinoLia.Command}
  */
 
@@ -59,6 +59,7 @@ const command = {
               ability: abilities[Math.floor(Math.random() * abilities.length)],
               power,
               level: 1,
+              lastFed: 0,
             };
             const roosters = Array.isArray(userData.roosters) ? [...userData.roosters] : [];
             roosters.push(rooster);
@@ -102,7 +103,7 @@ const command = {
         {
           subcommand: "feed",
           aliases: ["train"],
-          description: "Feed your active rooster to level it up and gain random XP (10-30).",
+          description: "Feed your active rooster when hungry to level it up and upgrade its ability.",
           usage: "sabong feed",
           async deploy({ chat, event, hoshinoDB, HoshinoEXP }) {
             const userData = await hoshinoDB.get(event.senderID);
@@ -119,17 +120,22 @@ const command = {
             }
             const roosters = [...userData.roosters];
             const rooster = roosters[userData.activeRooster];
+            const hungerCooldown = 3600000; 
+            if (rooster.lastFed && Date.now() - rooster.lastFed < hungerCooldown) {
+              return await chat.reply(
+                `Your ${rooster.breed} rooster is not hungry yet! Try again later.`
+              );
+            }
             rooster.level = (rooster.level || 1) + 1;
-            const exp = new HoshinoEXP(userData.expData || { exp: 0, mana: 100, health: 100 });
-            const xpGained = Math.floor(Math.random() * 21) + 10;
-            exp.expControls.raise(xpGained);
+            const abilities = ["Speed", "Strength", "Agility", "Endurance", "Precision"];
+            rooster.ability = abilities[Math.floor(Math.random() * abilities.length)];
+            rooster.lastFed = Date.now();
             await hoshinoDB.set(event.senderID, {
               ...userData,
               roosters,
-              expData: exp.raw(),
             });
             await chat.reply(
-              `Fed your ${rooster.breed} rooster! It reached level ${rooster.level}, and you gained ${xpGained} XP (Player Level: ${exp.getLevel()}).`
+              `Fed your ${rooster.breed} rooster! It reached level ${rooster.level} with upgraded ${rooster.ability} ability.`
             );
           },
         },
@@ -173,6 +179,7 @@ const command = {
               ability: Math.random() < 0.5 ? rooster1.ability : rooster2.ability,
               power: Math.floor((rooster1.power + rooster2.power) / 2 * (0.8 + Math.random() * 0.4)),
               level: 1,
+              lastFed: 0,
             };
             const roosters = [...userData.roosters];
             roosters.push(newRooster);
@@ -265,7 +272,16 @@ const command = {
             if (userData.activeRooster == null) {
               return await chat.reply("You need to uncage a rooster first! Use: sabong uncage");
             }
-            const bet = parseInt(args[0]);
+            console.log(`Battle: args=${JSON.stringify(args)}`);
+            let bet;
+            if (args[0]) {
+              bet = parseInt(args[0]);
+            } else {
+              const argString = args.join(" ");
+              const match = argString.match(/\d+/);
+              bet = match ? parseInt(match[0]) : NaN;
+            }
+            console.log(`Battle: parsed bet=${bet}`);
             if (isNaN(bet) || bet <= 0) {
               return await chat.reply("Please provide a valid bet amount. Usage: sabong battle <bet>");
             }
@@ -288,8 +304,8 @@ const command = {
             const opponentRooster = opponentData.roosters[opponentData.activeRooster];
             const userExp = new HoshinoEXP(userData.expData || { exp: 0, mana: 100, health: 100 });
             const opponentExp = new HoshinoEXP(opponentData.expData || { exp: 0, mana: 100, health: 100 });
-            const userPower = userRooster.power + userExp.getLevel() * 10;
-            const opponentPower = opponentRooster.power + opponentExp.getLevel() * 10;
+            const userPower = userRooster.power + userRooster.level * 5;
+            const opponentPower = opponentRooster.power + opponentRooster.level * 5;
             const powerDiff = (userPower - opponentPower) / (userPower + opponentPower);
             const winChance = 0.5 + powerDiff * 0.5;
             const userWins = Math.random() < winChance;
@@ -351,6 +367,7 @@ const command = {
             const roosters = userData.roosters.map((r, i) => ({
               ...r,
               level: r.level || 1,
+              lastFed: r.lastFed || 0,
             }));
             await hoshinoDB.set(event.senderID, {
               ...userData,
