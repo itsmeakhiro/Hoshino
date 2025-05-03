@@ -1,4 +1,4 @@
-/**
+/** 
  * @type {HoshinoLia.Command}
  */
 
@@ -13,7 +13,7 @@ const command = {
     description: "Manage and battle digital roosters in a fun, cruelty-free game.",
     category: "Game",
     usage:
-      "sabong buy | sabong uncage <index> | sabong feed | sabong breed <index1> <index2> | sabong trade <username> <index> | sabong battle <bet>",
+      "sabong buy | sabong uncage <index> | sabong feed | sabong breed <index1> <index2> | sabong trade <username> <index> | sabong battle <bet> | sabong status",
     config: {
       admin: false,
       moderator: false,
@@ -35,7 +35,7 @@ const command = {
         {
           subcommand: "buy",
           aliases: ["purchase"],
-          description: "Buy a random rooster with unique breed and abilities.",
+          description: "Buy a random rooster for 100K, requiring uncaging.",
           usage: "sabong buy",
           async deploy({ chat, event, hoshinoDB, HoshinoEXP }) {
             const userData = await hoshinoDB.get(event.senderID);
@@ -44,30 +44,32 @@ const command = {
                 "You need to register first! Use: profile register <username>"
               );
             }
-            const breeds = ["Asil", "Kelso", "Claret", "Shamo", "Malay"];
-            const abilities = ["Speed", "Strength", "Agility", "Endurance", "Precision"];
-            const power = Math.floor(Math.random() * 100) + 1; 
-            const price = 100000 + power * 10000; 
+            const price = 100000;
             if (userData.balance < price) {
               return await chat.reply(
-                `You need $${price.toLocaleString()} to buy this rooster!`
+                `You need $${price.toLocaleString()} to buy a rooster!`
               );
             }
+            const breeds = ["Asil", "Kelso", "Claret", "Shamo", "Malay"];
+            const abilities = ["Speed", "Strength", "Agility", "Endurance", "Precision"];
+            const power = Math.floor(Math.random() * 100) + 1;
             const rooster = {
               id: crypto.randomBytes(8).toString('hex'),
               breed: breeds[Math.floor(Math.random() * breeds.length)],
               ability: abilities[Math.floor(Math.random() * abilities.length)],
               power,
+              level: 1,
             };
-            const roosters = userData.roosters || [];
+            const roosters = Array.isArray(userData.roosters) ? [...userData.roosters] : [];
             roosters.push(rooster);
             await hoshinoDB.set(event.senderID, {
               ...userData,
               balance: userData.balance - price,
               roosters,
             });
+            console.log(`Buy: Added rooster to roosters=${JSON.stringify(roosters)}`);
             await chat.reply(
-              `Bought a ${rooster.breed} rooster with ${rooster.ability} ability (Power: ${rooster.power}) for $${price.toLocaleString()}!`
+              `Bought a ${rooster.breed} rooster with ${rooster.ability} ability (Power: ${rooster.power}) for $${price.toLocaleString()}! Uncage it with: sabong uncage ${roosters.length}`
             );
           },
         },
@@ -83,13 +85,19 @@ const command = {
                 "You need to register first! Use: profile register <username>"
               );
             }
-            if (!userData.roosters || userData.roosters.length === 0) {
+            if (!Array.isArray(userData.roosters) || userData.roosters.length === 0) {
               return await chat.reply("You don't own any roosters! Use: sabong buy");
             }
+            if (!args[0]) {
+              return await chat.reply(
+                "Please provide a rooster index. Usage: sabong uncage <index>"
+              );
+            }
             const index = parseInt(args[0]) - 1;
+            console.log(`Uncage: args=${JSON.stringify(args)}, index=${index}, roosters.length=${userData.roosters.length}, roosters=${JSON.stringify(userData.roosters)}`);
             if (isNaN(index) || index < 0 || index >= userData.roosters.length) {
               return await chat.reply(
-                `Invalid rooster index. You have ${userData.roosters.length} roosters.`
+                `Invalid rooster index. You have ${userData.roosters.length} rooster${userData.roosters.length === 1 ? '' : 's'}. Use an index from 1 to ${userData.roosters.length}.`
               );
             }
             await hoshinoDB.set(event.senderID, {
@@ -98,14 +106,14 @@ const command = {
             });
             const rooster = userData.roosters[index];
             await chat.reply(
-              `Uncaged your ${rooster.breed} rooster with ${rooster.ability} ability as your active fighter!`
+              `Uncaged your ${rooster.breed} rooster with ${rooster.ability} ability (Power: ${rooster.power}) as your active fighter!`
             );
           },
         },
         {
           subcommand: "feed",
           aliases: ["train"],
-          description: "Feed your active rooster to gain 20 XP for yourself.",
+          description: "Feed your active rooster to level it up and gain random XP (10-30).",
           usage: "sabong feed",
           async deploy({ chat, event, hoshinoDB, HoshinoEXP }) {
             const userData = await hoshinoDB.get(event.senderID);
@@ -120,15 +128,19 @@ const command = {
             if (userData.activeRooster == null) {
               return await chat.reply("You need to uncage a rooster first! Use: sabong uncage <index>");
             }
-            const rooster = userData.roosters[userData.activeRooster];
+            const roosters = [...userData.roosters];
+            const rooster = roosters[userData.activeRooster];
+            rooster.level = (rooster.level || 1) + 1;
             const exp = new HoshinoEXP(userData.expData || { exp: 0, mana: 100, health: 100 });
-            exp.expControls.raise(20); 
+            const xpGained = Math.floor(Math.random() * 21) + 10;
+            exp.expControls.raise(xpGained);
             await hoshinoDB.set(event.senderID, {
               ...userData,
+              roosters,
               expData: exp.raw(),
             });
             await chat.reply(
-              `Fed your ${rooster.breed} rooster! You gained 20 XP and are now level ${exp.getLevel()}.`
+              `Fed your ${rooster.breed} rooster! It reached level ${rooster.level}, and you gained ${xpGained} XP (Player Level: ${exp.getLevel()}).`
             );
           },
         },
@@ -159,7 +171,7 @@ const command = {
               index1 === index2
             ) {
               return await chat.reply(
-                `Invalid rooster indices. You have ${userData.roosters.length} roosters.`
+                `Invalid rooster indices. You have ${userData.roosters.length} rooster${userData.roosters.length === 1 ? '' : 's'}.`
               );
             }
             const rooster1 = userData.roosters[index1];
@@ -170,9 +182,10 @@ const command = {
               id: crypto.randomBytes(8).toString('hex'),
               breed: breeds[Math.floor(Math.random() * breeds.length)],
               ability: Math.random() < 0.5 ? rooster1.ability : rooster2.ability,
-              power: Math.floor((rooster1.power + rooster2.power) / 2 * (0.8 + Math.random() * 0.4)), // 80-120% of average
+              power: Math.floor((rooster1.power + rooster2.power) / 2 * (0.8 + Math.random() * 0.4)),
+              level: 1,
             };
-            const roosters = userData.roosters;
+            const roosters = [...userData.roosters];
             roosters.push(newRooster);
             await hoshinoDB.set(event.senderID, {
               ...userData,
@@ -207,7 +220,7 @@ const command = {
             const index = parseInt(args[args.length - 1]) - 1;
             if (isNaN(index) || index < 0 || index >= userData.roosters.length) {
               return await chat.reply(
-                `Invalid rooster index. You have ${userData.roosters.length} roosters.`
+                `Invalid rooster index. You have ${userData.roosters.length} rooster${userData.roosters.length === 1 ? '' : 's'}.`
               );
             }
             const allUsers = await hoshinoDB.getAll();
@@ -288,17 +301,18 @@ const command = {
             const opponentExp = new HoshinoEXP(opponentData.expData || { exp: 0, mana: 100, health: 100 });
             const userPower = userRooster.power + userExp.getLevel() * 10;
             const opponentPower = opponentRooster.power + opponentExp.getLevel() * 10;
-            const powerDiff = (userPower - opponentPower) / (userPower + opponentPower); 
-            const winChance = 0.5 + powerDiff * 0.5; 
+            const powerDiff = (userPower - opponentPower) / (userPower + opponentPower);
+            const winChance = 0.5 + powerDiff * 0.5;
             const userWins = Math.random() < winChance;
-            const userDiamonds = Math.floor(Math.random() * 100) + 1; 
-            const opponentDiamonds = Math.floor(Math.random() * 100) + 1; 
+            const userDiamonds = Math.floor(Math.random() * 100) + 1;
+            const opponentDiamonds = Math.floor(Math.random() * 100) + 1;
             let message;
             if (userWins) {
-              userExp.expControls.raise(50); 
+              const xpGained = Math.floor(Math.random() * 41) + 30;
+              userExp.expControls.raise(xpGained);
               await hoshinoDB.set(event.senderID, {
                 ...userData,
-                balance: userData.balance + bet * 2, 
+                balance: userData.balance + bet * 2,
                 diamonds: (userData.diamonds || 0) + userDiamonds + opponentDiamonds,
                 expData: userExp.raw(),
               });
@@ -308,7 +322,7 @@ const command = {
               });
               message = [
                 `Your ${userRooster.breed} rooster defeated ${opponentData.username}'s ${opponentRooster.breed} rooster!`,
-                `You won $${(bet * 2).toLocaleString()}, ${userDiamonds + opponentDiamonds} diamonds, and 50 XP.`,
+                `You won $${(bet * 2).toLocaleString()}, ${userDiamonds + opponentDiamonds} diamonds, and ${xpGained} XP.`,
                 `You are now level ${userExp.getLevel()}.`
               ].join("\n");
             } else {
@@ -328,6 +342,42 @@ const command = {
               ].join("\n");
             }
             await chat.reply(message);
+          },
+        },
+        {
+          subcommand: "status",
+          aliases: ["list", "roosters"],
+          description: "Check all your roosters' details.",
+          usage: "sabong status",
+          async deploy({ chat, event, hoshinoDB, HoshinoEXP }) {
+            const userData = await hoshinoDB.get(event.senderID);
+            if (!userData || !userData.username) {
+              return await chat.reply(
+                "You need to register first! Use: profile register <username>"
+              );
+            }
+            if (!Array.isArray(userData.roosters) || userData.roosters.length === 0) {
+              return await chat.reply("You don't own any roosters! Use: sabong buy");
+            }
+            const roosters = userData.roosters.map((r, i) => ({
+              ...r,
+              level: r.level || 1,
+            }));
+            await hoshinoDB.set(event.senderID, {
+              ...userData,
+              roosters,
+            });
+            const output = ["Your Roosters:"];
+            roosters.forEach((rooster, i) => {
+              output.push(
+                `${i + 1}. ${rooster.breed}`,
+                `   RoosterID: ${rooster.id}`,
+                `   Level: ${rooster.level}`,
+                `   Ability: ${rooster.ability}`
+              );
+            });
+            output.push(`Active Rooster: ${userData.activeRooster != null ? userData.activeRooster + 1 : "None"}`);
+            await chat.reply(output.join("\n"));
           },
         },
       ],
