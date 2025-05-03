@@ -1,6 +1,7 @@
 /**
  * @type {HoshinoLia.Command}
  */
+
 const command = {
   manifest: {
     name: "empire",
@@ -8,10 +9,10 @@ const command = {
     version: "1.0",
     developer: "Francis Loyd Raval",
     description:
-      "A simulation game where you build an empire by buying land, recruiting workers and soldiers, earning money, training soldiers, upgrading your castle, and conquering others.",
+      "A simulation game where you build an empire by buying land, recruiting workers and soldiers, earning money, training soldiers, upgrading your castle, conquering others, and rebuilding damaged castles.",
     category: "Simulation",
     usage:
-      "empire buy | empire recruit <worker|soldier> | empire work | empire collect | empire train | empire status | empire upgrade | empire conquer",
+      "empire buy | empire recruit <worker|soldier> | empire work | empire collect | empire train | empire status | empire upgrade | empire conquer | empire rebuild",
     config: {
       admin: false,
       moderator: false,
@@ -45,7 +46,7 @@ const command = {
             if (userData.empire && userData.empire.hasLand) {
               return await chat.reply("You already own land!");
             }
-            const success = Math.random() < 0.5; 
+            const success = Math.random() < 0.5;
             if (!success) {
               return await chat.reply(
                 "Failed to find suitable land. Try again!"
@@ -61,7 +62,10 @@ const command = {
                 earnings: 0,
                 lastWork: 0,
                 lastConquer: 0,
+                rebuildProgress: 0,
+                lastRebuild: 0,
               },
+              exp: { exp: 0, mana: 100, health: 100 },
             });
             await chat.reply(
               "You successfully bought land and built a weak castle!"
@@ -138,7 +142,7 @@ const command = {
                 `Workers are still working. Check back in ${remaining} minutes.`
               );
             }
-            const earnings = userData.empire.workers.length * 100; // 100 per worker
+            const earnings = userData.empire.workers.length * 100;
             await hoshinoDB.set(event.senderID, {
               ...userData,
               empire: {
@@ -212,7 +216,7 @@ const command = {
         {
           subcommand: "status",
           aliases: ["stats", "info"],
-          description: "Check your empire's earnings, castle, and soldier status.",
+          description: "Check your empire's earnings, castle, soldier status, and rebuild progress.",
           usage: "empire status",
           async deploy({ chat, event, hoshinoDB }) {
             const userData = await hoshinoDB.get(event.senderID);
@@ -221,15 +225,23 @@ const command = {
                 "You need to buy land first! Use: empire buy"
               );
             }
-            const { castle, workers, soldiers, earnings = 0 } = userData.empire;
+            const { castle, workers, soldiers, earnings = 0, rebuildProgress = 0, lastRebuild = 0 } = userData.empire;
+            const maxHealth = 100 + (castle.level - 1) * 20;
+            const userExp = new HoshinoEXP(userData.exp || { exp: 0, mana: 100, health: 100 });
             const statusInfo = [
-              `Castle: Level ${castle.level}, Health ${castle.health}, Defense ${castle.defense}`,
+              `Castle: Level ${castle.level}, Health ${castle.health}/${maxHealth}, Defense ${castle.defense}`,
               `Workers: ${workers.length} (Level ${workers[0]?.level || 1})`,
               `Soldiers: ${soldiers.length} (Level ${soldiers[0]?.level || 1})`,
               `Pending Earnings: $${earnings.toLocaleString("en-US")}`,
               soldiers.length > 0
                 ? `Soldier Stats: Strength ${soldiers[0].strength}, Agility ${soldiers[0].agility}, Endurance ${soldiers[0].endurance}`
                 : "No soldiers recruited.",
+              rebuildProgress > 0
+                ? `Rebuild Progress: ${(rebuildProgress * 100).toFixed(1)}%`
+                : castle.health < maxHealth
+                ? "Castle damaged! Use 'empire rebuild' to repair."
+                : "Castle at full health.",
+              `EXP: ${userExp.getEXP()}, Level: ${userExp.getLevel()}, Rank: ${userExp.getRankString()}`,
             ].join("\n");
             await chat.reply(statusInfo);
           },
@@ -275,7 +287,7 @@ const command = {
           aliases: ["raid"],
           description: "Attempt to conquer another player's castle (50% chance, 30-min cooldown).",
           usage: "empire conquer",
-          async deploy({ chat, event, hoshinoDB }) {
+          async deploy({ chat, event, hoshinoDB, HoshinoExp }) {
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.empire || !userData.empire.hasLand) {
               return await chat.reply(
@@ -307,15 +319,19 @@ const command = {
               return await chat.reply("No other user joined the game yet.");
             }
             const [targetUID, targetData] = otherUsers[Math.floor(Math.random() * otherUsers.length)];
-            const success = Math.random() < 0.5; 
-            const randomDiamonds = Math.floor(Math.random() * 5) + 1; 
+            const success = Math.random() < 0.5;
+            const randomDiamonds = Math.floor(Math.random() * 5) + 1;
+            const userExp = new HoshinoEXP(userData.exp || { exp: 0, mana: 100, health: 100 });
+            const targetExp = new HoshinoEXP(targetData.exp || { exp: 0, mana: 100, health: 100 });
             if (success) {
-              const loot = Math.floor((targetData.balance || 0) * 0.5); 
+              const loot = Math.floor((targetData.balance || 0) * 0.5);
+              userExp.raise(50);
               await hoshinoDB.set(event.senderID, {
                 ...userData,
                 balance: (userData.balance || 0) + loot,
                 diamonds: (userData.diamonds || 0) + randomDiamonds,
                 empire: { ...userData.empire, lastConquer: now },
+                exp: userExp.raw(),
               });
               await hoshinoDB.set(targetUID, {
                 ...targetData,
@@ -328,11 +344,15 @@ const command = {
                   soldiers: targetData.empire.soldiers.slice(1),
                 },
                 balance: Math.max(0, (targetData.balance || 0) - loot),
+                exp: targetExp.raw(),
               });
               await chat.reply(
-                `You conquered ${targetData.username}'s castle! Gained $${loot} and 💎${randomDiamonds}. Their castle lost 20 health and 1 soldier.`
+                `You conquered ${targetData.username}'s castle! Gained $${loot}, 💎${randomDiamonds}, and 50 EXP. Their castle lost 20 health and 1 soldier.`
               );
             } else {
+              const expToLose = Math.min(userExp.getEXP(), 20);
+              userExp.decrease(expToLose);
+              targetExp.raise(expToLose);
               await hoshinoDB.set(event.senderID, {
                 ...userData,
                 empire: {
@@ -341,18 +361,69 @@ const command = {
                     ...userData.empire.castle,
                     health: Math.max(0, userData.empire.castle.health - 20),
                   },
-                  soldiers: userData.empire.soldiers.slice(1), 
+                  soldiers: userData.empire.soldiers.slice(1),
                   lastConquer: now,
                 },
                 balance: 0,
+                exp: userExp.raw(),
               });
               await hoshinoDB.set(targetUID, {
                 ...targetData,
                 balance: (targetData.balance || 0) + (userData.balance || 0),
                 diamonds: (targetData.diamonds || 0) + randomDiamonds,
+                exp: targetExp.raw(),
               });
               await chat.reply(
-                `You failed to conquer ${targetData.username}'s castle! Your castle lost 20 health, 1 soldier, all money, and they gained 💎${randomDiamonds}.`
+                `You failed to conquer ${targetData.username}'s castle! Your castle lost 20 health, 1 soldier, all money, and ${expToLose} EXP. They gained 💎${randomDiamonds} and ${expToLose} EXP.`
+              );
+            }
+          },
+        },
+        {
+          subcommand: "rebuild",
+          aliases: ["repair"],
+          description: "Rebuild your damaged castle using workers (faster with higher-level workers).",
+          usage: "empire rebuild",
+          async deploy({ chat, event, hoshinoDB }) {
+            const userData = await hoshinoDB.get(event.senderID);
+            if (!userData || !userData.empire || !userData.empire.hasLand) {
+              return await chat.reply(
+                "You need to buy land first! Use: empire buy"
+              );
+            }
+            if (userData.empire.workers.length === 0) {
+              return await chat.reply(
+                "You need at least one worker to rebuild! Use: empire recruit worker"
+              );
+            }
+            const { castle, workers, rebuildProgress = 0, lastRebuild = 0 } = userData.empire;
+            const maxHealth = 100 + (castle.level - 1) * 20;
+            if (castle.health >= maxHealth) {
+              return await chat.reply("Your castle is already at full health!");
+            }
+            const avgWorkerLevel = workers.reduce((sum, w) => sum + w.level, 0) / workers.length;
+            const baseRebuildTime = Math.max(15, 60 - (avgWorkerLevel - 1) * 5) * 60 * 1000;
+            const now = Date.now();
+            const elapsed = now - lastRebuild;
+            const progressIncrement = elapsed / baseRebuildTime;
+            const newProgress = Math.min(1, rebuildProgress + progressIncrement);
+            const healthToRestore = (maxHealth - castle.health) * newProgress;
+            const newHealth = Math.min(maxHealth, castle.health + Math.floor(healthToRestore));
+            await hoshinoDB.set(event.senderID, {
+              ...userData,
+              empire: {
+                ...userData.empire,
+                castle: { ...castle, health: newHealth },
+                rebuildProgress: newHealth >= maxHealth ? 0 : newProgress,
+                lastRebuild: now,
+              },
+            });
+            if (newHealth >= maxHealth) {
+              await chat.reply("Your castle has been fully rebuilt!");
+            } else {
+              const remainingTime = Math.ceil(((1 - newProgress) * baseRebuildTime) / 60000);
+              await chat.reply(
+                `Rebuilding in progress. Castle health: ${newHealth}/${maxHealth}. Check back in ${remainingTime} minutes.`
               );
             }
           },
