@@ -58,7 +58,14 @@ class HoshinoEXP {
   }
 
   setEXP(exp) {
+    const previousLevel = this.getLevel();
     this.cxp.exp = exp;
+    const newLevel = this.getLevel();
+
+    if (newLevel > previousLevel) {
+      this.cxp.health = this.getMaxHealth();
+      this.cxp.mana = this.getMaxMana();
+    }
     return true;
   }
 
@@ -101,7 +108,14 @@ class HoshinoEXP {
   }
 
   setLevel(level) {
+    const previousLevel = this.getLevel();
     this.setEXP(HoshinoEXP.getEXPFromLevel(level));
+    const newLevel = this.getLevel();
+
+    if (newLevel > previousLevel) {
+      this.cxp.health = this.getMaxHealth();
+      this.cxp.mana = this.getMaxMana();
+    }
     return true;
   }
 
@@ -148,9 +162,7 @@ class HoshinoEXP {
   }
 
   getRankString() {
-    return HoshinoEXP.rankNames[
-      Math.max(0, Math.min(this.getLevel() - 1, HoshinoEXP.rankNames.length - 1))
-    ];
+    return HoshinoEXP.rankNames[Math.floor(this.getLevel() / 5)];
   }
 
   expReached(exp) {
@@ -165,12 +177,17 @@ class HoshinoEXP {
     if (level <= 1) {
       return 0;
     } else {
-      return 10 * Math.pow(2, level - 1);
+      return 10 * Math.pow(2, level - 1) * level;
     }
   }
 
   static getLevelFromEXP(lastExp) {
-    return lastExp < 10 ? 1 : Math.floor(Math.log2(lastExp / 10)) + 1;
+    if (lastExp < 10) return 1;
+    let level = 0;
+    while (HoshinoEXP.getEXPFromLevel(level + 1) <= lastExp) {
+      level++;
+    }
+    return level;
   }
 
   static rankNames = [
