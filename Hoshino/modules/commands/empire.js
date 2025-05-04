@@ -8,7 +8,7 @@ const command = {
     version: "1.0",
     developer: "Francis Loyd Raval",
     description:
-      "A simulation game where you build an empire by buying land, recruiting workers and random soldiers (Normal, Archer, Berserker), earning money, training workers and soldiers, upgrading your castle to increase occupancy and stats, conquering others with your entire army, and rebuilding damaged castles.",
+      "A simulation game where you build an empire by buying land, recruiting workers and random soldiers (Normal, Archer, Berserker), earning money, training workers and soldiers, upgrading your castle to increase worker and soldier limits, conquering others with your entire army using soldier stats, and rebuilding damaged castles.",
     category: "Simulation",
     usage:
       "empire buy | empire recruit | empire work | empire collect | empire train | empire status | empire upgrade | empire conquer | empire rebuild",
@@ -45,7 +45,7 @@ const command = {
             if (userData.empire && userData.empire.hasLand) {
               return await chat.reply("You already own land!");
             }
-            const success = Math.random() < 0.5; 
+            const success = Math.random() < 0.5;
             if (!success) {
               return await chat.reply(
                 "Failed to find suitable land. Try again!"
@@ -64,8 +64,9 @@ const command = {
                 rebuildProgress: 0,
                 lastRebuild: 0,
                 lastTrain: 0,
-                recruitLimit: 5, 
-                upgradeCost: 100000000, 
+                workerLimit: 5,
+                soldierLimit: 5,
+                upgradeCost: 100000000,
               },
             });
             await chat.reply(
@@ -85,10 +86,20 @@ const command = {
                 "You need to buy land first! Use: empire buy"
               );
             }
-            const { workers = [], soldiers = [], recruitLimit = 5 } = userData.empire;
-            if (workers.length + soldiers.length + 2 > recruitLimit) {
+            const { workers = [], soldiers = [], workerLimit = 5, soldierLimit = 5 } = userData.empire;
+            if (workers.length >= workerLimit && soldiers.length >= soldierLimit) {
               return await chat.reply(
-                `You need ${2 - (recruitLimit - (workers.length + soldiers.length))} more slot(s)! Upgrade your castle to increase occupancy (current limit: ${recruitLimit}).`
+                `Worker limit reached (${workerLimit}/${workerLimit}) and soldier limit reached (${soldierLimit}/${soldierLimit})! Upgrade your castle to increase limits.`
+              );
+            }
+            if (workers.length >= workerLimit) {
+              return await chat.reply(
+                `Worker limit reached (${workerLimit}/${workerLimit})! Upgrade your castle to increase worker limit.`
+              );
+            }
+            if (soldiers.length >= soldierLimit) {
+              return await chat.reply(
+                `Soldier limit reached (${soldierLimit}/${soldierLimit})! Upgrade your castle to increase soldier limit.`
               );
             }
             const worker = {
@@ -143,7 +154,7 @@ const command = {
                 `Workers are still working. Check back in ${remaining} minutes.`
               );
             }
-            const earnings = userData.empire.workers.length * 100; 
+            const earnings = userData.empire.workers.length * 100;
             await hoshinoDB.set(event.senderID, {
               ...userData,
               empire: {
@@ -244,10 +255,11 @@ const command = {
                 "You need to buy land first! Use: empire buy"
               );
             }
-            const { castle, workers, soldiers, earnings = 0, rebuildProgress = 0, lastRebuild = 0, recruitLimit = 5, upgradeCost = 100000000 } = userData.empire;
+            const { castle, workers, soldiers, earnings = 0, rebuildProgress = 0, lastRebuild = 0, workerLimit = 5, soldierLimit = 5, upgradeCost = 100000000 } = userData.empire;
             const maxHealth = 100 + (castle.level - 1) * 20;
             const avgWorkerLevel = workers.length > 0 ? (workers.reduce((sum, w) => sum + w.level, 0) / workers.length).toFixed(1) : 1;
-            const availableSlots = recruitLimit - (workers.length + soldiers.length);
+            const workerSlotsAvailable = workerLimit - workers.length;
+            const soldierSlotsAvailable = soldierLimit - soldiers.length;
             const soldierDetails = soldiers.length > 0
               ? soldiers.map(s => `${s.type.charAt(0).toUpperCase() + s.type.slice(1)} (Level ${s.level}, Strength ${s.strength}, Agility ${s.agility}, Endurance ${s.endurance})`).join(", ")
               : "No soldiers recruited.";
@@ -255,7 +267,8 @@ const command = {
               `Castle: Level ${castle.level}, Health ${castle.health}/${maxHealth}, Defense ${castle.defense}`,
               `Workers: ${workers.length} (Avg Level ${avgWorkerLevel})`,
               `Soldiers: ${soldiers.length} (${soldierDetails})`,
-              `Recruit Limit: ${recruitLimit} (${availableSlots} slot(s) available)`,
+              `Worker Limit: ${workerLimit} (${workerSlotsAvailable} slot(s) available)`,
+              `Soldier Limit: ${soldierLimit} (${soldierSlotsAvailable} slot(s) available)`,
               `Next Upgrade Cost: $${upgradeCost.toLocaleString("en-US")}`,
               `Pending Earnings: $${earnings.toLocaleString("en-US")}`,
               rebuildProgress > 0
@@ -270,7 +283,7 @@ const command = {
         {
           subcommand: "upgrade",
           aliases: ["improve"],
-          description: "Upgrade your castle to increase health, defense, and occupancy (cost doubles each time).",
+          description: "Upgrade your castle to increase health, defense, and worker/soldier limits (cost doubles each time).",
           usage: "empire upgrade",
           async deploy({ chat, event, hoshinoDB }) {
             const userData = await hoshinoDB.get(event.senderID);
@@ -286,8 +299,9 @@ const command = {
               );
             }
             const castle = userData.empire.castle;
-            const newRecruitLimit = (userData.empire.recruitLimit || 5) + 1; 
-            const newUpgradeCost = currentUpgradeCost * 2; 
+            const newWorkerLimit = (userData.empire.workerLimit || 5) + 1;
+            const newSoldierLimit = (userData.empire.soldierLimit || 5) + 1;
+            const newUpgradeCost = currentUpgradeCost * 2;
             await hoshinoDB.set(event.senderID, {
               ...userData,
               balance: userData.balance - currentUpgradeCost,
@@ -299,19 +313,20 @@ const command = {
                   health: castle.health + 20,
                   defense: castle.defense + 5,
                 },
-                recruitLimit: newRecruitLimit,
+                workerLimit: newWorkerLimit,
+                soldierLimit: newSoldierLimit,
                 upgradeCost: newUpgradeCost,
               },
             });
             await chat.reply(
-              `Castle upgraded to level ${castle.level + 1}! +20 health, +5 defense, +1 recruit slot (now ${newRecruitLimit}). $${currentUpgradeCost.toLocaleString("en-US")} deducted. Next upgrade: $${newUpgradeCost.toLocaleString("en-US")}.`
+              `Castle upgraded to level ${castle.level + 1}! +20 health, +5 defense, +1 worker limit (now ${newWorkerLimit}), +1 soldier limit (now ${newSoldierLimit}). $${currentUpgradeCost.toLocaleString("en-US")} deducted. Next upgrade: $${newUpgradeCost.toLocaleString("en-US")}.`
             );
           },
         },
         {
           subcommand: "conquer",
           aliases: ["raid"],
-          description: "Send your entire army to conquer another player's castle (50% chance, 30-min cooldown, possible army losses).",
+          description: "Send your entire army to conquer another player's castle (chance based on soldier stats, 30-min cooldown, possible army losses).",
           usage: "empire conquer",
           async deploy({ chat, event, hoshinoDB }) {
             const userData = await hoshinoDB.get(event.senderID);
@@ -345,15 +360,34 @@ const command = {
               return await chat.reply("No other user joined the game yet.");
             }
             const [targetUID, targetData] = otherUsers[Math.floor(Math.random() * otherUsers.length)];
-            const success = Math.random() < 0.5; 
-            const randomDiamonds = Math.floor(Math.random() * 5) + 1; 
-
+            const randomDiamonds = Math.floor(Math.random() * 5) + 1;
+            const attackerSoldiers = userData.empire.soldiers;
+            const avgAttackerStats = attackerSoldiers.length > 0
+              ? {
+                  strength: attackerSoldiers.reduce((sum, s) => sum + s.strength, 0) / attackerSoldiers.length,
+                  agility: attackerSoldiers.reduce((sum, s) => sum + s.agility, 0) / attackerSoldiers.length,
+                  endurance: attackerSoldiers.reduce((sum, s) => sum + s.endurance, 0) / attackerSoldiers.length,
+                }
+              : { strength: 0, agility: 0, endurance: 0 };
+            const attackBonus = (avgAttackerStats.strength + avgAttackerStats.agility + avgAttackerStats.endurance) / 3000;
+            let winRate = Math.min(0.9, 0.5 + attackBonus);
+            const defenderSoldiers = targetData.empire.soldiers;
+            const avgDefenderStats = defenderSoldiers.length > 0
+              ? {
+                  strength: defenderSoldiers.reduce((sum, s) => sum + s.strength, 0) / defenderSoldiers.length,
+                  agility: defenderSoldiers.reduce((sum, s) => sum + s.agility, 0) / defenderSoldiers.length,
+                  endurance: defenderSoldiers.reduce((sum, s) => sum + s.endurance, 0) / defenderSoldiers.length,
+                }
+              : { strength: 0, agility: 0, endurance: 0 };
+            const defenseBonus = targetData.empire.castle.defense / 1000 +
+              (defenderSoldiers.length > 0 ? (avgDefenderStats.strength + avgDefenderStats.agility + avgDefenderStats.endurance) / 3000 : 0);
+            const finalWinRate = Math.max(0.1, Math.min(0.9, winRate - defenseBonus));
+            const success = Math.random() < finalWinRate;
             let survivingSoldiers = [...userData.empire.soldiers];
             let targetSurvivingSoldiers = [...targetData.empire.soldiers];
             let userLossMessage = "";
             let targetLossMessage = "";
-
-            if (userData.empire.soldiers.length > 1) { 
+            if (userData.empire.soldiers.length > 1) {
               const lossType = Math.random() < 0.5 ? "half" : "twenty";
               const soldiersToLose = lossType === "half"
                 ? Math.floor(userData.empire.soldiers.length / 2)
@@ -377,8 +411,7 @@ const command = {
                 userLossMessage = `Lost ${soldiersToLose} soldier(s): ${lossDetails}.`;
               }
             }
-
-            if (targetData.empire.soldiers.length > 1) { 
+            if (targetData.empire.soldiers.length > 1) {
               const lossType = Math.random() < 0.5 ? "half" : "twenty";
               const soldiersToLose = lossType === "half"
                 ? Math.floor(targetData.empire.soldiers.length / 2)
@@ -406,9 +439,13 @@ const command = {
             } else {
               targetLossMessage = "They lost no soldiers.";
             }
-
+            let defenderExtraLoss = "";
+            if (targetData.empire.soldiers.length > 0 && Math.random() < 0.5) {
+              const lostSoldier = targetSurvivingSoldiers.splice(Math.floor(Math.random() * targetSurvivingSoldiers.length), 1)[0];
+              defenderExtraLoss = `They also lost 1 additional soldier: ${lostSoldier.type.charAt(0).toUpperCase() + lostSoldier.type.slice(1)}.`;
+            }
             if (success) {
-              const loot = Math.floor((targetData.balance || 0) * 0.5); 
+              const loot = Math.floor((targetData.balance || 0) * 0.5);
               await hoshinoDB.set(event.senderID, {
                 ...userData,
                 balance: (userData.balance || 0) + loot,
@@ -432,10 +469,11 @@ const command = {
                 balance: Math.max(0, (targetData.balance || 0) - loot),
               });
               const message = [
-                `You conquered ${targetData.username}'s castle!`,
+                `You conquered ${targetData.username}'s castle! (Win chance: ${(finalWinRate * 100).toFixed(1)}%)`,
                 `Gained $${loot.toLocaleString("en-US")} and 💎${randomDiamonds}.`,
                 `Their castle lost 20 health.`,
                 targetLossMessage,
+                defenderExtraLoss,
                 userLossMessage || "Your army suffered no losses."
               ].filter(Boolean).join(" ");
               await chat.reply(message);
@@ -457,12 +495,17 @@ const command = {
                 ...targetData,
                 balance: (targetData.balance || 0) + (userData.balance || 0),
                 diamonds: (targetData.diamonds || 0) + randomDiamonds,
+                empire: {
+                  ...targetData.empire,
+                  soldiers: targetSurvivingSoldiers,
+                },
               });
               const message = [
-                `You failed to conquer ${targetData.username}'s castle!`,
+                `You failed to conquer ${targetData.username}'s castle! (Win chance: ${(finalWinRate * 100).toFixed(1)}%)`,
                 `Your castle lost 20 health and all money.`,
                 `They gained 💎${randomDiamonds}.`,
                 targetLossMessage,
+                defenderExtraLoss,
                 userLossMessage || "Your army suffered no losses."
               ].filter(Boolean).join(" ");
               await chat.reply(message);
@@ -492,7 +535,7 @@ const command = {
               return await chat.reply("Your castle is already at full health!");
             }
             const avgWorkerLevel = workers.reduce((sum, w) => sum + w.level, 0) / workers.length;
-            const baseRebuildTime = Math.max(15, 60 - (avgWorkerLevel - 1) * 5) * 60 * 1000; 
+            const baseRebuildTime = Math.max(15, 60 - (avgWorkerLevel - 1) * 5) * 60 * 1000;
             const now = Date.now();
             const elapsed = now - lastRebuild;
             const progressIncrement = elapsed / baseRebuildTime;
