@@ -25,7 +25,7 @@ const command = {
   font: {
     title: "bold",
     content: "sans",
-    favicon: "sans",
+    footer: "sans",
   },
   async deploy(ctx) {
     const home = new ctx.HoshinoHM(
@@ -50,10 +50,10 @@ const command = {
             const formattedBankBalance = bankBalance.toLocaleString("en-US");
             const formattedInterest = Math.floor(collectibleInterest).toLocaleString("en-US");
             const bankInfo = [
-              `Username: ${username}`,
-              `Available Balance: $${formattedBalance}`,
-              `Bank Balance: $${formattedBankBalance}`,
-              `Collectible Interest: $${formattedInterest} (${minutesElapsed} min elapsed)`,
+              `**Username:** ${username}`,
+              `**Available Balance:** $${formattedBalance}`,
+              `**Bank Balance:** $${formattedBankBalance}`,
+              `**Collectible Interest:** $${formattedInterest} (${minutesElapsed} min elapsed)`,
             ].join("\n");
             await chat.reply(bankInfo);
           },
