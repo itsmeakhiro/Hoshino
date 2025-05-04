@@ -64,29 +64,31 @@ const command = {
           description: "Deposit money from your balance to your bank account.",
           usage: "bank deposit <amount>",
           async deploy({ chat, args, event, hoshinoDB }) {
-            if (args.length < 1 || isNaN(args[0]) || args[0] <= 0) {
+            const amountInput = args[0];
+            const amount = Number(amountInput);
+            if (!amountInput || isNaN(amount) || amount <= 0) {
               return await chat.reply(
-                "Please provide a valid amount to deposit. Usage: bank deposit <amount>"
+                "Please provide a valid positive amount to deposit. Usage: bank deposit <amount>"
               );
             }
-            const amount = Math.floor(Number(args[0]));
+            const flooredAmount = Math.floor(amount);
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
               return await chat.reply(
                 "You need to register first! Use: profile register <username>"
               );
             }
-            if (userData.balance < amount) {
+            if (userData.balance < flooredAmount) {
               return await chat.reply(
                 "You don't have enough balance to deposit that amount!"
               );
             }
             await hoshinoDB.set(event.senderID, {
               ...userData,
-              balance: userData.balance - amount,
-              bankBalance: (userData.bankBalance || 0) + amount,
+              balance: userData.balance - flooredAmount,
+              bankBalance: (userData.bankBalance || 0) + flooredAmount,
             });
-            const formattedAmount = amount.toLocaleString("en-US");
+            const formattedAmount = flooredAmount.toLocaleString("en-US");
             await chat.reply(
               `Successfully deposited $${formattedAmount} to your bank account!`
             );
@@ -98,29 +100,31 @@ const command = {
           description: "Withdraw money from your bank account to your balance.",
           usage: "bank withdraw <amount>",
           async deploy({ chat, args, event, hoshinoDB }) {
-            if (args.length < 1 || isNaN(args[0]) || args[0] <= 0) {
+            const amountInput = args[0];
+            const amount = Number(amountInput);
+            if (!amountInput || isNaN(amount) || amount <= 0) {
               return await chat.reply(
-                "Please provide a valid amount to withdraw. Usage: bank withdraw <amount>"
+                "Please provide a valid positive amount to withdraw. Usage: bank withdraw <amount>"
               );
             }
-            const amount = Math.floor(Number(args[0]));
+            const flooredAmount = Math.floor(amount);
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
               return await chat.reply(
                 "You need to register first! Use: profile register <username>"
               );
             }
-            if ((userData.bankBalance || 0) < amount) {
+            if ((userData.bankBalance || 0) < flooredAmount) {
               return await chat.reply(
                 "You don't have enough money in your bank account to withdraw that amount!"
               );
             }
             await hoshinoDB.set(event.senderID, {
               ...userData,
-              balance: userData.balance + amount,
-              bankBalance: (userData.bankBalance || 0) - amount,
+              balance: userData.balance + flooredAmount,
+              bankBalance: (userData.bankBalance || 0) - flooredAmount,
             });
-            const formattedAmount = amount.toLocaleString("en-US");
+            const formattedAmount = flooredAmount.toLocaleString("en-US");
             await chat.reply(
               `Successfully withdrew $${formattedAmount} from your bank account!`
             );
