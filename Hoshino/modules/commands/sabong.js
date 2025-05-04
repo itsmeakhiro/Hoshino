@@ -273,14 +273,7 @@ const command = {
               return await chat.reply("You need to uncage a rooster first! Use: sabong uncage");
             }
             console.log(`Battle: args=${JSON.stringify(args)}`);
-            let bet;
-            if (args[0]) {
-              bet = parseInt(args[0]);
-            } else {
-              const argString = args.join(" ");
-              const match = argString.match(/\d+/);
-              bet = match ? parseInt(match[0]) : NaN;
-            }
+            const bet = parseInt(args[0]);
             console.log(`Battle: parsed bet=${bet}`);
             if (isNaN(bet) || bet <= 0) {
               return await chat.reply("Please provide a valid bet amount. Usage: sabong battle <bet>");
