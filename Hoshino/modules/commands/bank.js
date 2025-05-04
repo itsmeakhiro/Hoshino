@@ -26,7 +26,8 @@ const command = {
     content: "sans",
     footer: "sans",
   },
-  async applyInterest(userData, hoshinoDB, senderID) {
+  async deploy(ctx) {
+    async applyInterest(userData, hoshinoDB, senderID) {
     const { bankBalance = 0, lastInterestUpdate = 0 } = userData;
     if (bankBalance <= 0) return userData; 
 
@@ -56,7 +57,6 @@ const command = {
     await hoshinoDB.set(senderID, updatedData);
     return updatedData;
   },
-  async deploy(ctx) {
     const home = new ctx.HoshinoHM(
       [
         {
