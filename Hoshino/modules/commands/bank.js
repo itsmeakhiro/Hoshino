@@ -8,9 +8,10 @@ const command = {
     version: "1.0",
     developer: "Francis Loyd Raval",
     description:
-      "Manage your bank account: deposit, withdraw, or check balance with automatic interest.",
+      "Manage your bank account: deposit, withdraw, check balance, or collect interest.",
     category: "Economy",
-    usage: "bank info | bank deposit <amount> | bank withdraw <amount>",
+    usage:
+      "bank info | bank deposit <amount> | bank withdraw <amount> | bank collect",
     config: {
       admin: false,
       moderator: false,
@@ -27,65 +28,40 @@ const command = {
     footer: "sans",
   },
   async deploy(ctx) {
-    async applyInterest(userData, hoshinoDB, senderID) {
-    const { bankBalance = 0, lastInterestUpdate = 0 } = userData;
-    if (bankBalance <= 0) return userData; 
-
-    const interestPeriod = 50 * 60 * 1000; 
-    const now = Date.now();
-    const periodsElapsed = Math.floor((now - lastInterestUpdate) / interestPeriod);
-    if (periodsElapsed < 1) return userData; 
-
-    let newBalance = bankBalance;
-    const interestRate = 0.05; 
-    const maxBalance = 10_000_000; 
-
-    for (let i = 0; i < periodsElapsed; i++) {
-      const interest = Math.floor(newBalance * interestRate);
-      newBalance += interest;
-      if (newBalance >= maxBalance) {
-        newBalance = maxBalance;
-        break; 
-      }
-    }
-
-    const updatedData = {
-      ...userData,
-      bankBalance: newBalance,
-      lastInterestUpdate: lastInterestUpdate + periodsElapsed * interestPeriod,
-    };
-    await hoshinoDB.set(senderID, updatedData);
-    return updatedData;
-  },
     const home = new ctx.HoshinoHM(
       [
         {
           subcommand: "info",
           aliases: ["balance", "i"],
-          description: "Check your bank balance and available balance.",
+          description: "Check your bank balance, available balance, and interest.",
           usage: "bank info",
           async deploy({ chat, args, event, hoshinoDB }) {
-            let userData = await hoshinoDB.get(event.senderID);
+            const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
               return await chat.reply(
                 "You need to register first! Use: profile register <username>"
               );
             }
-            userData = await command.applyInterest(userData, hoshinoDB, event.senderID);
-            const { balance = 0, bankBalance = 0, lastInterestUpdate = 0, username } = userData;
-
-            const interestPeriod = 50 * 60 * 1000; 
-            const nextUpdate = lastInterestUpdate + interestPeriod;
-            const minutesUntilNext = Math.ceil((nextUpdate - Date.now()) / (1000 * 60));
-            const isCapped = bankBalance >= 10_000_000;
+            const { balance = 0, bankBalance = 0, lastInterestCollect = 0, username } = userData;
+            const minutesElapsed = Math.floor((Date.now() - lastInterestCollect) / (1000 * 60));
+            const principal = bankBalance;
+            const annualRate = 0.05; 
+            const compoundsPerYear = 12; 
+            const years = minutesElapsed / (60 * 24 * 365);
+            const interestMultiplier = Math.pow(1 + annualRate / compoundsPerYear, compoundsPerYear * years);
+            let collectibleInterest = principal * (interestMultiplier - 1);
+            const interestCap = 10_000_000;
+            const isCapped = collectibleInterest > interestCap;
+            collectibleInterest = Math.min(Math.floor(collectibleInterest), interestCap);
 
             const formattedBalance = balance.toLocaleString("en-US");
             const formattedBankBalance = bankBalance.toLocaleString("en-US");
+            const formattedInterest = collectibleInterest.toLocaleString("en-US");
             const bankInfo = [
               `Username: ${username}`,
               `Available Balance: $${formattedBalance}`,
-              `Bank Balance: $${formattedBankBalance}${isCapped ? " (capped)" : ""}`,
-              `Next Interest: ${minutesUntilNext} min`,
+              `Bank Balance: $${formattedBankBalance}`,
+              `Collectible Interest: $${formattedInterest}${isCapped ? " (capped)" : ""} (${minutesElapsed} min elapsed)`,
             ].join("\n");
             await chat.reply(bankInfo);
           },
@@ -97,41 +73,31 @@ const command = {
           usage: "bank deposit <amount>",
           async deploy({ chat, args, event, hoshinoDB }) {
             console.log(`Deposit args: ${JSON.stringify(args)}`);
-            console.log(`Deposit event: ${JSON.stringify(event)}`);
 
-            const amountInput = args[1] || args[0] || args.slice(1).join(" ");
+            const amountInput = args[1] || args[0];
             const amount = Number(amountInput?.trim());
 
             if (!amountInput || isNaN(amount) || amount <= 0) {
-              console.log(`Invalid deposit input: amountInput=${amountInput}, amount=${amount}`);
               return await chat.reply(
-                `Please provide a valid positive amount to deposit. Usage: bank deposit <amount> (Received: ${amountInput || "none"})`
+                "Please provide a valid positive amount to deposit. Usage: bank deposit <amount>"
               );
             }
             const flooredAmount = Math.floor(amount);
-            let userData = await hoshinoDB.get(event.senderID);
+            const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
               return await chat.reply(
                 "You need to register first! Use: profile register <username>"
               );
             }
-            userData = await command.applyInterest(userData, hoshinoDB, event.senderID);
             if (userData.balance < flooredAmount) {
-              console.log(`Insufficient balance: balance=${userData.balance}, attempted=${flooredAmount}`);
               return await chat.reply(
                 "You don't have enough balance to deposit that amount!"
-              );
-            }
-            const newBankBalance = (userData.bankBalance || 0) + flooredAmount;
-            if (newBankBalance > 10_000_000) {
-              return await chat.reply(
-                "Deposit would exceed the bank balance cap of $10,000,000!"
               );
             }
             await hoshinoDB.set(event.senderID, {
               ...userData,
               balance: userData.balance - flooredAmount,
-              bankBalance: newBankBalance,
+              bankBalance: (userData.bankBalance || 0) + flooredAmount,
             });
             const formattedAmount = flooredAmount.toLocaleString("en-US");
             await chat.reply(
@@ -156,13 +122,12 @@ const command = {
               );
             }
             const flooredAmount = Math.floor(amount);
-            let userData = await hoshinoDB.get(event.senderID);
+            const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
               return await chat.reply(
                 "You need to register first! Use: profile register <username>"
               );
             }
-            userData = await command.applyInterest(userData, hoshinoDB, event.senderID);
             if ((userData.bankBalance || 0) < flooredAmount) {
               return await chat.reply(
                 "You don't have enough money in your bank account to withdraw that amount!"
@@ -176,6 +141,51 @@ const command = {
             const formattedAmount = flooredAmount.toLocaleString("en-US");
             await chat.reply(
               `Successfully withdrew $${formattedAmount} from your bank account!`
+            );
+          },
+        },
+        {
+          subcommand: "collect",
+          aliases: ["claim", "interest"],
+          description: "Collect interest based on your bank balance (5% annual, compounded monthly).",
+          usage: "bank collect",
+          async deploy({ chat, args, event, hoshinoDB }) {
+            const userData = await hoshinoDB.get(event.senderID);
+            if (!userData || !userData.username) {
+              return await chat.reply(
+                "You need to register first! Use: profile register <username>"
+              );
+            }
+            const { bankBalance = 0, lastInterestCollect = 0 } = userData;
+            if (bankBalance <= 0) {
+              return await chat.reply(
+                "You need money in your bank account to earn interest!"
+              );
+            }
+            const minutesElapsed = Math.floor((Date.now() - lastInterestCollect) / (1000 * 60));
+            if (minutesElapsed < 1) {
+              return await chat.reply(
+                "No interest available yet. Wait at least 1 minute since your last collection."
+              );
+            }
+            const principal = bankBalance;
+            const annualRate = 0.05;
+            const compoundsPerYear = 12; 
+            const years = minutesElapsed / (60 * 24 * 365); 
+            const interestMultiplier = Math.pow(1 + annualRate / compoundsPerYear, compoundsPerYear * years);
+            let interestEarned = principal * (interestMultiplier - 1);
+            const interestCap = 10_000_000;
+            const isCapped = interestEarned > interestCap;
+            interestEarned = Math.min(Math.floor(interestEarned), interestCap);
+
+            await hoshinoDB.set(event.senderID, {
+              ...userData,
+              bankBalance: bankBalance + interestEarned,
+              lastInterestCollect: Date.now(),
+            });
+            const formattedInterest = interestEarned.toLocaleString("en-US");
+            await chat.reply(
+              `Successfully collected $${formattedInterest}${isCapped ? " (capped)" : ""} in interest! Your bank balance has been updated.`
             );
           },
         },
