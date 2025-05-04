@@ -25,7 +25,7 @@ const command = {
   font: {
     title: "bold",
     content: "sans",
-    footer: "sans",
+    favicon: "sans",
   },
   async deploy(ctx) {
     const home = new ctx.HoshinoHM(
@@ -64,10 +64,8 @@ const command = {
           description: "Deposit money from your balance to your bank account.",
           usage: "bank deposit <amount>",
           async deploy({ chat, args, event, hoshinoDB }) {
-            // Debug: Log args to inspect input
             console.log(`Deposit args: ${JSON.stringify(args)}`);
 
-            // Assume amount is in args[0] or args[1] (if subcommand is args[0])
             const amountInput = args[1] || args[0];
             const amount = Number(amountInput?.trim());
 
@@ -164,7 +162,7 @@ const command = {
             }
             const interestMultiplier = Math.pow(2, minutesElapsed);
             const interestEarned = Math.floor(bankBalance * (interestMultiplier - 1));
-            await hoshinoDB.set(eventworkbench .set(event.senderID, {
+            await hoshinoDB.set(event.senderID, {
               ...userData,
               bankBalance: bankBalance + interestEarned,
               lastInterestCollect: Date.now(),
