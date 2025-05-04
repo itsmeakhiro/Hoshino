@@ -64,8 +64,13 @@ const command = {
           description: "Deposit money from your balance to your bank account.",
           usage: "bank deposit <amount>",
           async deploy({ chat, args, event, hoshinoDB }) {
-            const amountInput = args[0];
-            const amount = Number(amountInput);
+            // Debug: Log args to inspect input
+            console.log(`Deposit args: ${JSON.stringify(args)}`);
+
+            // Assume amount is in args[0] or args[1] (if subcommand is args[0])
+            const amountInput = args[1] || args[0];
+            const amount = Number(amountInput?.trim());
+
             if (!amountInput || isNaN(amount) || amount <= 0) {
               return await chat.reply(
                 "Please provide a valid positive amount to deposit. Usage: bank deposit <amount>"
@@ -100,8 +105,11 @@ const command = {
           description: "Withdraw money from your bank account to your balance.",
           usage: "bank withdraw <amount>",
           async deploy({ chat, args, event, hoshinoDB }) {
-            const amountInput = args[0];
-            const amount = Number(amountInput);
+            console.log(`Withdraw args: ${JSON.stringify(args)}`);
+
+            const amountInput = args[1] || args[0];
+            const amount = Number(amountInput?.trim());
+
             if (!amountInput || isNaN(amount) || amount <= 0) {
               return await chat.reply(
                 "Please provide a valid positive amount to withdraw. Usage: bank withdraw <amount>"
@@ -156,7 +164,7 @@ const command = {
             }
             const interestMultiplier = Math.pow(2, minutesElapsed);
             const interestEarned = Math.floor(bankBalance * (interestMultiplier - 1));
-            await hoshinoDB.set(event.senderID, {
+            await hoshinoDB.set(eventworkbench .set(event.senderID, {
               ...userData,
               bankBalance: bankBalance + interestEarned,
               lastInterestCollect: Date.now(),
