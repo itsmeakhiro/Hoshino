@@ -8,10 +8,10 @@ const command = {
     version: "1.0",
     developer: "Francis Loyd Raval",
     description:
-      "A simulation game where you build an empire by buying land, recruiting workers and soldiers, earning money, training soldiers, upgrading your castle, conquering others, and rebuilding damaged castles.",
+      "A simulation game where you build an empire by buying land, recruiting workers and random soldiers (Normal, Archer, Berserker), earning money, training workers and soldiers, upgrading your castle to increase occupancy and stats, conquering others with your entire army, and rebuilding damaged castles.",
     category: "Simulation",
     usage:
-      "empire buy | empire recruit <worker|soldier> | empire work | empire collect | empire train | empire status | empire upgrade | empire conquer | empire rebuild",
+      "empire buy | empire recruit | empire work | empire collect | empire train | empire status | empire upgrade | empire conquer | empire rebuild",
     config: {
       admin: false,
       moderator: false,
@@ -63,6 +63,9 @@ const command = {
                 lastConquer: 0,
                 rebuildProgress: 0,
                 lastRebuild: 0,
+                lastTrain: 0,
+                recruitLimit: 5, 
+                upgradeCost: 100000000, 
               },
             });
             await chat.reply(
@@ -73,47 +76,46 @@ const command = {
         {
           subcommand: "recruit",
           aliases: ["hire"],
-          description: "Recruit a worker or soldier (max 5 total).",
-          usage: "empire recruit <worker|soldier>",
+          description: "Recruit one worker and one random soldier (Normal, Archer, Berserker).",
+          usage: "empire recruit",
           async deploy({ chat, args, event, hoshinoDB }) {
-            if (args.length < 1) {
-              return await chat.reply(
-                "Specify what to recruit. Usage: empire recruit <worker|soldier>"
-              );
-            }
-            // Use args[1] if args[0] is "recruit", else use args[0]
-            const type = (args[0].toLowerCase() === "recruit" ? args[1] : args[0]).toLowerCase();
-            if (!["worker", "soldier"].includes(type)) {
-              return await chat.reply(
-                "Invalid type! Use: empire recruit <worker|soldier>"
-              );
-            }
             const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.empire || !userData.empire.hasLand) {
               return await chat.reply(
                 "You need to buy land first! Use: empire buy"
               );
             }
-            const { workers = [], soldiers = [] } = userData.empire;
-            if (workers.length + soldiers.length >= 5) {
+            const { workers = [], soldiers = [], recruitLimit = 5 } = userData.empire;
+            if (workers.length + soldiers.length + 2 > recruitLimit) {
               return await chat.reply(
-                "You have reached the maximum of 5 recruits!"
+                `You need ${2 - (recruitLimit - (workers.length + soldiers.length))} more slot(s)! Upgrade your castle to increase occupancy (current limit: ${recruitLimit}).`
               );
             }
-            const recruit = {
+            const worker = {
               level: 1,
               equipment: { armor: "leather", weapon: "wooden", level: 1 },
             };
-            if (type === "worker") {
-              workers.push(recruit);
-            } else {
-              soldiers.push({ ...recruit, strength: 10, agility: 10, endurance: 10 });
-            }
+            workers.push(worker);
+            const soldierTypes = [
+              { type: "normal", strength: 10, agility: 10, endurance: 10 },
+              { type: "archer", strength: 5, agility: 15, endurance: 8 },
+              { type: "berserker", strength: 15, agility: 8, endurance: 5 },
+            ];
+            const randomSoldier = soldierTypes[Math.floor(Math.random() * soldierTypes.length)];
+            const soldier = {
+              level: 1,
+              equipment: { armor: "leather", weapon: "wooden", level: 1 },
+              type: randomSoldier.type,
+              strength: randomSoldier.strength,
+              agility: randomSoldier.agility,
+              endurance: randomSoldier.endurance,
+            };
+            soldiers.push(soldier);
             await hoshinoDB.set(event.senderID, {
               ...userData,
               empire: { ...userData.empire, workers, soldiers },
             });
-            await chat.reply(`Successfully recruited a ${type}!`);
+            await chat.reply(`Recruited 1 worker and 1 ${randomSoldier.type} soldier!`);
           },
         },
         {
@@ -130,7 +132,7 @@ const command = {
             }
             if (userData.empire.workers.length === 0) {
               return await chat.reply(
-                "You need at least one worker! Use: empire recruit worker"
+                "You need at least one worker! Use: empire recruit"
               );
             }
             const now = Date.now();
@@ -182,7 +184,7 @@ const command = {
         {
           subcommand: "train",
           aliases: ["practice"],
-          description: "Train soldiers to improve strength, agility, and endurance.",
+          description: "Train workers and soldiers to improve their levels (24-hour cooldown).",
           usage: "empire train",
           async deploy({ chat, event, hoshinoDB }) {
             const userData = await hoshinoDB.get(event.senderID);
@@ -191,9 +193,17 @@ const command = {
                 "You need to buy land first! Use: empire buy"
               );
             }
-            if (userData.empire.soldiers.length === 0) {
+            if (userData.empire.workers.length === 0 && userData.empire.soldiers.length === 0) {
               return await chat.reply(
-                "You need at least one soldier! Use: empire recruit soldier"
+                "You need at least one worker or soldier! Use: empire recruit"
+              );
+            }
+            const now = Date.now();
+            const lastTrain = userData.empire.lastTrain || 0;
+            if (now - lastTrain < 24 * 60 * 60 * 1000) {
+              const remaining = Math.ceil((24 * 60 * 60 * 1000 - (now - lastTrain)) / (60 * 60 * 1000));
+              return await chat.reply(
+                `Training is on cooldown. Try again in ${remaining} hour(s).`
               );
             }
             const soldiers = userData.empire.soldiers.map((soldier) => ({
@@ -203,13 +213,23 @@ const command = {
               endurance: soldier.endurance + 2,
               level: soldier.level + 1,
             }));
+            const workers = userData.empire.workers.map((worker) => ({
+              ...worker,
+              level: worker.level + 1,
+            }));
             await hoshinoDB.set(event.senderID, {
               ...userData,
-              empire: { ...userData.empire, soldiers },
+              empire: {
+                ...userData.empire,
+                soldiers,
+                workers,
+                lastTrain: now,
+              },
             });
-            await chat.reply(
-              `Your ${soldiers.length} soldier(s) trained and gained +2 strength, agility, endurance, and +1 level!`
-            );
+            const trained = [];
+            if (soldiers.length > 0) trained.push(`${soldiers.length} soldier(s) (+2 strength, agility, endurance, +1 level)`);
+            if (workers.length > 0) trained.push(`${workers.length} worker(s) (+1 level)`);
+            await chat.reply(`Training complete! Improved: ${trained.join(", ")}.`);
           },
         },
         {
@@ -224,16 +244,20 @@ const command = {
                 "You need to buy land first! Use: empire buy"
               );
             }
-            const { castle, workers, soldiers, earnings = 0, rebuildProgress = 0, lastRebuild = 0 } = userData.empire;
+            const { castle, workers, soldiers, earnings = 0, rebuildProgress = 0, lastRebuild = 0, recruitLimit = 5, upgradeCost = 100000000 } = userData.empire;
             const maxHealth = 100 + (castle.level - 1) * 20;
+            const avgWorkerLevel = workers.length > 0 ? (workers.reduce((sum, w) => sum + w.level, 0) / workers.length).toFixed(1) : 1;
+            const availableSlots = recruitLimit - (workers.length + soldiers.length);
+            const soldierDetails = soldiers.length > 0
+              ? soldiers.map(s => `${s.type.charAt(0).toUpperCase() + s.type.slice(1)} (Level ${s.level}, Strength ${s.strength}, Agility ${s.agility}, Endurance ${s.endurance})`).join(", ")
+              : "No soldiers recruited.";
             const statusInfo = [
               `Castle: Level ${castle.level}, Health ${castle.health}/${maxHealth}, Defense ${castle.defense}`,
-              `Workers: ${workers.length} (Level ${workers[0]?.level || 1})`,
-              `Soldiers: ${soldiers.length} (Level ${soldiers[0]?.level || 1})`,
+              `Workers: ${workers.length} (Avg Level ${avgWorkerLevel})`,
+              `Soldiers: ${soldiers.length} (${soldierDetails})`,
+              `Recruit Limit: ${recruitLimit} (${availableSlots} slot(s) available)`,
+              `Next Upgrade Cost: $${upgradeCost.toLocaleString("en-US")}`,
               `Pending Earnings: $${earnings.toLocaleString("en-US")}`,
-              soldiers.length > 0
-                ? `Soldier Stats: Strength ${soldiers[0].strength}, Agility ${soldiers[0].agility}, Endurance ${soldiers[0].endurance}`
-                : "No soldiers recruited.",
               rebuildProgress > 0
                 ? `Rebuild Progress: ${(rebuildProgress * 100).toFixed(1)}%`
                 : castle.health < maxHealth
@@ -246,7 +270,7 @@ const command = {
         {
           subcommand: "upgrade",
           aliases: ["improve"],
-          description: "Upgrade your castle to increase health and defense (costs 1000).",
+          description: "Upgrade your castle to increase health, defense, and occupancy (cost doubles each time).",
           usage: "empire upgrade",
           async deploy({ chat, event, hoshinoDB }) {
             const userData = await hoshinoDB.get(event.senderID);
@@ -255,15 +279,18 @@ const command = {
                 "You need to buy land first! Use: empire buy"
               );
             }
-            if ((userData.balance || 0) < 1000) {
+            const currentUpgradeCost = userData.empire.upgradeCost || 100000000;
+            if ((userData.balance || 0) < currentUpgradeCost) {
               return await chat.reply(
-                "You need 1,000 to upgrade your castle!"
+                `You need $${currentUpgradeCost.toLocaleString("en-US")} to upgrade your castle!`
               );
             }
             const castle = userData.empire.castle;
+            const newRecruitLimit = (userData.empire.recruitLimit || 5) + 1; 
+            const newUpgradeCost = currentUpgradeCost * 2; 
             await hoshinoDB.set(event.senderID, {
               ...userData,
-              balance: userData.balance - 1000,
+              balance: userData.balance - currentUpgradeCost,
               empire: {
                 ...userData.empire,
                 castle: {
@@ -272,17 +299,19 @@ const command = {
                   health: castle.health + 20,
                   defense: castle.defense + 5,
                 },
+                recruitLimit: newRecruitLimit,
+                upgradeCost: newUpgradeCost,
               },
             });
             await chat.reply(
-              `Castle upgraded to level ${castle.level + 1}! +20 health, +5 defense. 1,000 deducted.`
+              `Castle upgraded to level ${castle.level + 1}! +20 health, +5 defense, +1 recruit slot (now ${newRecruitLimit}). $${currentUpgradeCost.toLocaleString("en-US")} deducted. Next upgrade: $${newUpgradeCost.toLocaleString("en-US")}.`
             );
           },
         },
         {
           subcommand: "conquer",
           aliases: ["raid"],
-          description: "Attempt to conquer another player's castle (50% chance, 30-min cooldown).",
+          description: "Send your entire army to conquer another player's castle (50% chance, 30-min cooldown, possible army losses).",
           usage: "empire conquer",
           async deploy({ chat, event, hoshinoDB }) {
             const userData = await hoshinoDB.get(event.senderID);
@@ -293,7 +322,7 @@ const command = {
             }
             if (userData.empire.soldiers.length === 0) {
               return await chat.reply(
-                "You need at least one soldier! Use: empire recruit soldier"
+                "You need at least one soldier! Use: empire recruit"
               );
             }
             const now = Date.now();
@@ -318,13 +347,77 @@ const command = {
             const [targetUID, targetData] = otherUsers[Math.floor(Math.random() * otherUsers.length)];
             const success = Math.random() < 0.5; 
             const randomDiamonds = Math.floor(Math.random() * 5) + 1; 
+
+            let survivingSoldiers = [...userData.empire.soldiers];
+            let targetSurvivingSoldiers = [...targetData.empire.soldiers];
+            let userLossMessage = "";
+            let targetLossMessage = "";
+
+            if (userData.empire.soldiers.length > 1) { 
+              const lossType = Math.random() < 0.5 ? "half" : "twenty";
+              const soldiersToLose = lossType === "half"
+                ? Math.floor(userData.empire.soldiers.length / 2)
+                : Math.floor(userData.empire.soldiers.length * 0.2);
+              if (soldiersToLose > 0) {
+                const lostSoldiers = [];
+                const indices = [...Array(userData.empire.soldiers.length).keys()];
+                for (let i = 0; i < soldiersToLose; i++) {
+                  const randomIndex = Math.floor(Math.random() * indices.length);
+                  const soldierIndex = indices.splice(randomIndex, 1)[0];
+                  lostSoldiers.push(userData.empire.soldiers[soldierIndex]);
+                }
+                survivingSoldiers = userData.empire.soldiers.filter((_, i) => !lostSoldiers.includes(userData.empire.soldiers[i]));
+                const lossCounts = lostSoldiers.reduce((acc, s) => {
+                  acc[s.type] = (acc[s.type] || 0) + 1;
+                  return acc;
+                }, {});
+                const lossDetails = Object.entries(lossCounts)
+                  .map(([type, count]) => `${count} ${type.charAt(0).toUpperCase() + type.slice(1)}`)
+                  .join(", ");
+                userLossMessage = `Lost ${soldiersToLose} soldier(s): ${lossDetails}.`;
+              }
+            }
+
+            if (targetData.empire.soldiers.length > 1) { 
+              const lossType = Math.random() < 0.5 ? "half" : "twenty";
+              const soldiersToLose = lossType === "half"
+                ? Math.floor(targetData.empire.soldiers.length / 2)
+                : Math.floor(targetData.empire.soldiers.length * 0.2);
+              if (soldiersToLose > 0) {
+                const lostSoldiers = [];
+                const indices = [...Array(targetData.empire.soldiers.length).keys()];
+                for (let i = 0; i < soldiersToLose; i++) {
+                  const randomIndex = Math.floor(Math.random() * indices.length);
+                  const soldierIndex = indices.splice(randomIndex, 1)[0];
+                  lostSoldiers.push(targetData.empire.soldiers[soldierIndex]);
+                }
+                targetSurvivingSoldiers = targetData.empire.soldiers.filter((_, i) => !lostSoldiers.includes(targetData.empire.soldiers[i]));
+                const lossCounts = lostSoldiers.reduce((acc, s) => {
+                  acc[s.type] = (acc[s.type] || 0) + 1;
+                  return acc;
+                }, {});
+                const lossDetails = Object.entries(lossCounts)
+                  .map(([type, count]) => `${count} ${type.charAt(0).toUpperCase() + type.slice(1)}`)
+                  .join(", ");
+                targetLossMessage = `They lost ${soldiersToLose} soldier(s): ${lossDetails}.`;
+              } else {
+                targetLossMessage = "They lost no soldiers.";
+              }
+            } else {
+              targetLossMessage = "They lost no soldiers.";
+            }
+
             if (success) {
               const loot = Math.floor((targetData.balance || 0) * 0.5); 
               await hoshinoDB.set(event.senderID, {
                 ...userData,
                 balance: (userData.balance || 0) + loot,
                 diamonds: (userData.diamonds || 0) + randomDiamonds,
-                empire: { ...userData.empire, lastConquer: now },
+                empire: {
+                  ...userData.empire,
+                  soldiers: survivingSoldiers,
+                  lastConquer: now,
+                },
               });
               await hoshinoDB.set(targetUID, {
                 ...targetData,
@@ -334,13 +427,18 @@ const command = {
                     ...targetData.empire.castle,
                     health: Math.max(0, targetData.empire.castle.health - 20),
                   },
-                  soldiers: targetData.empire.soldiers.slice(1), 
+                  soldiers: targetSurvivingSoldiers,
                 },
                 balance: Math.max(0, (targetData.balance || 0) - loot),
               });
-              await chat.reply(
-                `You conquered ${targetData.username}'s castle! Gained $${loot} and 💎${randomDiamonds}. Their castle lost 20 health and 1 soldier.`
-              );
+              const message = [
+                `You conquered ${targetData.username}'s castle!`,
+                `Gained $${loot.toLocaleString("en-US")} and 💎${randomDiamonds}.`,
+                `Their castle lost 20 health.`,
+                targetLossMessage,
+                userLossMessage || "Your army suffered no losses."
+              ].filter(Boolean).join(" ");
+              await chat.reply(message);
             } else {
               await hoshinoDB.set(event.senderID, {
                 ...userData,
@@ -350,7 +448,7 @@ const command = {
                     ...userData.empire.castle,
                     health: Math.max(0, userData.empire.castle.health - 20),
                   },
-                  soldiers: userData.empire.soldiers.slice(1), // Lose 1 soldier
+                  soldiers: survivingSoldiers,
                   lastConquer: now,
                 },
                 balance: 0,
@@ -360,9 +458,14 @@ const command = {
                 balance: (targetData.balance || 0) + (userData.balance || 0),
                 diamonds: (targetData.diamonds || 0) + randomDiamonds,
               });
-              await chat.reply(
-                `You failed to conquer ${targetData.username}'s castle! Your castle lost 20 health, 1 soldier, all money, and they gained 💎${randomDiamonds}.`
-              );
+              const message = [
+                `You failed to conquer ${targetData.username}'s castle!`,
+                `Your castle lost 20 health and all money.`,
+                `They gained 💎${randomDiamonds}.`,
+                targetLossMessage,
+                userLossMessage || "Your army suffered no losses."
+              ].filter(Boolean).join(" ");
+              await chat.reply(message);
             }
           },
         },
@@ -380,7 +483,7 @@ const command = {
             }
             if (userData.empire.workers.length === 0) {
               return await chat.reply(
-                "You need at least one worker to rebuild! Use: empire recruit worker"
+                "You need at least one worker to rebuild! Use: empire recruit"
               );
             }
             const { castle, workers, rebuildProgress = 0, lastRebuild = 0 } = userData.empire;
