@@ -44,16 +44,24 @@ const command = {
             }
             const { balance = 0, bankBalance = 0, lastInterestCollect = 0, username } = userData;
             const minutesElapsed = Math.floor((Date.now() - lastInterestCollect) / (1000 * 60));
-            const interestMultiplier = Math.pow(2, minutesElapsed);
-            const collectibleInterest = bankBalance * (interestMultiplier - 1);
+            const principal = bankBalance;
+            const annualRate = 0.05; 
+            const compoundsPerYear = 12; 
+            const years = minutesElapsed / (60 * 24 * 365);
+            const interestMultiplier = Math.pow(1 + annualRate / compoundsPerYear, compoundsPerYear * years);
+            let collectibleInterest = principal * (interestMultiplier - 1);
+            const interestCap = 10_000_000;
+            const isCapped = collectibleInterest > interestCap;
+            collectibleInterest = Math.min(Math.floor(collectibleInterest), interestCap);
+
             const formattedBalance = balance.toLocaleString("en-US");
             const formattedBankBalance = bankBalance.toLocaleString("en-US");
-            const formattedInterest = Math.floor(collectibleInterest).toLocaleString("en-US");
+            const formattedInterest = collectibleInterest.toLocaleString("en-US");
             const bankInfo = [
-              `**Username:** ${username}`,
-              `**Available Balance:** $${formattedBalance}`,
-              `**Bank Balance:** $${formattedBankBalance}`,
-              `**Collectible Interest:** $${formattedInterest} (${minutesElapsed} min elapsed)`,
+              `Username: ${username}`,
+              `Available Balance: $${formattedBalance}`,
+              `Bank Balance: $${formattedBankBalance}`,
+              `Collectible Interest: $${formattedInterest}${isCapped ? " (capped)" : ""} (${minutesElapsed} min elapsed)`,
             ].join("\n");
             await chat.reply(bankInfo);
           },
@@ -139,7 +147,7 @@ const command = {
         {
           subcommand: "collect",
           aliases: ["claim", "interest"],
-          description: "Collect interest based on your bank balance (doubles every minute).",
+          description: "Collect interest based on your bank balance (5% annual, compounded monthly).",
           usage: "bank collect",
           async deploy({ chat, args, event, hoshinoDB }) {
             const userData = await hoshinoDB.get(event.senderID);
@@ -160,8 +168,16 @@ const command = {
                 "No interest available yet. Wait at least 1 minute since your last collection."
               );
             }
-            const interestMultiplier = Math.pow(2, minutesElapsed);
-            const interestEarned = Math.floor(bankBalance * (interestMultiplier - 1));
+            const principal = bankBalance;
+            const annualRate = 0.05;
+            const compoundsPerYear = 12; 
+            const years = minutesElapsed / (60 * 24 * 365); 
+            const interestMultiplier = Math.pow(1 + annualRate / compoundsPerYear, compoundsPerYear * years);
+            let interestEarned = principal * (interestMultiplier - 1);
+            const interestCap = 10_000_000;
+            const isCapped = interestEarned > interestCap;
+            interestEarned = Math.min(Math.floor(interestEarned), interestCap);
+
             await hoshinoDB.set(event.senderID, {
               ...userData,
               bankBalance: bankBalance + interestEarned,
@@ -169,7 +185,7 @@ const command = {
             });
             const formattedInterest = interestEarned.toLocaleString("en-US");
             await chat.reply(
-              `Successfully collected $${formattedInterest} in interest! Your bank balance has been updated.`
+              `Successfully collected $${formattedInterest}${isCapped ? " (capped)" : ""} in interest! Your bank balance has been updated.`
             );
           },
         },
