@@ -7,8 +7,26 @@ const HoshinoDB = require("../Hoshino/resources/plugins/database/utils");
 const hoshinoDB = new HoshinoDB();
 const allResolve = new Map();
 
+/**
+ * @typedef {Object} QueryParams
+ * @property {string} [senderID]
+ * @property {string} [body]
+ * @property {string} [threadID]
+ * @property {string} [type]
+ * @property {string} [messageID]
+ * @property {string} [timestamp]
+ * @property {boolean} [isGroup]
+ * @property {string[]} [participantIDs]
+ * @property {any[]} [attachments]
+ * @property {Record<string, any>} [mentions]
+ * @property {boolean} [isWeb]
+ * @property {{ messageID: string, senderID: string }} [messageReply]
+ */
+
 router.get("/postWReply", async (req, res) => {
-  if (!req.query.senderID) {
+  /** @type {QueryParams} */
+  const query = req.query;
+  if (!query.senderID) {
     res.json({
       result: {
         body: "❌ Please Enter your senderID on query.",
@@ -18,7 +36,7 @@ router.get("/postWReply", async (req, res) => {
     return;
   }
 
-  const rawSenderID = String(req.query.senderID).replace(/^(web:|custom_)/, "");
+  const rawSenderID = String(query.senderID).replace(/^(web:|custom_)/, "");
   let customSenderID;
 
   try {
@@ -38,7 +56,7 @@ router.get("/postWReply", async (req, res) => {
     return;
   }
 
-  const event = new Event({ ...req.query, senderID: customSenderID });
+  const event = new Event({ ...query, senderID: customSenderID });
   event.messageID = `id_${crypto.randomUUID()}`;
 
   const botResponse = await new Promise(async (resolve) => {
@@ -116,6 +134,7 @@ class Event {
       attachments: [],
       mentions: {},
       isWeb: true,
+      messageReply: undefined,
     };
     Object.assign(this, defaults, info);
 
@@ -125,9 +144,9 @@ class Event {
       this.messageReply.senderID = formatIP(this.messageReply.senderID);
     }
     this.participantIDs = (this.participantIDs || []).map((id) => formatIP(id));
-    if (Object.keys(this.mentions || {}).length > 0) {
+    if (Object.keys(this.mentions ?? {}).length > 0) {
       this.mentions = Object.fromEntries(
-        Object.entries(this.mentions).map((i) => [formatIP(i[0]), i[1]])
+        Object.entries(this.mentions ?? {}).map((i) => [formatIP(i[0]), i[1]])
       );
     }
   }
