@@ -102,10 +102,10 @@ router.get("/postWReply", async (req, res) => {
 function formatIP(ip) {
   return String(ip).replace(/^custom_/, "");
 }
-
+/** @type {HoshinoLia.Event} */
+    
 class Event {
   constructor({ ...info } = {}) {
-    /** @type {HoshinoLia.Event} */
     this.messageID = undefined;
 
     let defaults = {
