@@ -7,24 +7,7 @@ const HoshinoDB = require("../Hoshino/resources/plugins/database/utils");
 const hoshinoDB = new HoshinoDB();
 const allResolve = new Map();
 
-/**
- * @typedef {Object} QueryParams
- * @property {string} [senderID]
- * @property {string} [body]
- * @property {string} [threadID]
- * @property {string} [type]
- * @property {string} [messageID]
- * @property {string} [timestamp]
- * @property {boolean} [isGroup]
- * @property {string[]} [participantIDs]
- * @property {any[]} [attachments]
- * @property {Record<string, any>} [mentions]
- * @property {boolean} [isWeb]
- * @property {{ messageID: string, senderID: string }} [messageReply]
- */
-
 router.get("/postWReply", async (req, res) => {
-  /** @type {QueryParams} */
   const query = req.query;
   if (!query.senderID) {
     res.json({
@@ -56,6 +39,7 @@ router.get("/postWReply", async (req, res) => {
     return;
   }
 
+  
   const event = new Event({ ...query, senderID: customSenderID });
   event.messageID = `id_${crypto.randomUUID()}`;
 
@@ -101,6 +85,7 @@ router.get("/postWReply", async (req, res) => {
       }
     );
     try {
+      /** @type {HoshinoLia.Event} */
       await listener({ api: apiFake, event });
     } catch (error) {
       console.error(error);
@@ -120,6 +105,7 @@ function formatIP(ip) {
 
 class Event {
   constructor({ ...info } = {}) {
+    /** @type {HoshinoLia.Event} */
     this.messageID = undefined;
 
     let defaults = {
@@ -134,7 +120,7 @@ class Event {
       attachments: [],
       mentions: {},
       isWeb: true,
-      messageReply: undefined,
+      messageReply: null,
     };
     Object.assign(this, defaults, info);
 
