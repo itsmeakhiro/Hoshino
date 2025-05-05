@@ -1,23 +1,44 @@
-// Disclaimer: This function may / has to be in beta version. So please do not intent to modify this file as this is an own developed code by Francis Loyd Raval. Do not MODIFY this if you dont want to global ban you to the website and its bot functionality. This part is where the tokito has access to become a API
-
 const express = require("express");
 const crypto = require("crypto");
 const router = express.Router();
 const listener = require("./system/listener").default;
+const HoshinoDB = require("../Hoshino/resources/plugins/database/utils");
 
+const hoshinoDB = new HoshinoDB();
 const allResolve = new Map();
 
 router.get("/postWReply", async (req, res) => {
   if (!req.query.senderID) {
     res.json({
       result: {
-        body: "❌ Please Enter your senderID on query. it allows any idenfitiers, please open your code.",
+        body: "❌ Please Enter your senderID on query.",
       },
-      status: "success",
+      status: "error",
     });
     return;
   }
-  const event = new Event(req.query ?? {});
+
+  const rawSenderID = String(req.query.senderID).replace(/^(web:|custom_)/, "");
+  let customSenderID;
+
+  try {
+    const data = await hoshinoDB.get(rawSenderID);
+    if (data?.customSenderID) {
+      customSenderID = data.customSenderID;
+    } else {
+      customSenderID = `custom_${crypto.randomUUID()}`;
+      await hoshinoDB.set(rawSenderID, { customSenderID });
+    }
+  } catch (error) {
+    console.error("Database error:", error);
+    res.json({
+      result: { body: "❌ Database error." },
+      status: "error",
+    });
+    return;
+  }
+
+  const event = new Event({ ...req.query, senderID: customSenderID });
   event.messageID = `id_${crypto.randomUUID()}`;
 
   const botResponse = await new Promise(async (resolve) => {
@@ -35,6 +56,7 @@ router.get("/postWReply", async (req, res) => {
             status: "success",
           };
           resolve(ll);
+          allResolve.delete(event.messageID);
           if (typeof third === "function") {
             try {
               third(ll);
@@ -61,29 +83,21 @@ router.get("/postWReply", async (req, res) => {
       }
     );
     try {
-      // @ts-ignore
       await listener({ api: apiFake, event });
     } catch (error) {
       console.error(error);
+      res.json({
+        result: { body: "Error processing request." },
+        status: "error",
+      });
     }
   });
 
   res.json(botResponse);
 });
 
-const pref = "web:";
-
 function formatIP(ip) {
-  try {
-    ip = ip?.replaceAll("custom_", "");
-
-    const formattedIP = ip;
-
-    return `${pref}${formattedIP}`;
-  } catch (error) {
-    console.error("Error in formatting IP:", error);
-    return ip;
-  }
+  return String(ip).replace(/^custom_/, "");
 }
 
 class Event {
@@ -104,29 +118,15 @@ class Event {
       isWeb: true,
     };
     Object.assign(this, defaults, info);
-    // @ts-ignore
-    if (this.userID && this.isWeb) {
-      this.userID = formatIP(this.senderID);
-    }
+
     this.senderID = formatIP(this.senderID);
     this.threadID = formatIP(this.threadID);
-    if (
-      "messageReply" in this &&
-      typeof this.messageReply === "object" &&
-      this.messageReply
-    ) {
-      // @ts-ignore
-
+    if (this.messageReply?.senderID) {
       this.messageReply.senderID = formatIP(this.messageReply.senderID);
     }
-    this.participantIDs ??= [];
-    if (Array.isArray(this.participantIDs)) {
-      this.participantIDs = this.participantIDs.map((id) => formatIP(id));
-    }
-
-    if (Object.keys(this.mentions ?? {}).length > 0) {
+    this.participantIDs = (this.participantIDs || []).map((id) => formatIP(id));
+    if (Object.keys(this.mentions || {}).length > 0) {
       this.mentions = Object.fromEntries(
-        // @ts-ignore
         Object.entries(this.mentions).map((i) => [formatIP(i[0]), i[1]])
       );
     }
@@ -136,25 +136,12 @@ class Event {
 module.exports = router;
 
 function normalizeMessageForm(form) {
-  let r = {};
-  if (form && r) {
-    if (typeof form === "object") {
-      r = form;
-    }
-
-    if (typeof form === "string") {
-      // @ts-ignore
-      r = {
-        body: form,
-      };
-    }
-    if (!Array.isArray(r.attachment) && r.attachment) {
-      r.attachment = [r.attachment];
-    }
-    return r;
-  } else {
-    return {
-      body: undefined,
-    };
+  if (!form) {
+    return { body: "" };
   }
+  let r = typeof form === "string" ? { body: form } : form;
+  if (r.attachment && !Array.isArray(r.attachment)) {
+    r.attachment = [r.attachment];
+  }
+  return r;
 }
