@@ -9,7 +9,7 @@ const command = {
     developer: "Francis Loyd Raval",
     description: "Try your luck at rizzing someone to earn money!",
     category: "Game",
-    usage: "!rizz <bet>",
+    usage: "!rizz <bet | allin>",
     config: {
       admin: false,
       moderator: false,
@@ -34,17 +34,27 @@ const command = {
           "You must register first using profile register [username]"
         );
       }
-      const bet = parseInt(args[0]);
-      if (args.length === 0 || isNaN(bet) || bet <= 0) {
+      let { balance = 0 } = userData;
+      if (balance <= 0) {
         return await chat.reply(
-          "Please specify a valid bet amount (e.g., !rizz 100)."
+          "Your balance is $0. You need some money to play!"
         );
       }
-      let { balance = 0 } = userData;
-      if (balance < bet) {
-        return await chat.reply(
-          `You don't have enough balance! Your balance: $${balance}.`
-        );
+      let bet;
+      if (args[0] && (args[0].toLowerCase() === "allin" || args[0].toLowerCase() === "all")) {
+        bet = balance;
+      } else {
+        bet = parseInt(args[0]);
+        if (args.length === 0 || isNaN(bet) || bet <= 0) {
+          return await chat.reply(
+            "Please specify a valid bet amount or use 'allin' (e.g., rizz 100 or rizz allin)."
+          );
+        }
+        if (bet > balance) {
+          return await chat.reply(
+            `You don't have enough balance! Your balance: $${balance}.`
+          );
+        }
       }
       balance -= bet;
       const success = Math.random() < 0.5;
@@ -66,7 +76,7 @@ const command = {
         "That sigma move was too bold for them... 🐺",
         "Your sigma swagger got no response... 🐺",
       ];
-      let resultMessage = `                    **Result**\n`;
+      let resultMessage = ``;
       if (success) {
         const multiplier = (Math.random() * 1.5) + 1.5;
         const winnings = Math.floor(bet * multiplier);
