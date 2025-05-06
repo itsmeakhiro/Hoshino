@@ -6,16 +6,22 @@ const listener = require("./system/listener").default;
 const allResolve = new Map();
 
 router.get("/postWReply", async (req, res) => {
-  if (!req.query.senderID) {
+  const query = req.query;
+  if (!query.senderID) {
     res.json({
       result: {
-        body: "❌ Please Enter your senderID on query. it allows any idenfitiers, please open your code.",
+        body: "❌ Please Enter your senderID on query.",
       },
-      status: "success",
+      status: "error",
     });
     return;
   }
-  const event = new Event(req.query ?? {});
+
+  const rawSenderID = String(query.senderID).replace(/^(web:|custom_)/, "");
+  const customSenderID = `custom_${crypto.randomUUID()}`;
+
+  /** @type {HoshinoLia.Event} */
+  const event = new Event({ ...query, senderID: customSenderID });
   event.messageID = `id_${crypto.randomUUID()}`;
 
   const botResponse = await new Promise(async (resolve) => {
@@ -33,6 +39,7 @@ router.get("/postWReply", async (req, res) => {
             status: "success",
           };
           resolve(ll);
+          allResolve.delete(event.messageID);
           if (typeof third === "function") {
             try {
               third(ll);
@@ -59,32 +66,20 @@ router.get("/postWReply", async (req, res) => {
       }
     );
     try {
-      // @ts-ignore
       await listener({ api: apiFake, event });
     } catch (error) {
       console.error(error);
+      res.json({
+        result: { body: "Error processing request." },
+        status: "error",
+      });
     }
   });
 
   res.json(botResponse);
 });
 
-const pref = "web:";
-
-function formatIP(ip) {
-  try {
-    ip = ip?.replaceAll("custom_", "");
-
-    const formattedIP = ip;
-
-    return `${pref}${formattedIP}`;
-  } catch (error) {
-    console.error("Error in formatting IP:", error);
-    return ip;
-  }
-}
-
-function formatIPLegacy(ip) {
+function formatIPLegacy(ip, pref = "custom_") {
   try {
     const encodedIP = Buffer.from(ip)
       .toString("base64")
@@ -95,9 +90,10 @@ function formatIPLegacy(ip) {
   }
 }
 
+/** @implements {HoshinoLia.Event} */
 class Event {
   constructor({ ...info } = {}) {
-    this.messageID = undefined;
+    this.messageID = "";
 
     let defaults = {
       body: "",
@@ -113,56 +109,42 @@ class Event {
       isWeb: true,
     };
     Object.assign(this, defaults, info);
-    // @ts-ignore
-    if (this.userID && this.isWeb) {
-      this.userID = formatIP(this.senderID);
-    }
-    this.senderID = formatIP(this.senderID);
-    this.threadID = formatIP(this.threadID);
-    if (
-      "messageReply" in this &&
-      typeof this.messageReply === "object" &&
-      this.messageReply
-    ) {
-      // @ts-ignore
-      this.messageReply.senderID = formatIP(this.messageReply.senderID);
-    }
-    this.participantIDs ??= [];
-    if (Array.isArray(this.participantIDs)) {
-      this.participantIDs = this.participantIDs.map((id) => formatIP(id));
-    }
+    this.body = defaults.body;
+    this.senderID = defaults.senderID;
+    this.threadID = defaults.threadID;
+    this.messageID = defaults.messageID;
+    this.type = defaults.type;
+    this.timestamp = defaults.timestamp;
+    this.isGroup = defaults.isGroup;
+    this.participantIDs = defaults.participantIDs;
+    this.attachments = defaults.attachments;
+    this.mentions = defaults.mentions;
+    this.isWeb = defaults.isWeb;
+    this.messageReply = defaults.messageReply;
 
+    this.senderID = formatIPLegacy(this.senderID);
+    this.threadID = formatIPLegacy(this.threadID);
+    if (this.messageReply?.senderID) {
+      this.messageReply.senderID = formatIPLegacy(this.messageReply.senderID);
+    }
+    this.participantIDs = (this.participantIDs || []).map((id) => formatIPLegacy(id));
     if (Object.keys(this.mentions ?? {}).length > 0) {
       this.mentions = Object.fromEntries(
-        // @ts-ignore
-        Object.entries(this.mentions).map((i) => [formatIP(i[0]), i[1]])
+        Object.entries(this.mentions ?? {}).map((i) => [formatIPLegacy(i[0]), i[1]])
       );
     }
   }
 }
 
-module.exports = router;
-
 function normalizeMessageForm(form) {
-  let r = {};
-  if (form && r) {
-    if (typeof form === "object") {
-      r = form;
-    }
-
-    if (typeof form === "string") {
-      // @ts-ignore
-      r = {
-        body: form,
-      };
-    }
-    if (!Array.isArray(r.attachment) && r.attachment) {
-      r.attachment = [r.attachment];
-    }
-    return r;
-  } else {
-    return {
-      body: undefined,
-    };
+  if (!form) {
+    return { body: "" };
   }
+  let r = typeof form === "string" ? { body: form } : form;
+  if (r.attachment && !Array.isArray(r.attachment)) {
+    r.attachment = [r.attachment];
+  }
+  return r;
 }
+
+module.exports = router;
