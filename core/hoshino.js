@@ -39,7 +39,7 @@ router.get("/postWReply", async (req, res) => {
     return;
   }
 
-  
+  /** @type {HoshinoLia.Event} */
   const event = new Event({ ...query, senderID: customSenderID });
   event.messageID = `id_${crypto.randomUUID()}`;
 
@@ -85,7 +85,6 @@ router.get("/postWReply", async (req, res) => {
       }
     );
     try {
-      /** @type {HoshinoLia.Event} */
       await listener({ api: apiFake, event });
     } catch (error) {
       console.error(error);
@@ -102,11 +101,10 @@ router.get("/postWReply", async (req, res) => {
 function formatIP(ip) {
   return String(ip).replace(/^custom_/, "");
 }
-/** @type {HoshinoLia.Event} */
-    
+/** @implements {HoshinoLia.Event} */
 class Event {
   constructor({ ...info } = {}) {
-    this.messageID = undefined;
+    this.messageID = "";
 
     let defaults = {
       body: "",
@@ -120,9 +118,20 @@ class Event {
       attachments: [],
       mentions: {},
       isWeb: true,
-      messageReply: null,
     };
     Object.assign(this, defaults, info);
+    this.body = defaults.body;
+    this.senderID = defaults.senderID;
+    this.threadID = defaults.threadID;
+    this.messageID = defaults.messageID;
+    this.type = defaults.type;
+    this.timestamp = defaults.timestamp;
+    this.isGroup = defaults.isGroup;
+    this.participantIDs = defaults.participantIDs;
+    this.attachments = defaults.attachments;
+    this.mentions = defaults.mentions;
+    this.isWeb = defaults.isWeb;
+    this.messageReply = defaults.messageReply;
 
     this.senderID = formatIP(this.senderID);
     this.threadID = formatIP(this.threadID);
