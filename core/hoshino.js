@@ -2,9 +2,7 @@ const express = require("express");
 const crypto = require("crypto");
 const router = express.Router();
 const listener = require("./system/listener").default;
-const HoshinoDB = require("../Hoshino/resources/plugins/database/utils");
 
-const hoshinoDB = new HoshinoDB();
 const allResolve = new Map();
 
 router.get("/postWReply", async (req, res) => {
@@ -20,24 +18,7 @@ router.get("/postWReply", async (req, res) => {
   }
 
   const rawSenderID = String(query.senderID).replace(/^(web:|custom_)/, "");
-  let customSenderID;
-
-  try {
-    const data = await hoshinoDB.get(rawSenderID);
-    if (data?.customSenderID) {
-      customSenderID = data.customSenderID;
-    } else {
-      customSenderID = `custom_${crypto.randomUUID()}`;
-      await hoshinoDB.set(rawSenderID, { customSenderID });
-    }
-  } catch (error) {
-    console.error("Database error:", error);
-    res.json({
-      result: { body: "❌ Database error." },
-      status: "error",
-    });
-    return;
-  }
+  const customSenderID = `custom_${crypto.randomUUID()}`;
 
   /** @type {HoshinoLia.Event} */
   const event = new Event({ ...query, senderID: customSenderID });
@@ -98,9 +79,17 @@ router.get("/postWReply", async (req, res) => {
   res.json(botResponse);
 });
 
-function formatIP(ip) {
-  return String(ip).replace(/^custom_/, "");
+function formatIPLegacy(ip, pref = "custom_") {
+  try {
+    const encodedIP = Buffer.from(ip)
+      .toString("base64")
+      .replace(/[+/=]/g, (match) => ({ "+": "0", "/": "1", "=": "" }[match]));
+    return `${pref}${encodedIP}`;
+  } catch (error) {
+    return ip;
+  }
 }
+
 /** @implements {HoshinoLia.Event} */
 class Event {
   constructor({ ...info } = {}) {
@@ -133,21 +122,19 @@ class Event {
     this.isWeb = defaults.isWeb;
     this.messageReply = defaults.messageReply;
 
-    this.senderID = formatIP(this.senderID);
-    this.threadID = formatIP(this.threadID);
+    this.senderID = formatIPLegacy(this.senderID);
+    this.threadID = formatIPLegacy(this.threadID);
     if (this.messageReply?.senderID) {
-      this.messageReply.senderID = formatIP(this.messageReply.senderID);
+      this.messageReply.senderID = formatIPLegacy(this.messageReply.senderID);
     }
-    this.participantIDs = (this.participantIDs || []).map((id) => formatIP(id));
+    this.participantIDs = (this.participantIDs || []).map((id) => formatIPLegacy(id));
     if (Object.keys(this.mentions ?? {}).length > 0) {
       this.mentions = Object.fromEntries(
-        Object.entries(this.mentions ?? {}).map((i) => [formatIP(i[0]), i[1]])
+        Object.entries(this.mentions ?? {}).map((i) => [formatIPLegacy(i[0]), i[1]])
       );
     }
   }
 }
-
-module.exports = router;
 
 function normalizeMessageForm(form) {
   if (!form) {
@@ -159,3 +146,5 @@ function normalizeMessageForm(form) {
   }
   return r;
 }
+
+module.exports = router;
