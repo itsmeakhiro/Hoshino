@@ -82,6 +82,17 @@ function formatIP(ip) {
   }
 }
 
+function formatIPLegacy(ip) {
+  try {
+    const encodedIP = Buffer.from(ip)
+      .toString("base64")
+      .replace(/[+/=]/g, (match) => ({ "+": "0", "/": "1", "=": "" }[match]));
+    return `${encodedIP}`;
+  } catch (error) {
+    return ip;
+  }
+}
+
 class Event {
   constructor({ ...info } = {}) {
     this.messageID = undefined;
@@ -112,7 +123,6 @@ class Event {
       this.messageReply
     ) {
       // @ts-ignore
-
       this.messageReply.senderID = formatIP(this.messageReply.senderID);
     }
     this.participantIDs ??= [];
