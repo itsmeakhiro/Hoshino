@@ -29,7 +29,6 @@ router.get("/postWReply", async (req, res) => {
               body: nform.body,
               messageID: `id_${crypto.randomUUID()}`,
               timestamp: Date.now().toString(),
-              customID: event.customID, 
             },
             status: "success",
           };
@@ -93,11 +92,16 @@ function formatIPLegacy(ip) {
 }
 
 class Event {
+  /**
+   * @type {HoshinoLia.Event["messageReply"]}
+   */
+  messageReply = undefined;
+  /**
+   *
+   * @param {Partial<HoshinoLia.Event>} param0
+   */
   constructor({ ...info } = {}) {
-    this.messageID = undefined;
-    this.customID = formatIPLegacy(info.senderID ? String(info.senderID) : "0");
-
-    let defaults = {
+    let vals = {
       body: "",
       senderID: "0",
       threadID: "0",
@@ -109,24 +113,32 @@ class Event {
       attachments: [],
       mentions: {},
       isWeb: true,
+      ...info,
     };
-    Object.assign(this, defaults, info);
-    // @ts-ignore
+    this.mentions = vals.mentions;
+    this.body = vals.body;
+    this.senderID = vals.senderID;
+    this.threadID = vals.threadID;
+    this.messageID = vals.messageID;
+    this.type = vals.type;
+    this.timestamp = vals.timestamp;
+    this.isGroup = vals.isGroup;
+    this.participantIDs = vals.participantIDs;
+    this.attachments = vals.attachments;
+    this.isWeb = vals.isWeb;
+    Object.assign(this, vals, info);
     if (this.userID && this.isWeb) {
-      this.userID = formatIP(this.senderID);
+      this.userID = formatIPLegacy(this.senderID);
     }
-    this.senderID = formatIP(this.senderID);
-    this.threadID = formatIP(this.threadID);
+    this.senderID = formatIPLegacy(this.senderID);
+    this.threadID = formatIPLegacy(this.threadID);
     if (
       "messageReply" in this &&
       typeof this.messageReply === "object" &&
       this.messageReply
     ) {
-      // @ts-ignore
-      this.messageReply.senderID = formatIP(this.messageReply.senderID || "0");
-      // [CHANGED] Add runtime check for messageReply.senderID
-      this.messageReply.customID = formatIPLegacy(
-        this.messageReply.senderID ? String(this.messageReply.senderID) : "0"
+      this.messageReply.senderID = formatIPLegacy(
+        this.messageReply.senderID || "0"
       );
     }
     this.participantIDs ??= [];
@@ -136,7 +148,6 @@ class Event {
 
     if (Object.keys(this.mentions ?? {}).length > 0) {
       this.mentions = Object.fromEntries(
-        // @ts-ignore
         Object.entries(this.mentions).map((i) => [formatIP(i[0]), i[1]])
       );
     }

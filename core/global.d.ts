@@ -115,6 +115,7 @@ declare global {
         messageID: string;
         senderID: string;
       };
+      isWeb?: boolean;
       [key: string]: any;
     }
 
