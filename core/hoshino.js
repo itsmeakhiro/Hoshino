@@ -29,7 +29,7 @@ router.get("/postWReply", async (req, res) => {
               body: nform.body,
               messageID: `id_${crypto.randomUUID()}`,
               timestamp: Date.now().toString(),
-              customID: event.customID, // [CHANGED] Include customID in response
+              customID: event.customID,
             },
             status: "success",
           };
@@ -91,11 +91,11 @@ function formatIPLegacy(ip) {
     return ip;
   }
 }
-
+/** @implements {HoshinoLia.Event} */
 class Event {
   constructor({ ...info } = {}) {
     this.messageID = undefined;
-    this.customID = formatIPLegacy(info.senderID || "0"); // [ADDED] Generate customID
+    this.customID = formatIPLegacy(info.senderID || "0"); 
 
     let defaults = {
       body: "",
