@@ -83,10 +83,10 @@ function formatIP(ip) {
 }
 
 class Event {
-  constructor({ ...info } = {}) {
+  constructor(info = {}) {
     this.messageID = undefined;
 
-    let defaults = {
+    const defaults = {
       body: "",
       senderID: "0",
       threadID: "0",
@@ -98,36 +98,28 @@ class Event {
       attachments: [],
       mentions: {},
     };
-    Object.assign(this, defaults, info);
 
-    // Store original IDs before formatting
+    const safeInfo = typeof info === "object" && info !== null ? info : {};
+
+    Object.assign(this, defaults, safeInfo);
+
     this.originalSenderID = this.senderID;
     this.originalThreadID = this.threadID;
     this.originalParticipantIDs = this.participantIDs ? [...this.participantIDs] : [];
     this.originalMentions = this.mentions ? { ...this.mentions } : {};
+
     if (this.messageReply && typeof this.messageReply === "object") {
       this.originalMessageReplySenderID = this.messageReply.senderID;
+      this.messageReply.senderID = formatIP(this.messageReply.senderID);
     }
 
     // Apply formatIP to generate custom IDs
     this.senderID = formatIP(this.senderID);
     this.threadID = formatIP(this.threadID);
-    if (
-      "messageReply" in this &&
-      typeof this.messageReply === "object" &&
-      this.messageReply
-    ) {
-      // @ts-ignore
-      this.messageReply.senderID = formatIP(this.messageReply.senderID);
-    }
-    this.participantIDs ??= [];
-    if (Array.isArray(this.participantIDs)) {
-      this.participantIDs = this.participantIDs.map((id) => formatIP(id));
-    }
+    this.participantIDs = this.participantIDs ? this.participantIDs.map((id) => formatIP(id)) : [];
 
-    if (Object.keys(this.mentions ?? {}).length > 0) {
+    if (Object.keys(this.mentions).length > 0) {
       this.mentions = Object.fromEntries(
-        // @ts-ignore
         Object.entries(this.mentions).map((i) => [formatIP(i[0]), i[1]])
       );
     }
