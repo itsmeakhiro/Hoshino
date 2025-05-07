@@ -100,6 +100,7 @@ class Event {
     };
     Object.assign(this, defaults, info);
 
+    // Store original IDs before formatting
     this.originalSenderID = this.senderID;
     this.originalThreadID = this.threadID;
     this.originalParticipantIDs = this.participantIDs ? [...this.participantIDs] : [];
@@ -108,6 +109,7 @@ class Event {
       this.originalMessageReplySenderID = this.messageReply.senderID;
     }
 
+    // Apply formatIP to generate custom IDs
     this.senderID = formatIP(this.senderID);
     this.threadID = formatIP(this.threadID);
     if (
@@ -156,4 +158,4 @@ function normalizeMessageForm(form) {
       body: undefined,
     };
   }
-              }
+}
