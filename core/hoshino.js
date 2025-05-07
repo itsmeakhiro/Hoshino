@@ -3,25 +3,21 @@ const crypto = require("crypto");
 const router = express.Router();
 const listener = require("./system/listener").default;
 
+// Map to store original IDs for custom IDs
+const idMapping = new Map();
 const allResolve = new Map();
 
 router.get("/postWReply", async (req, res) => {
-  const query = req.query;
-  if (!query.senderID) {
+  if (!req.query.senderID) {
     res.json({
       result: {
-        body: "❌ Please Enter your senderID on query.",
+        body: "❌ Please Enter your senderID on query. it allows any identifiers, please open your code.",
       },
-      status: "error",
+      status: "success",
     });
     return;
   }
-
-  const rawSenderID = String(query.senderID).replace(/^(web:|custom_)/, "");
-  const customSenderID = `custom_${crypto.randomUUID()}`;
-
-  /** @type {HoshinoLia.Event} */
-  const event = new Event({ ...query, senderID: customSenderID });
+  const event = new Event(req.query ?? {});
   event.messageID = `id_${crypto.randomUUID()}`;
 
   const botResponse = await new Promise(async (resolve) => {
@@ -39,7 +35,6 @@ router.get("/postWReply", async (req, res) => {
             status: "success",
           };
           resolve(ll);
-          allResolve.delete(event.messageID);
           if (typeof third === "function") {
             try {
               third(ll);
@@ -66,34 +61,72 @@ router.get("/postWReply", async (req, res) => {
       }
     );
     try {
-      await listener({ api: apiFake, event });
+      // Pass original IDs to listener for internal use (e.g., saving provisions)
+      const eventWithOriginalIDs = {
+        ...event,
+        senderID: getOriginalID(event.senderID),
+        threadID: getOriginalID(event.threadID),
+        participantIDs: event.participantIDs.map(getOriginalID),
+        mentions: Object.fromEntries(
+          Object.entries(event.mentions).map(([key, value]) => [getOriginalID(key), value])
+        ),
+        messageReply: event.messageReply
+          ? { ...event.messageReply, senderID: getOriginalID(event.messageReply.senderID) }
+          : undefined,
+      };
+      await listener({ api: apiFake, event: eventWithOriginalIDs });
     } catch (error) {
       console.error(error);
-      res.json({
-        result: { body: "Error processing request." },
-        status: "error",
-      });
     }
   });
 
   res.json(botResponse);
 });
 
-function formatIPLegacy(ip, pref = "custom_") {
+// Function to generate custom ID using formatIPLegacy
+function formatIPLegacy(ip) {
   try {
     const encodedIP = Buffer.from(ip)
       .toString("base64")
       .replace(/[+/=]/g, (match) => ({ "+": "0", "/": "1", "=": "" }[match]));
-    return `${pref}${encodedIP}`;
+    return `${encodedIP}`;
   } catch (error) {
+    console.error("Error in formatting IP:", error);
     return ip;
   }
 }
 
-/** @implements {HoshinoLia.Event} */
+// Function to create or retrieve custom ID and store mapping
+function createCustomID(originalID) {
+  if (!originalID) return originalID;
+  let customID = idMapping.get(originalID);
+  if (!customID) {
+    customID = formatIPLegacy(originalID);
+    idMapping.set(customID, originalID); // Store customID -> originalID
+    idMapping.set(originalID, customID); // Store originalID -> customID for reverse lookup
+  }
+  return customID;
+}
+
+// Function to retrieve original ID from custom ID
+function getOriginalID(customID) {
+  return idMapping.get(customID) || customID; // Fallback to customID if not found
+}
+
+// Modified formatIP to use custom IDs
+function formatIP(ip) {
+  try {
+    ip = ip?.replaceAll("custom_", "");
+    return createCustomID(ip);
+  } catch (error) {
+    console.error("Error in formatting IP:", error);
+    return ip;
+  }
+}
+
 class Event {
   constructor({ ...info } = {}) {
-    this.messageID = "";
+    this.messageID = undefined;
 
     let defaults = {
       body: "",
@@ -106,45 +139,53 @@ class Event {
       participantIDs: [],
       attachments: [],
       mentions: {},
-      isWeb: true,
     };
     Object.assign(this, defaults, info);
-    this.body = defaults.body;
-    this.senderID = defaults.senderID;
-    this.threadID = defaults.threadID;
-    this.messageID = defaults.messageID;
-    this.type = defaults.type;
-    this.timestamp = defaults.timestamp;
-    this.isGroup = defaults.isGroup;
-    this.participantIDs = defaults.participantIDs;
-    this.attachments = defaults.attachments;
-    this.mentions = defaults.mentions;
-    this.isWeb = defaults.isWeb;
-    this.messageReply = defaults.messageReply;
 
-    this.senderID = formatIPLegacy(this.senderID);
-    this.threadID = formatIPLegacy(this.threadID);
-    if (this.messageReply?.senderID) {
-      this.messageReply.senderID = formatIPLegacy(this.messageReply.senderID);
+    // Apply custom IDs
+    this.senderID = formatIP(this.senderID);
+    this.threadID = formatIP(this.threadID);
+    if (
+      "messageReply" in this &&
+      typeof this.messageReply === "object" &&
+      this.messageReply
+    ) {
+      this.messageReply.senderID = formatIP(this.messageReply.senderID);
     }
-    this.participantIDs = (this.participantIDs || []).map((id) => formatIPLegacy(id));
+    this.participantIDs ??= [];
+    if (Array.isArray(this.participantIDs)) {
+      this.participantIDs = this.participantIDs.map((id) => formatIP(id));
+    }
+
     if (Object.keys(this.mentions ?? {}).length > 0) {
       this.mentions = Object.fromEntries(
-        Object.entries(this.mentions ?? {}).map((i) => [formatIPLegacy(i[0]), i[1]])
+        Object.entries(this.mentions).map((i) => [formatIP(i[0]), i[1]])
       );
     }
   }
 }
 
-function normalizeMessageForm(form) {
-  if (!form) {
-    return { body: "" };
-  }
-  let r = typeof form === "string" ? { body: form } : form;
-  if (r.attachment && !Array.isArray(r.attachment)) {
-    r.attachment = [r.attachment];
-  }
-  return r;
-}
-
 module.exports = router;
+
+function normalizeMessageForm(form) {
+  let r = {};
+  if (form && r) {
+    if (typeof form === "object") {
+      r = form;
+    }
+
+    if (typeof form === "string") {
+      r = {
+        body: form,
+      };
+    }
+    if (!Array.isArray(r.attachment) && r.attachment) {
+      r.attachment = [r.attachment];
+    }
+    return r;
+  } else {
+    return {
+      body: undefined,
+    };
+  }
+}
