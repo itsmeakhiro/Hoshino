@@ -69,13 +69,15 @@ router.get("/postWReply", async (req, res) => {
   res.json(botResponse);
 });
 
+const pref = "web:";
+
 function formatIP(ip) {
   try {
     ip = ip?.replaceAll("custom_", "");
-    const encodedIP = Buffer.from(ip)
-      .toString("base64")
-      .replace(/[+/=]/g, (match) => ({ "+": "0", "/": "1", "=": "" }[match]));
-    return encodedIP;
+
+    const formattedIP = ip;
+
+    return `${pref}${formattedIP}`;
   } catch (error) {
     console.error("Error in formatting IP:", error);
     return ip;
@@ -83,10 +85,10 @@ function formatIP(ip) {
 }
 
 class Event {
-  constructor(info = {}) {
+  constructor({ ...info } = {}) {
     this.messageID = undefined;
 
-    const defaults = {
+    let defaults = {
       body: "",
       senderID: "0",
       threadID: "0",
@@ -97,29 +99,32 @@ class Event {
       participantIDs: [],
       attachments: [],
       mentions: {},
+      isWeb: true,
     };
-
-    const safeInfo = typeof info === "object" && info !== null ? info : {};
-
-    Object.assign(this, defaults, safeInfo);
-
-    this.originalSenderID = this.senderID;
-    this.originalThreadID = this.threadID;
-    this.originalParticipantIDs = this.participantIDs ? [...this.participantIDs] : [];
-    this.originalMentions = this.mentions ? { ...this.mentions } : {};
-
-    if (this.messageReply && typeof this.messageReply === "object") {
-      this.originalMessageReplySenderID = this.messageReply.senderID;
-      this.messageReply.senderID = formatIP(this.messageReply.senderID);
+    Object.assign(this, defaults, info);
+    // @ts-ignore
+    if (this.userID && this.isWeb) {
+      this.userID = formatIP(this.senderID);
     }
-
-    // Apply formatIP to generate custom IDs
     this.senderID = formatIP(this.senderID);
     this.threadID = formatIP(this.threadID);
-    this.participantIDs = this.participantIDs ? this.participantIDs.map((id) => formatIP(id)) : [];
+    if (
+      "messageReply" in this &&
+      typeof this.messageReply === "object" &&
+      this.messageReply
+    ) {
+      // @ts-ignore
 
-    if (Object.keys(this.mentions).length > 0) {
+      this.messageReply.senderID = formatIP(this.messageReply.senderID);
+    }
+    this.participantIDs ??= [];
+    if (Array.isArray(this.participantIDs)) {
+      this.participantIDs = this.participantIDs.map((id) => formatIP(id));
+    }
+
+    if (Object.keys(this.mentions ?? {}).length > 0) {
       this.mentions = Object.fromEntries(
+        // @ts-ignore
         Object.entries(this.mentions).map((i) => [formatIP(i[0]), i[1]])
       );
     }
@@ -150,4 +155,3 @@ function normalizeMessageForm(form) {
       body: undefined,
     };
   }
-}
