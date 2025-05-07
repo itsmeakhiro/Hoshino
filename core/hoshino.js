@@ -3,15 +3,13 @@ const crypto = require("crypto");
 const router = express.Router();
 const listener = require("./system/listener").default;
 
-// Map to store original IDs for custom IDs
-const idMapping = new Map();
 const allResolve = new Map();
 
 router.get("/postWReply", async (req, res) => {
   if (!req.query.senderID) {
     res.json({
       result: {
-        body: "❌ Please Enter your senderID on query. it allows any identifiers, please open your code.",
+        body: "❌ Please Enter your senderID on query. it allows any idenfitiers, please open your code.",
       },
       status: "success",
     });
@@ -61,20 +59,8 @@ router.get("/postWReply", async (req, res) => {
       }
     );
     try {
-      // Pass original IDs to listener for internal use (e.g., saving provisions)
-      const eventWithOriginalIDs = {
-        ...event,
-        senderID: getOriginalID(event.senderID),
-        threadID: getOriginalID(event.threadID),
-        participantIDs: event.participantIDs.map(getOriginalID),
-        mentions: Object.fromEntries(
-          Object.entries(event.mentions).map(([key, value]) => [getOriginalID(key), value])
-        ),
-        messageReply: event.messageReply
-          ? { ...event.messageReply, senderID: getOriginalID(event.messageReply.senderID) }
-          : undefined,
-      };
-      await listener({ api: apiFake, event: eventWithOriginalIDs });
+      // @ts-ignore
+      await listener({ api: apiFake, event });
     } catch (error) {
       console.error(error);
     }
@@ -83,41 +69,13 @@ router.get("/postWReply", async (req, res) => {
   res.json(botResponse);
 });
 
-// Function to generate custom ID using formatIPLegacy
-function formatIPLegacy(ip) {
-  try {
-    const encodedIP = Buffer.from(ip)
-      .toString("base64")
-      .replace(/[+/=]/g, (match) => ({ "+": "0", "/": "1", "=": "" }[match]));
-    return `${encodedIP}`;
-  } catch (error) {
-    console.error("Error in formatting IP:", error);
-    return ip;
-  }
-}
-
-// Function to create or retrieve custom ID and store mapping
-function createCustomID(originalID) {
-  if (!originalID) return originalID;
-  let customID = idMapping.get(originalID);
-  if (!customID) {
-    customID = formatIPLegacy(originalID);
-    idMapping.set(customID, originalID); // Store customID -> originalID
-    idMapping.set(originalID, customID); // Store originalID -> customID for reverse lookup
-  }
-  return customID;
-}
-
-// Function to retrieve original ID from custom ID
-function getOriginalID(customID) {
-  return idMapping.get(customID) || customID; // Fallback to customID if not found
-}
-
-// Modified formatIP to use custom IDs
 function formatIP(ip) {
   try {
     ip = ip?.replaceAll("custom_", "");
-    return createCustomID(ip);
+    const encodedIP = Buffer.from(ip)
+      .toString("base64")
+      .replace(/[+/=]/g, (match) => ({ "+": "0", "/": "1", "=": "" }[match]));
+    return encodedIP;
   } catch (error) {
     console.error("Error in formatting IP:", error);
     return ip;
@@ -142,7 +100,14 @@ class Event {
     };
     Object.assign(this, defaults, info);
 
-    // Apply custom IDs
+    this.originalSenderID = this.senderID;
+    this.originalThreadID = this.threadID;
+    this.originalParticipantIDs = this.participantIDs ? [...this.participantIDs] : [];
+    this.originalMentions = this.mentions ? { ...this.mentions } : {};
+    if (this.messageReply && typeof this.messageReply === "object") {
+      this.originalMessageReplySenderID = this.messageReply.senderID;
+    }
+
     this.senderID = formatIP(this.senderID);
     this.threadID = formatIP(this.threadID);
     if (
@@ -150,6 +115,7 @@ class Event {
       typeof this.messageReply === "object" &&
       this.messageReply
     ) {
+      // @ts-ignore
       this.messageReply.senderID = formatIP(this.messageReply.senderID);
     }
     this.participantIDs ??= [];
@@ -159,6 +125,7 @@ class Event {
 
     if (Object.keys(this.mentions ?? {}).length > 0) {
       this.mentions = Object.fromEntries(
+        // @ts-ignore
         Object.entries(this.mentions).map((i) => [formatIP(i[0]), i[1]])
       );
     }
@@ -175,6 +142,7 @@ function normalizeMessageForm(form) {
     }
 
     if (typeof form === "string") {
+      // @ts-ignore
       r = {
         body: form,
       };
@@ -188,4 +156,4 @@ function normalizeMessageForm(form) {
       body: undefined,
     };
   }
-}
+              }
