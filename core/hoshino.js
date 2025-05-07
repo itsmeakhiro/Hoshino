@@ -29,6 +29,7 @@ router.get("/postWReply", async (req, res) => {
               body: nform.body,
               messageID: `id_${crypto.randomUUID()}`,
               timestamp: Date.now().toString(),
+              customID: event.customID, // [CHANGED] Include customID in response
             },
             status: "success",
           };
@@ -72,9 +73,7 @@ router.get("/postWReply", async (req, res) => {
 function formatIP(ip) {
   try {
     ip = ip?.replaceAll("custom_", "");
-
     const formattedIP = ip;
-
     return `${formattedIP}`;
   } catch (error) {
     console.error("Error in formatting IP:", error);
@@ -96,6 +95,7 @@ function formatIPLegacy(ip) {
 class Event {
   constructor({ ...info } = {}) {
     this.messageID = undefined;
+    this.customID = formatIPLegacy(info.senderID || "0"); // [ADDED] Generate customID
 
     let defaults = {
       body: "",
@@ -124,6 +124,7 @@ class Event {
     ) {
       // @ts-ignore
       this.messageReply.senderID = formatIP(this.messageReply.senderID);
+      this.messageReply.customID = formatIPLegacy(this.messageReply.senderID);
     }
     this.participantIDs ??= [];
     if (Array.isArray(this.participantIDs)) {
@@ -147,7 +148,6 @@ function normalizeMessageForm(form) {
     if (typeof form === "object") {
       r = form;
     }
-
     if (typeof form === "string") {
       // @ts-ignore
       r = {
