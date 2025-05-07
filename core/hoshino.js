@@ -29,7 +29,7 @@ router.get("/postWReply", async (req, res) => {
               body: nform.body,
               messageID: `id_${crypto.randomUUID()}`,
               timestamp: Date.now().toString(),
-              customID: event.customID, // Include customID in response
+              customID: event.customID, 
             },
             status: "success",
           };
@@ -95,7 +95,6 @@ function formatIPLegacy(ip) {
 class Event {
   constructor({ ...info } = {}) {
     this.messageID = undefined;
-    // [CHANGED] Add runtime check for info.senderID
     this.customID = formatIPLegacy(info.senderID ? String(info.senderID) : "0");
 
     let defaults = {
