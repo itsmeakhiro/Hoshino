@@ -3,7 +3,7 @@ const command: HoshinoLia.Command = {
     name: "hscn",
     aliases: ["hc"],
     version: "1.0",
-    developer: "Francis Loyd Raval",
+    developer: "Francis Loyd Raval & MrKimstersDev",
     description:
       "Manage your Hcoins: earn coins, check your balance, or convert to money. Earning may incur costs.",
     category: "Economy",
