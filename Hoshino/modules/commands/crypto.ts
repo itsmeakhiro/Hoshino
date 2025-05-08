@@ -1,4 +1,5 @@
 // DO NOT REMOVE HoshinoLia.Command, do not add types on async deploy ctx
+
 const command: HoshinoLia.Command = {
   manifest: {
     name: "crypto",
@@ -46,7 +47,7 @@ const command: HoshinoLia.Command = {
             await hoshinoDB.set(userID, {
               ...userData,
               miningStartTime: Date.now(),
-              miningCosts: 0, 
+              miningCosts: 0,
             });
             await chat.reply(
               "Started mining crypto coins! Earn 1 coin per minute. Note: Mining may deduct 10-50 balance per minute (20% chance)."
@@ -73,7 +74,7 @@ const command: HoshinoLia.Command = {
               balance = 0,
               username,
             } = userData;
-            let miningStatus = "Not mining.";
+            let miningStatus: string = "Not mining.";
             let pendingCoins = 0;
             let newCosts = miningCosts;
             let newBalance = balance;
@@ -82,14 +83,13 @@ const command: HoshinoLia.Command = {
               pendingCoins = minutesElapsed;
               for (let i = 0; i < minutesElapsed; i++) {
                 if (Math.random() < 0.2 && newBalance >= 10) {
-                  const cost = Math.floor(Math.random() * 41) + 10; 
+                  const cost = Math.floor(Math.random() * 41) + 10;
                   newCosts += cost;
                   newBalance -= cost;
                 }
               }
-              miningStatus = `Mining for ${minutesElapsed} minute(s). Pending: ${pendingCoins} coin(s). Costs: $${newCosts.toLocaleString(
-                "en-US"
-              )}.`;
+              const formattedCosts = newCosts.toLocaleString("en-US");
+              miningStatus = `Mining for ${minutesElapsed} minute(s). Pending: ${pendingCoins} coin(s). Costs: $${formattedCosts}.`;
             }
             const formattedCoins = cryptoCoins.toLocaleString("en-US");
             const formattedBalance = newBalance.toLocaleString("en-US");
@@ -105,7 +105,7 @@ const command: HoshinoLia.Command = {
                 cryptoCoins: cryptoCoins + pendingCoins,
                 balance: newBalance,
                 miningStartTime: null,
-                miningCosts: 0, 
+                miningCosts: 0,
               });
               if (pendingCoins > 0) {
                 infoLines.push(`Collected ${pendingCoins} coin(s) from mining!`);
@@ -153,7 +153,7 @@ const command: HoshinoLia.Command = {
               pendingCoins = minutesElapsed;
               for (let i = 0; i < minutesElapsed; i++) {
                 if (Math.random() < 0.2 && newBalance >= 10) {
-                  const cost = Math.floor(Math.random() * 41) + 10; 
+                  const cost = Math.floor(Math.random() * 41) + 10;
                   newCosts += cost;
                   newBalance -= cost;
                 }
@@ -179,7 +179,6 @@ const command: HoshinoLia.Command = {
                 remainingCoins -= conversions * rate.coins;
               }
             }
-     
             if (remainingCoins > 0) {
               newBalance += remainingCoins * 2;
             }
@@ -187,7 +186,7 @@ const command: HoshinoLia.Command = {
               ...userData,
               cryptoCoins: totalCoins - amount,
               balance: newBalance,
-              miningStartTime: miningStartTime ? Date.now() : null, 
+              miningStartTime: miningStartTime ? Date.now() : null,
               miningCosts: 0,
             });
             const costMessage =
