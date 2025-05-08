@@ -69,24 +69,15 @@ router.get("/postWReply", async (req, res) => {
   res.json(botResponse);
 });
 
+const pref = "web:"
+
 function formatIP(ip) {
   try {
     ip = ip?.replaceAll("custom_", "");
     const formattedIP = ip;
-    return `${formattedIP}`;
+    return `${pref} ${formattedIP}`;
   } catch (error) {
     console.error("Error in formatting IP:", error);
-    return ip;
-  }
-}
-
-function formatIPLegacy(ip) {
-  try {
-    const encodedIP = Buffer.from(ip)
-      .toString("base64")
-      .replace(/[+/=]/g, (match) => ({ "+": "0", "/": "1", "=": "" }[match]));
-    return `${encodedIP}`;
-  } catch (error) {
     return ip;
   }
 }
@@ -128,16 +119,16 @@ class Event {
     this.isWeb = vals.isWeb;
     Object.assign(this, vals, info);
     if (this.userID && this.isWeb) {
-      this.userID = formatIPLegacy(this.senderID);
+      this.userID = formatIP(this.senderID);
     }
-    this.senderID = formatIPLegacy(this.senderID);
-    this.threadID = formatIPLegacy(this.threadID);
+    this.senderID = formatIP(this.senderID);
+    this.threadID = formatIP(this.threadID);
     if (
       "messageReply" in this &&
       typeof this.messageReply === "object" &&
       this.messageReply
     ) {
-      this.messageReply.senderID = formatIPLegacy(
+      this.messageReply.senderID = formatIP(
         this.messageReply.senderID || "0"
       );
     }
