@@ -29,11 +29,6 @@ const command = {
     content: "sans",
     footer: "sans",
   },
-  /**
-   * Deploys the profile command
-   * @param {any} ctx - Command context
-   * @returns {Promise<void>}
-   */
   async deploy(ctx) {
     const home = new ctx.HoshinoHM(
       [
