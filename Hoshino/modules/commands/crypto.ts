@@ -89,7 +89,7 @@ const command: HoshinoLia.Command = {
                 }
               }
               const formattedCosts = newCosts.toLocaleString("en-US");
-              miningStatus = `Mining for ${minutesElapsed} minute(s). Pending: ${pendingCoins} coin(s). Costs: $${formattedCosts}.`;
+              miningStatus = `Mining for ${String(minutesElapsed)} minute(s). Pending: ${String(pendingCoins)} coin(s). Costs: $${formattedCosts}.`;
             }
             const formattedCoins = cryptoCoins.toLocaleString("en-US");
             const formattedBalance = newBalance.toLocaleString("en-US");
