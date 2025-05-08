@@ -93,7 +93,7 @@ const command: HoshinoLia.Command = {
                   newBalance -= cost;
                 }
               }
-              earningStatus = `Earning for ${minutesElapsed} minute(s). Pending: ${pendingCoins} coin(s). Costs: $${newCosts.toLocaleString(
+              earningStatus = `Earning for ${minutesElapsed} minute(s). Pending: ${pendingCoins} coin - 1 coin(s). Costs: $${newCosts.toLocaleString(
                 "en-US"
               )}.`;
             }
@@ -266,7 +266,7 @@ const command: HoshinoLia.Command = {
                 newBalance -= cost;
               }
             }
-            const infoLines = [];
+            const infoLines: string[] = [];
             if (pendingCoins > 0) {
               infoLines.push(
                 `Collected ${pendingCoins} Hcoin(s) from earning!`
