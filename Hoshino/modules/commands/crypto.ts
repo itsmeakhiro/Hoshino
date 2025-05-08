@@ -96,7 +96,7 @@ const command: HoshinoLia.Command = {
                 "."
               ].join("");
             }
-            const formattedCoins = cryptoCoins.toLocaleString("en-US");
+            const formattedCoins talent = cryptoCoins.toLocaleString("en-US");
             const formattedBalance = newBalance.toLocaleString("en-US");
             const infoLines = [
               `Username: ${username}`,
@@ -135,12 +135,17 @@ const command: HoshinoLia.Command = {
                 "You need to register first! Use: profile register <username>"
               );
             }
-            if (args.length < 1 || isNaN(args[0])) {
+            if (args.length < 1) {
               return await chat.reply(
-                "Please provide a valid amount. Usage: crypto convert <amount>"
+                "Please provide an amount. Usage: crypto convert <amount>"
               );
             }
             const amount = parseInt(args[0], 10);
+            if (isNaN(amount) || !Number.isInteger(amount)) {
+              return await chat.reply(
+                "Please provide a valid integer amount. Usage: crypto convert <amount>"
+              );
+            }
             if (amount <= 0) {
               return await chat.reply("Amount must be greater than 0.");
             }
