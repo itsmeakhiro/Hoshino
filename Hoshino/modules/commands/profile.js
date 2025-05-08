@@ -2,8 +2,12 @@
  * @type {HoshinoLia.Command}
  */
 
-// Utility function to remove 'web:' prefix from user ID
-function cleanUserID(senderID: string): string {
+/**
+ * Removes 'web:' prefix from user ID
+ * @param {string} senderID - The user ID to clean
+ * @returns {string} - The cleaned user ID
+ */
+function cleanUserID(senderID) {
   return senderID.replace(/^web:/, '');
 }
 
@@ -33,6 +37,11 @@ const command = {
     content: "sans",
     footer: "sans",
   },
+  /**
+   * Deploys the profile command
+   * @param {any} ctx - Command context
+   * @returns {Promise<void>}
+   */
   async deploy(ctx) {
     const home = new ctx.HoshinoHM(
       [
@@ -104,7 +113,7 @@ const command = {
           async deploy({ chat, args, event, hoshinoDB, HoshinoUser, HoshinoEXP }) {
             if (args.length < 1) {
               return await chat.reply(
-                "Please provide a new username. Usage: profile changeusername <newusername>"
+                "Please provide a new username usage: profile changeusername <newusername>"
               );
             }
             const newUsername = args.join(" ").trim();
