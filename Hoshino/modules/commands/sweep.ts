@@ -1,6 +1,5 @@
 const { cleanUserID } = global.Hoshino.utils;
 
-// Trash items with individual values
 const TRASH_ITEMS = [
   { name: "Old Newspaper", emoji: "📰", value: 2 },
   { name: "Plastic Bottle", emoji: "🥤", value: 3 },
