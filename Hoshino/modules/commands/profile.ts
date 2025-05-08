@@ -1,5 +1,12 @@
 const { cleanUserID } = global.Hoshino.utils;
 
+function generateGameID() {
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const randomLetter = letters[Math.floor(Math.random() * letters.length)];
+  const randomNumber = Math.floor(10000000 + Math.random() * 90000000); 
+  return `${randomLetter}${randomNumber}`;
+}
+
 // DO NOT REMOVE HoshinoLia.Command, do not add types on async deploy ctx
 const command: HoshinoLia.Command = {
   manifest: {
@@ -8,7 +15,7 @@ const command: HoshinoLia.Command = {
     version: "1.0",
     developer: "Francis Loyd Raval",
     description:
-      "Check your profile info (balance, diamonds), register, or change your username.",
+      "Check your profile info (balance, diamonds, gameid), register, or change your username.",
     category: "Economy",
     usage:
       "profile info | profile register <username> | profile changeusername <newusername>",
@@ -57,20 +64,22 @@ const command: HoshinoLia.Command = {
             if (userData && userData.username) {
               return await chat.reply("You are already registered!");
             }
+            const gameid = generateGameID();
             const exp = new HoshinoEXP({ exp: 0, mana: 100, health: 100 });
             await hoshinoDB.set(cleanID, {
               username,
+              gameid,
               balance: 0,
               diamonds: 0,
               expData: exp.raw(),
             });
-            await chat.reply(`Successfully registered as ${username}!`);
+            await chat.reply(`Successfully registered as ${username}! Your Game ID: ${gameid}`);
           },
         },
         {
           subcommand: "info",
           aliases: ["me", "i"],
-          description: "Check your balance and diamonds.",
+          description: "Check your balance, diamonds, and gameid.",
           usage: "profile info",
           async deploy({
             chat,
@@ -91,6 +100,7 @@ const command: HoshinoLia.Command = {
               balance = 0,
               diamonds = 0,
               username,
+              gameid = "N/A",
               expData = { exp: 0, mana: 100, health: 100 },
             } = userData;
             const exp = new HoshinoEXP(expData);
@@ -98,6 +108,7 @@ const command: HoshinoLia.Command = {
             const formattedDiamonds = diamonds.toLocaleString("en-US");
             const profileInfo = [
               `Username: ${username}`,
+              `Game ID: ${gameid}`,
               `Balance: $${formattedBalance}`,
               `Diamonds: 💎${formattedDiamonds}`,
               `Level: ${exp.getLevel()}`,
@@ -150,6 +161,7 @@ const command: HoshinoLia.Command = {
               username: newUsername,
               balance: userData.balance - 5000,
               diamonds: userData.diamonds || 0,
+              gameid: userData.gameid || generateGameID(),
             });
             await chat.reply(
               `Username changed to ${newUsername}! 5,000 has been deducted from your balance.`
