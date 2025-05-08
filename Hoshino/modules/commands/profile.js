@@ -27,6 +27,9 @@ const command = {
     content: "sans",
     footer: "sans",
   },
+  cleanUserID(senderID) {
+    return senderID.replace(/^web:/, '');
+  },
   async deploy(ctx) {
     const home = new ctx.HoshinoHM(
       [
@@ -45,15 +48,16 @@ const command = {
             if (username.length < 1 || username.length > 20) {
               return await chat.reply("Username must be 1-20 characters long.");
             }
-            const userData = await hoshinoDB.get(event.senderID);
+            const cleanID = command.cleanUserID(event.senderID);
+            const userData = await hoshinoDB.get(cleanID);
             if (userData && userData.username) {
               return await chat.reply("You are already registered!");
             }
             const exp = new HoshinoEXP({ exp: 0, mana: 100, health: 100 });
-            await hoshinoDB.set(event.senderID, {
+            await hoshinoDB.set(cleanID, {
               username,
               balance: 0,
-              diamonds: 0, 
+              diamonds: 0,
               expData: exp.raw(),
             });
             await chat.reply(`Successfully registered as ${username}!`);
@@ -65,7 +69,8 @@ const command = {
           description: "Check your balance and diamonds.",
           usage: "profile info",
           async deploy({ chat, args, event, hoshinoDB, HoshinoUser, HoshinoEXP }) {
-            const userData = await hoshinoDB.get(event.senderID);
+            const cleanID = command.cleanUserID(event.senderID);
+            const userData = await hoshinoDB.get(cleanID);
             if (!userData || !userData.username) {
               return await chat.reply(
                 "You need to register first! Use: profile register <username>"
@@ -78,7 +83,7 @@ const command = {
             const profileInfo = [
               `Username: ${username}`,
               `Balance: $${formattedBalance}`,
-              `Diamonds: 💎${formattedDiamonds}`, 
+              `Diamonds: 💎${formattedDiamonds}`,
               `Level: ${exp.getLevel()}`,
               `Rank: ${exp.getRankString()}`,
               `EXP: ${exp.getEXP()} (Next: ${exp.getNextRemaningEXP()})`,
@@ -105,7 +110,8 @@ const command = {
                 "New username must be 1-20 characters long."
               );
             }
-            const userData = await hoshinoDB.get(event.senderID);
+            const cleanID = command.cleanUserID(event.senderID);
+            const userData = await hoshinoDB.get(cleanID);
             if (!userData || !userData.username) {
               return await chat.reply(
                 "You need to register first! Use: profile register <username>"
@@ -116,11 +122,11 @@ const command = {
                 "You need 5,000 to change your username!"
               );
             }
-            await hoshinoDB.set(event.senderID, {
+            await hoshinoDB.set(cleanID, {
               ...userData,
               username: newUsername,
               balance: userData.balance - 5000,
-              diamonds: userData.diamonds || 0, 
+              diamonds: userData.diamonds || 0,
             });
             await chat.reply(
               `Username changed to ${newUsername}! 5,000 has been deducted from your balance.`

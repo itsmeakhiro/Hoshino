@@ -75,7 +75,7 @@ function formatIP(ip) {
   try {
     ip = ip?.replaceAll("custom_", "");
     const formattedIP = ip;
-    return `${pref} ${formattedIP}`;
+    return `${pref}${formattedIP}`;
   } catch (error) {
     console.error("Error in formatting IP:", error);
     return ip;
