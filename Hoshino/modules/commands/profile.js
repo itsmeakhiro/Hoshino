@@ -1,6 +1,12 @@
 /**
  * @type {HoshinoLia.Command}
  */
+
+// Utility function to remove 'web:' prefix from user ID
+function cleanUserID(senderID: string): string {
+  return senderID.replace(/^web:/, '');
+}
+
 const command = {
   manifest: {
     name: "profile",
@@ -27,9 +33,6 @@ const command = {
     content: "sans",
     footer: "sans",
   },
-  cleanUserID(senderID) {
-    return senderID.replace(/^web:/, '');
-  },
   async deploy(ctx) {
     const home = new ctx.HoshinoHM(
       [
@@ -48,7 +51,7 @@ const command = {
             if (username.length < 1 || username.length > 20) {
               return await chat.reply("Username must be 1-20 characters long.");
             }
-            const cleanID = command.cleanUserID(event.senderID);
+            const cleanID = cleanUserID(event.senderID);
             const userData = await hoshinoDB.get(cleanID);
             if (userData && userData.username) {
               return await chat.reply("You are already registered!");
@@ -69,7 +72,7 @@ const command = {
           description: "Check your balance and diamonds.",
           usage: "profile info",
           async deploy({ chat, args, event, hoshinoDB, HoshinoUser, HoshinoEXP }) {
-            const cleanID = command.cleanUserID(event.senderID);
+            const cleanID = cleanUserID(event.senderID);
             const userData = await hoshinoDB.get(cleanID);
             if (!userData || !userData.username) {
               return await chat.reply(
@@ -110,7 +113,7 @@ const command = {
                 "New username must be 1-20 characters long."
               );
             }
-            const cleanID = command.cleanUserID(event.senderID);
+            const cleanID = cleanUserID(event.senderID);
             const userData = await hoshinoDB.get(cleanID);
             if (!userData || !userData.username) {
               return await chat.reply(
