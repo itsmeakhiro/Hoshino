@@ -148,16 +148,25 @@ const command: HoshinoLia.Command = {
                 "Please provide an amount. Usage: hscn convert <amount>"
               );
             }
-            const amountStr = args.join(" ").trim();
-            if (!/^\d+$/.test(amountStr)) {
+            const amountArgs = args[0].toLowerCase() === "convert" || args[0].toLowerCase() === "conv" || args[0].toLowerCase() === "exchange"
+              ? args.slice(1)
+              : args;
+            if (amountArgs.length === 0) {
               return await chat.reply(
-                "Amount must be a positive number without spaces, letters, or symbols. Usage: hscn convert <amount>"
+                "Please provide an amount. Usage: hscn convert <amount>"
+              );
+            }
+            const amountStr = amountArgs.join(" ").trim();
+            if (!/^\d+$/.test(amountStr)) {
+              console.log(`Invalid convert input: args=${JSON.stringify(args)}, amountStr=${amountStr}`);
+              return await chat.reply(
+                "Amount must be a positive number (e.g., 100). Usage: hscn convert <amount>"
               );
             }
             const amount = parseInt(amountStr, 10);
             if (isNaN(amount) || amount <= 0) {
               return await chat.reply(
-                "Amount must be a positive integer. Usage: hscn convert <amount>"
+                "Amount must be a positive integer (e.g., 100). Usage: hscn convert <amount>"
               );
             }
             const {
@@ -189,7 +198,7 @@ const command: HoshinoLia.Command = {
                 `You only have ${totalCoins} Hcoin(s) available!`
               );
             }
-            const addedBalance = amount * 2; 
+            const addedBalance = amount * 2;
             newBalance += addedBalance;
             await hoshinoDB.set(userID, {
               ...userData,
