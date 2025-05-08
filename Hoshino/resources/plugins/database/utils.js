@@ -11,6 +11,7 @@ class UserStatsManager {
   constructor({ uri = process.env.MONGO_URI } = {}) {
     this.defaults = {
       balance: 0,
+      diamonds: 0,
       username: null,
     };
     this.mongo = null;
