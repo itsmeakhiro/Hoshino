@@ -1,5 +1,3 @@
-// DO NOT REMOVE HoshinoLia.Command, do not add types on async deploy ctx
-
 const command: HoshinoLia.Command = {
   manifest: {
     name: "crypto",
@@ -74,7 +72,7 @@ const command: HoshinoLia.Command = {
               balance = 0,
               username,
             } = userData;
-            let miningStatus: string = "Not mining.";
+            let miningStatus = "Not mining.";
             let pendingCoins = 0;
             let newCosts = miningCosts;
             let newBalance = balance;
@@ -88,8 +86,15 @@ const command: HoshinoLia.Command = {
                   newBalance -= cost;
                 }
               }
-              const formattedCosts = newCosts.toLocaleString("en-US");
-              miningStatus = `Mining for ${String(minutesElapsed)} minute(s). Pending: ${String(pendingCoins)} coin(s). Costs: $${formattedCosts}.`;
+              miningStatus = [
+                "Mining for ",
+                minutesElapsed.toString(),
+                " minute(s). Pending: ",
+                pendingCoins.toString(),
+                " coin(s). Costs: $",
+                newCosts.toLocaleString("en-US"),
+                "."
+              ].join("");
             }
             const formattedCoins = cryptoCoins.toLocaleString("en-US");
             const formattedBalance = newBalance.toLocaleString("en-US");
