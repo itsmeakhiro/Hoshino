@@ -1,8 +1,5 @@
-/**
- * @type {HoshinoLia.Command}
- */
-
-const command = {
+// DO NOT REMOVE HoshinoLia.Command, do not add types on async deploy ctx
+const command: HoshinoLia.Command = {
   manifest: {
     name: "out",
     aliases: ["leave", "exit"],

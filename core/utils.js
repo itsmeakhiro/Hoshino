@@ -11,8 +11,8 @@ const utils = {
   async loadCommands() {
     const filePath = resolve(__dirname, "../Hoshino/modules/commands");
     console.log(`[DEBUG] Command file path: ${filePath}`);
-    const loadfiles = readdirSync(filePath).filter((file) =>
-      file.endsWith(".js")
+    const loadfiles = readdirSync(filePath).filter(
+      (file) => file.endsWith(".js") || file.endsWith(".ts")
     );
 
     if (loadfiles.length === 0) {
@@ -73,8 +73,8 @@ const utils = {
   async loadEvents() {
     const filePath = resolve(__dirname, "../Hoshino/modules/events");
     console.log(`[DEBUG] Event file path: ${filePath}`);
-    const loadfiles = readdirSync(filePath).filter((file) =>
-      file.endsWith(".js")
+    const loadfiles = readdirSync(filePath).filter(
+      (file) => file.endsWith(".js") || file.endsWith(".ts")
     );
 
     if (loadfiles.length === 0) {

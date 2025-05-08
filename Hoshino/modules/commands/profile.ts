@@ -1,9 +1,7 @@
 const { cleanUserID } = global.Hoshino.utils;
 
-/**
- * @type {HoshinoLia.Command}
- */
-const command = {
+// DO NOT REMOVE HoshinoLia.Command, do not add types on async deploy ctx
+const command: HoshinoLia.Command = {
   manifest: {
     name: "profile",
     aliases: ["prof"],
