@@ -93,7 +93,7 @@ const command: HoshinoLia.Command = {
                   newBalance -= cost;
                 }
               }
-              earningStatus = `Earning for ${minutesElapsed} minute(s). Pending: ${pendingCoins} coin - 1 coin(s). Costs: $${newCosts.toLocaleString(
+              earningStatus = `Earning for ${minutesElapsed} minute(s). Pending: ${pendingCoins} coin(s). Costs: $${newCosts.toLocaleString(
                 "en-US"
               )}.`;
             }
@@ -133,7 +133,7 @@ const command: HoshinoLia.Command = {
         {
           subcommand: "convert",
           aliases: ["conv", "exchange"],
-          description: "Convert Hcoins to balance money.",
+          description: "Convert Hcoins to balance money (1 Hcoin = 2 balance).",
           usage: "hscn convert <amount>",
           async deploy({ chat, args, event, hoshinoDB }) {
             const userID = cleanUserID(event.senderID);
@@ -189,25 +189,7 @@ const command: HoshinoLia.Command = {
                 `You only have ${totalCoins} Hcoin(s) available!`
               );
             }
-            let remainingCoins = amount;
-            let addedBalance = 0;
-            const exchangeRates = [
-              { coins: 1000, balance: 1500000 },
-              { coins: 500, balance: 1000 },
-              { coins: 50, balance: 100 },
-              { coins: 10, balance: 20 },
-            ];
-            for (const rate of exchangeRates) {
-              const conversions = Math.floor(remainingCoins / rate.coins);
-              if (conversions > 0) {
-                addedBalance += conversions * rate.balance;
-                remainingCoins -= conversions * rate.coins;
-              }
-            }
-            if (remainingCoins > 0) {
-              addedBalance += remainingCoins * 2;
-              remainingCoins = 0;
-            }
+            const addedBalance = amount * 2; 
             newBalance += addedBalance;
             await hoshinoDB.set(userID, {
               ...userData,
