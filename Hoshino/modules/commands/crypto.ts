@@ -48,7 +48,9 @@ const command: HoshinoLia.Command = {
               miningStartTime: Date.now(),
               miningCosts: 0, 
             });
-            await chat.reply("Started mining crypto coins! Earn 1 coin per minute. Note: Mining may deduct 10-50 balance per minute (20% chance).");
+            await chat.reply(
+              "Started mining crypto coins! Earn 1 coin per minute. Note: Mining may deduct 10-50 balance per minute (20% chance)."
+            );
           },
         },
         {
@@ -78,7 +80,6 @@ const command: HoshinoLia.Command = {
             if (miningStartTime) {
               const minutesElapsed = Math.floor((Date.now() - miningStartTime) / 60000);
               pendingCoins = minutesElapsed;
-              
               for (let i = 0; i < minutesElapsed; i++) {
                 if (Math.random() < 0.2 && newBalance >= 10) {
                   const cost = Math.floor(Math.random() * 41) + 10; 
@@ -86,16 +87,18 @@ const command: HoshinoLia.Command = {
                   newBalance -= cost;
                 }
               }
-              miningStatus = `Mining for ${minutesElapsed} minute(s). Pending: ${pendingCoins} coin(s). Costs: $${newCosts.toLocaleString("en-US")}.`;
+              miningStatus = `Mining for ${minutesElapsed} minute(s). Pending: ${pendingCoins} coin(s). Costs: $${newCosts.toLocaleString(
+                "en-US"
+              )}.`;
             }
             const formattedCoins = cryptoCoins.toLocaleString("en-US");
             const formattedBalance = newBalance.toLocaleString("en-US");
-            const info = [
+            const infoLines = [
               `Username: ${username}`,
               `Crypto Coins: 🪙${formattedCoins}`,
               `Balance: $${formattedBalance}`,
               `Mining Status: ${miningStatus}`,
-            ].join("\n");
+            ];
             if (pendingCoins > 0 || newCosts > miningCosts) {
               await hoshinoDB.set(userID, {
                 ...userData,
@@ -105,13 +108,13 @@ const command: HoshinoLia.Command = {
                 miningCosts: 0, 
               });
               if (pendingCoins > 0) {
-                info += `\nCollected ${pendingCoins} coin(s) from mining!`;
+                infoLines.push(`Collected ${pendingCoins} coin(s) from mining!`);
               }
               if (newCosts > miningCosts) {
-                info += `\nIncurred $${(newCosts - miningCosts).toLocaleString("en-US")} in mining costs.`;
+                infoLines.push(`Incurred $${(newCosts - miningCosts).toLocaleString("en-US")} in mining costs.`);
               }
             }
-            await chat.reply(info);
+            await chat.reply(infoLines.join("\n"));
           },
         },
         {
@@ -148,10 +151,9 @@ const command: HoshinoLia.Command = {
             if (miningStartTime) {
               const minutesElapsed = Math.floor((Date.now() - miningStartTime) / 60000);
               pendingCoins = minutesElapsed;
-              
               for (let i = 0; i < minutesElapsed; i++) {
                 if (Math.random() < 0.2 && newBalance >= 10) {
-                  const cost = Math.floor(Math.random() * 41) + 10;
+                  const cost = Math.floor(Math.random() * 41) + 10; 
                   newCosts += cost;
                   newBalance -= cost;
                 }
@@ -177,7 +179,7 @@ const command: HoshinoLia.Command = {
                 remainingCoins -= conversions * rate.coins;
               }
             }
-            
+     
             if (remainingCoins > 0) {
               newBalance += remainingCoins * 2;
             }
@@ -186,11 +188,16 @@ const command: HoshinoLia.Command = {
               cryptoCoins: totalCoins - amount,
               balance: newBalance,
               miningStartTime: miningStartTime ? Date.now() : null, 
-              miningCosts: 0, 
+              miningCosts: 0,
             });
-            const costMessage = newCosts > miningCosts ? ` Incurred $${(newCosts - miningCosts).toLocaleString("en-US")} in mining costs.` : "";
+            const costMessage =
+              newCosts > miningCosts
+                ? ` Incurred $${(newCosts - miningCosts).toLocaleString("en-US")} in mining costs.`
+                : "";
             await chat.reply(
-              `Converted ${amount} crypto coin(s) to $${(newBalance - balance).toLocaleString("en-US")} balance!${costMessage}`
+              `Converted ${amount} crypto coin(s) to $${(newBalance - balance).toLocaleString(
+                "en-US"
+              )} balance!${costMessage}`
             );
           },
         },
