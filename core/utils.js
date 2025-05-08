@@ -5,6 +5,9 @@ import { resolve, join } from "path";
  * @type {HoshinoLia.HoshinoUtils}
  */
 const utils = {
+  cleanUserID(senderID) {
+    return senderID.replace(/^web:/, "");
+  },
   async loadCommands() {
     const filePath = resolve(__dirname, "../Hoshino/modules/commands");
     console.log(`[DEBUG] Command file path: ${filePath}`);

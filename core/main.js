@@ -1,10 +1,10 @@
-const hoshino = require("./hoshino");
-const api = require("./system/handler/hoshinoAPI/plugins/characters").default;
-const EventEmitter = require("events");
-const utils = require("./utils").default;
-const express = require("express");
-const fs = require("fs");
-const path = require("path");
+import hoshino from "./hoshino";
+import api from "./system/handler/hoshinoAPI/plugins/characters";
+import EventEmitter from "events";
+import utils from "./utils";
+import express from "express";
+import { readFileSync, writeFileSync } from "fs";
+import { join } from "path";
 const app = express();
 try {
   require("./global");
@@ -16,6 +16,7 @@ process.on("unhandledRejection", (error) => console.log("ERROR", error));
 process.on("uncaughtException", (error) => console.log("ERROR", error.stack));
 
 global.bot = bot;
+global.utils = utils;
 
 app.use("", hoshino);
 app.use("", api);
@@ -25,7 +26,7 @@ global.Hoshino = {
   get config() {
     try {
       return JSON.parse(
-        fs.readFileSync(path.join(__dirname, "..", "settings.json"), "utf-8")
+        readFileSync(join(__dirname, "..", "settings.json"), "utf-8")
       );
     } catch (err) {
       console.log(
@@ -38,7 +39,7 @@ global.Hoshino = {
     const data = global.Hoshino.config;
     const finalData = { ...data, ...config };
     const str = JSON.stringify(finalData, null, 2);
-    fs.writeFileSync(path.join(__dirname, "..", "settings.json"), str);
+    writeFileSync(join(__dirname, "..", "settings.json"), str);
   },
   commands: new Map(),
   events: new Map(),
@@ -64,10 +65,10 @@ Object.assign(global.Hoshino, {
   },
 });
 
-const cUI = require("./views/console");
+import cUI from "./views/console";
 
 async function start() {
-  app.use(express.static(path.join(__dirname, "views", "web")));
+  app.use(express.static(join(__dirname, "views", "web")));
 
   const server = app.listen(8080, () => {
     console.log("Server running on port 8080");

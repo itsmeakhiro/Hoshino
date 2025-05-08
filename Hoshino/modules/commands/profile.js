@@ -1,16 +1,8 @@
+const { cleanUserID } = global.Hoshino.utils;
+
 /**
  * @type {HoshinoLia.Command}
  */
-
-/**
- * Removes 'web:' prefix from user ID
- * @param {string} senderID - The user ID to clean
- * @returns {string} - The cleaned user ID
- */
-function cleanUserID(senderID) {
-  return senderID.replace(/^web:/, '');
-}
-
 const command = {
   manifest: {
     name: "profile",
@@ -50,7 +42,14 @@ const command = {
           aliases: ["reg", "signup"],
           description: "Register with a username to use the economy system.",
           usage: "profile register <username>",
-          async deploy({ chat, args, event, hoshinoDB, HoshinoUser, HoshinoEXP }) {
+          async deploy({
+            chat,
+            args,
+            event,
+            hoshinoDB,
+            HoshinoUser,
+            HoshinoEXP,
+          }) {
             if (args.length < 1) {
               return await chat.reply(
                 "Please provide a username. Usage: profile register <username>"
@@ -80,7 +79,14 @@ const command = {
           aliases: ["me", "i"],
           description: "Check your balance and diamonds.",
           usage: "profile info",
-          async deploy({ chat, args, event, hoshinoDB, HoshinoUser, HoshinoEXP }) {
+          async deploy({
+            chat,
+            args,
+            event,
+            hoshinoDB,
+            HoshinoUser,
+            HoshinoEXP,
+          }) {
             const cleanID = cleanUserID(event.senderID);
             const userData = await hoshinoDB.get(cleanID);
             if (!userData || !userData.username) {
@@ -88,7 +94,12 @@ const command = {
                 "You need to register first! Use: profile register <username>"
               );
             }
-            const { balance = 0, diamonds = 0, username, expData = { exp: 0, mana: 100, health: 100 } } = userData;
+            const {
+              balance = 0,
+              diamonds = 0,
+              username,
+              expData = { exp: 0, mana: 100, health: 100 },
+            } = userData;
             const exp = new HoshinoEXP(expData);
             const formattedBalance = balance.toLocaleString("en-US");
             const formattedDiamonds = diamonds.toLocaleString("en-US");
@@ -110,7 +121,14 @@ const command = {
           aliases: ["rename", "chname"],
           description: "Change your username for 5,000.",
           usage: "profile changeusername <newusername>",
-          async deploy({ chat, args, event, hoshinoDB, HoshinoUser, HoshinoEXP }) {
+          async deploy({
+            chat,
+            args,
+            event,
+            hoshinoDB,
+            HoshinoUser,
+            HoshinoEXP,
+          }) {
             if (args.length < 1) {
               return await chat.reply(
                 "Please provide a new username usage: profile changeusername <newusername>"

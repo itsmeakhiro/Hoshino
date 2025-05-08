@@ -120,6 +120,12 @@ declare global {
     }
 
     export interface HoshinoUtils {
+      /**
+       * Removes 'web:' prefix from user ID
+       * @param senderID - The user ID to clean
+       * @returns - The cleaned user ID
+       */
+      cleanUserID(senderID: string): string;
       loadCommands(): Promise<void>;
       loadEvents(): Promise<void>;
     }
@@ -133,6 +139,8 @@ declare global {
       utils: HoshinoUtils;
     }
   }
+
+  var utils: HoshinoLia.HoshinoUtils;
 }
 
 export {};
