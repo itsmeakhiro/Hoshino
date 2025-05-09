@@ -6,7 +6,7 @@ const command: HoshinoLia.Command = {
     name: "inventory",
     aliases: ["inv", "items"],
     version: "1.0",
-    developer: "Francis Loyd Raval",
+    developer: "Francis And Liane",
     description: "Manage your inventory: check items, use food/potions, or toss items.",
     category: "RPG",
     usage: "inventory list | inventory use <item_key> | inventory toss <item_key> [amount]",
@@ -49,10 +49,21 @@ const command: HoshinoLia.Command = {
               return await chat.reply("Your inventory is empty!");
             }
 
-            const items = inventory.getAll().map((item, index) => {
-              const effects = [];
-              if (item.heal > 0) effects.push(`+${item.heal} HP`);
-              if (item.mana > 0) effects.push(`+${item.mana} MP`);
+            // Type assertion to specify the shape of items
+            const items = (inventory.getAll() as Array<{
+              key: string;
+              name: string;
+              icon: string;
+              heal?: number;
+              mana?: number;
+            }>).map((item, index) => {
+              const effects: string[] = [];
+              if (typeof item.heal === 'number' && item.heal > 0) {
+                effects.push(`+${item.heal} HP`);
+              }
+              if (typeof item.mana === 'number' && item.mana > 0) {
+                effects.push(`+${item.mana} MP`);
+              }
               const effectText = effects.length ? ` (${effects.join(", ")})` : "";
               return `${index + 1}. ${item.icon} ${item.name} [${item.key}]${effectText}`;
             });
@@ -119,8 +130,9 @@ const command: HoshinoLia.Command = {
               await chat.reply(
                 `${message}\nCurrent Health: ${exp.getHealth()}/${exp.getMaxHealth()}\nCurrent Mana: ${exp.getMana()}/${exp.getMaxMana()}`
               );
-            } catch (error) {
-              return await chat.reply(`Failed to use item: ${error.message}`);
+            } catch (error: unknown) {
+              const errorMessage = error instanceof Error ? error.message : "Unknown error";
+              return await chat.reply(`Failed to use item: ${errorMessage}`);
             }
           },
         },
@@ -165,6 +177,9 @@ const command: HoshinoLia.Command = {
             }
 
             const item = inventory.getOne(itemKey);
+            if (!item) {
+              return await chat.reply(`Item with key "${itemKey}" not found.`);
+            }
             if (item.cannotToss) {
               return await chat.reply(`You cannot toss "${item.name}"!`);
             }
