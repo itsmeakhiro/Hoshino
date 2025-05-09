@@ -1,18 +1,18 @@
-// DO NOT REMOVE HoshinoLia.Command, do not add types on async deploy ctx
+const { cleanUserID } = global.Hoshino.utils;
+
+// DO NOT REMOVE HoshinoLia.Command
 const command: HoshinoLia.Command = {
   manifest: {
     name: "inventory",
     aliases: ["inv", "items"],
-    version: "1.0.0",
-    developer: "Liane Cagara",
-    description: "Manage your inventory",
-    category: "simulator",
-    cooldown: 3,
-    usage: "!inventory <subcommand> [args]",
+    version: "1.0",
+    developer: "Francis Loyd Raval",
+    description: "Manage your inventory: check items, use food/potions, or toss items.",
+    category: "RPG",
+    usage: "inventory list | inventory use <item_key> | inventory toss <item_key> [amount]",
     config: {
       admin: false,
       moderator: false,
-      privateOnly: false,
     },
   },
   style: {
@@ -26,127 +26,171 @@ const command: HoshinoLia.Command = {
     footer: "sans",
   },
   async deploy(ctx) {
-    const ITEMS_PER_PAGE = 10;
-    const INVENTORY_LIMIT = 100;
+    const home = new ctx.HoshinoHM(
+      [
+        {
+          subcommand: "list",
+          aliases: ["check", "view"],
+          description: "View all items in your inventory.",
+          usage: "inventory list",
+          async deploy({ chat, event, hoshinoDB, Inventory }) {
+            const cleanID = cleanUserID(event.senderID);
+            const userData = await hoshinoDB.get(cleanID);
+            if (!userData || !userData.username) {
+              return await chat.reply(
+                "You need to register first! Use: profile register <username>"
+              );
+            }
 
-    const subcommands = [
-      {
-        subcommand: "view",
-        description: "View your inventory (e.g., !inventory view [page])",
-        deploy: async function (/** @type {HoshinoLia.CommandContext} */ ctx) {
-          const { chat, event, args, styler, hoshinoDB, Inventory } = ctx;
-          const userData = await hoshinoDB.get(event.senderID);
-          const inventory = new Inventory(
-            userData.inventory || [],
-            INVENTORY_LIMIT
-          );
+            const { inventoryData = [] } = userData;
+            const inventory = new Inventory(inventoryData);
 
-          if (!inventory.size()) {
-            return chat.send("Your inventory is empty!");
-          }
+            if (inventory.size() === 0) {
+              return await chat.reply("Your inventory is empty!");
+            }
 
-          const totalItems = inventory.size();
-          const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-          let page = parseInt(args[1], 10) || 1;
-          if (isNaN(page) || page < 1) page = 1;
-          if (page > totalPages) page = totalPages;
-
-          const startIndex = (page - 1) * ITEMS_PER_PAGE;
-          const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, totalItems);
-          const items = inventory.getAll().slice(startIndex, endIndex);
-
-          const itemList = items
-            .map(function (item, i) {
-              return `${
-                startIndex + i + 1
-              }. ${item.icon} **${item.name}** (${item.key}) - ${item.flavorText}`;
-            })
-            .join("\n");
-
-          const message = styler(
-            "lines1",
-            `Your Inventory (Page ${page}/${totalPages})`,
-            itemList,
-            `Total items: ${totalItems} / ${inventory.limit} | Use "!inventory view [page]" to navigate`
-          );
-          return chat.send(message);
+            const items = inventory.getAll().map((item, index) => {
+              const effects = [];
+              if (item.heal > 0) effects.push(`+${item.heal} HP`);
+              if (item.mana > 0) effects.push(`+${item.mana} MP`);
+              const effectText = effects.length ? ` (${effects.join(", ")})` : "";
+              return `${index + 1}. ${item.icon} ${item.name} [${item.key}]${effectText}`;
+            });
+            const inventoryList = `**Your Inventory (${inventory.size()}/${inventory.limit})**\n${items.join("\n")}`;
+            await chat.reply(inventoryList);
+          },
         },
-      },
-      {
-        subcommand: "toss",
-        description: "Toss an item (e.g., !inventory toss health-potion 1)",
-        deploy: async function (/** @type {HoshinoLia.CommandContext} */ ctx) {
-          const { chat, event, args, hoshinoDB, Inventory } = ctx;
-          const itemKey = args[1];
-          const amount = args[2] === "all" ? "all" : parseInt(args[2], 10) || 1;
-          if (!itemKey) {
-            return chat.send(
-              "Please specify an item key (e.g., health-potion)."
+        {
+          subcommand: "use",
+          aliases: ["heal", "consume"],
+          description: "Use a food or potion item to restore health or mana.",
+          usage: "inventory use <item_key>",
+          async deploy({ chat, args, event, hoshinoDB, HoshinoEXP, Inventory }) {
+            if (args.length < 1) {
+              return await chat.reply(
+                "Please provide an item key. Usage: inventory use <item_key>"
+              );
+            }
+            const itemKey = args.join(" ").trim();
+            if (!itemKey) {
+              return await chat.reply(
+                "Invalid item key. Usage: inventory use <item_key>"
+              );
+            }
+
+            const cleanID = cleanUserID(event.senderID);
+            const userData = await hoshinoDB.get(cleanID);
+            if (!userData || !userData.username) {
+              return await chat.reply(
+                "You need to register first! Use: profile register <username>"
+              );
+            }
+
+            const { expData = { exp: 0, mana: 100, health: 100 }, inventoryData = [] } = userData;
+            const exp = new HoshinoEXP(expData);
+            const inventory = new Inventory(inventoryData);
+
+            if (!inventory.has(itemKey)) {
+              return await chat.reply(
+                `You don't have an item with key "${itemKey}" in your inventory!`
+              );
+            }
+
+            try {
+              inventory.useHealingItem(itemKey, exp);
+              const item = inventory.getOne(itemKey) || {
+                name: "Unknown Item",
+                heal: 0,
+                mana: 0,
+              };
+              const healthRestored = item.heal > 0 ? `${item.heal} health` : "";
+              const manaRestored = item.mana > 0 ? `${item.mana} mana` : "";
+              const restored = [healthRestored, manaRestored].filter(Boolean).join(" and ");
+              const message = restored
+                ? `You used "${item.name}" and restored ${restored}!`
+                : `You used "${item.name}", but it had no effect.`;
+
+              await hoshinoDB.set(cleanID, {
+                ...userData,
+                expData: exp.raw(),
+                inventoryData: inventory.raw(),
+              });
+
+              await chat.reply(
+                `${message}\nCurrent Health: ${exp.getHealth()}/${exp.getMaxHealth()}\nCurrent Mana: ${exp.getMana()}/${exp.getMaxMana()}`
+              );
+            } catch (error) {
+              return await chat.reply(`Failed to use item: ${error.message}`);
+            }
+          },
+        },
+        {
+          subcommand: "toss",
+          aliases: ["discard", "remove"],
+          description: "Remove items from your inventory.",
+          usage: "inventory toss <item_key> [amount]",
+          async deploy({ chat, args, event, hoshinoDB, Inventory }) {
+            if (args.length < 1) {
+              return await chat.reply(
+                "Please provide an item key. Usage: inventory toss <item_key> [amount]"
+              );
+            }
+            const itemKey = args[0].trim();
+            const amount = args[1] ? parseInt(args[1]) : 1;
+
+            if (!itemKey) {
+              return await chat.reply(
+                "Invalid item key. Usage: inventory toss <item_key> [amount]"
+              );
+            }
+            if (isNaN(amount) || amount < 1) {
+              return await chat.reply("Amount must be a positive number.");
+            }
+
+            const cleanID = cleanUserID(event.senderID);
+            const userData = await hoshinoDB.get(cleanID);
+            if (!userData || !userData.username) {
+              return await chat.reply(
+                "You need to register first! Use: profile register <username>"
+              );
+            }
+
+            const { inventoryData = [] } = userData;
+            const inventory = new Inventory(inventoryData);
+
+            if (!inventory.has(itemKey)) {
+              return await chat.reply(
+                `You don't have an item with key "${itemKey}" in your inventory!`
+              );
+            }
+
+            const item = inventory.getOne(itemKey);
+            if (item.cannotToss) {
+              return await chat.reply(`You cannot toss "${item.name}"!`);
+            }
+
+            const availableAmount = inventory.getAmount(itemKey);
+            if (amount > availableAmount) {
+              return await chat.reply(
+                `You only have ${availableAmount} "${item.name}"(s) to toss!`
+              );
+            }
+
+            inventory.toss(itemKey, amount);
+            await hoshinoDB.set(cleanID, {
+              ...userData,
+              inventoryData: inventory.raw(),
+            });
+
+            await chat.reply(
+              `Successfully tossed ${amount} "${item.name}"(s) from your inventory.`
             );
-          }
-          const userData = await hoshinoDB.get(event.senderID);
-          const inventory = new Inventory(
-            userData.inventory || [],
-            INVENTORY_LIMIT
-          );
-          if (!inventory.has(itemKey)) {
-            return chat.send("You don’t have that item!");
-          }
-          const item = inventory.getOne(itemKey);
-          if (item.cannotToss) {
-            return chat.send(`${item.name} cannot be tossed!`);
-          }
-          inventory.toss(itemKey, amount);
-          await hoshinoDB.set(event.senderID, { inventory: inventory.raw() });
-          return chat.send(
-            `Tossed ${amount === "all" ? "all" : amount} ${item.name}(s)!`
-          );
+          },
         },
-      },
-      {
-        subcommand: "sell",
-        description: "Sell an item (e.g., !inventory sell iron-sword 1)",
-        deploy: async function (/** @type {HoshinoLia.CommandContext} */ ctx) {
-          const { chat, event, args, hoshinoDB, Inventory } = ctx;
-          const itemKey = args[1];
-          const amount = parseInt(args[2], 10) || 1;
-          if (!itemKey) {
-            return chat.send("Please specify an item key (e.g., iron-sword).");
-          }
-          const userData = await hoshinoDB.get(event.senderID);
-          const inventory = new Inventory(
-            userData.inventory || [],
-            INVENTORY_LIMIT
-          );
-          if (!inventory.hasAmount(itemKey, amount)) {
-            return chat.send(`You don’t have enough ${itemKey} to sell!`);
-          }
-          const item = inventory.getOne(itemKey);
-          const sellPrice = Number(item.sellPrice);
-          if (isNaN(sellPrice) || sellPrice <= 0) {
-            return chat.send(
-              `${item.name} cannot be sold (invalid or zero sell price)!`
-            );
-          }
-          const sellValue = sellPrice * amount;
-          inventory.toss(itemKey, amount);
-          const newBalance = (userData.balance || 0) + sellValue;
-          await hoshinoDB.set(event.senderID, {
-            inventory: inventory.raw(),
-            balance: newBalance,
-          });
-          return chat.send(
-            `Sold ${amount} ${
-              item.name
-            }(s) for ${sellValue.toLocaleString()} credits!`
-          );
-        },
-      },
-    ];
-
-    const inventoryHandler = new ctx.HoshinoHM(subcommands, "🎒");
-
-    return inventoryHandler.runInContext(ctx);
+      ],
+      "◆"
+    );
+    await home.runInContext(ctx);
   },
 };
 
