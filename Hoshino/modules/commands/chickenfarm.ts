@@ -85,7 +85,7 @@ const command: HoshinoLia.Command = {
             }
             if (balance < 1000) {
               return await chat.reply(
-                `You need $1000 to buy land! Current balance: $${balance.toLocaleString("en-US")}.`
+                `You need $1000 to buy land! Current balance: $${Math.round(balance).toLocaleString("en-US")}.`
               );
             }
             const success = Math.random() < 0.5;
@@ -96,7 +96,7 @@ const command: HoshinoLia.Command = {
             }
             await hoshinoDB.set(userID, {
               ...userData,
-              balance: balance - 1000,
+              balance: Math.round(balance - 1000),
               hasLand: true,
             });
             await chat.reply(
@@ -125,7 +125,7 @@ const command: HoshinoLia.Command = {
             }
             if (balance < 500) {
               return await chat.reply(
-                `You need $500 to buy a chicken! Current balance: $${balance.toLocaleString("en-US")}.`
+                `You need $500 to buy a chicken! Current balance: $${Math.round(balance).toLocaleString("en-US")}.`
               );
             }
             let random = Math.random();
@@ -140,7 +140,7 @@ const command: HoshinoLia.Command = {
             const newChickens = [...chickens, { rarity }];
             await hoshinoDB.set(userID, {
               ...userData,
-              balance: balance - 500,
+              balance: Math.round(balance - 500),
               chickens: newChickens,
             });
             await chat.reply(
@@ -197,6 +197,7 @@ const command: HoshinoLia.Command = {
               },
               chickenFarmLevel: userData.chickenFarmLevel || 0,
               chickenFarmUpgradeCost: userData.chickenFarmUpgradeCost || 50,
+              lastItemUpdate: Date.now(),
             });
             await chat.reply(
               `Started your chicken farm with ${chickens.length} chicken(s)! Collect items like eggs ($10–$25) or a Golden Egg ($1,000,000 from Legendary chickens) to earn balance (30% chance per minute per chicken). Farming will continue until you collect earnings.`
@@ -237,6 +238,7 @@ const command: HoshinoLia.Command = {
                 goldenEgg: 0,
               },
               chickenFarmLevel = 0,
+              lastItemUpdate = chickenFarmStartTime || Date.now(),
               username,
               gameid = "N/A",
             } = userData;
@@ -256,7 +258,7 @@ const command: HoshinoLia.Command = {
               );
             }
             const minutesElapsed = Math.floor(
-              (Date.now() - chickenFarmStartTime) / 60000
+              (Date.now() - lastItemUpdate) / 60000
             );
             const itemsCollected = { ...chickenFarmItems };
             for (let i = 0; i < minutesElapsed; i++) {
@@ -265,14 +267,27 @@ const command: HoshinoLia.Command = {
                   const items = CHICKEN_ITEMS[rarity].filter(
                     (item) => item.name !== "Golden Egg"
                   );
+                  if (items.length === 0) {
+                    console.log(`No items available for rarity: ${rarity}`);
+                    continue;
+                  }
                   const item = items[Math.floor(Math.random() * items.length)];
                   const key = item.name.toLowerCase().replace(/\s+/g, "");
                   itemsCollected[key] = (itemsCollected[key] || 0) + 1;
+                  console.log(`Collected ${item.name} for ${rarity} chicken`);
                 }
                 if (rarity === "legendary" && Math.random() < 0.05) {
                   itemsCollected.goldenEgg = (itemsCollected.goldenEgg || 0) + 1;
+                  console.log("Collected Golden Egg for legendary chicken");
                 }
               }
+            }
+            if (minutesElapsed > 0) {
+              await hoshinoDB.set(userID, {
+                ...userData,
+                chickenFarmItems: itemsCollected,
+                lastItemUpdate: Date.now(),
+              });
             }
             let totalValue = 0;
             const itemLines: string[] = [];
@@ -287,7 +302,8 @@ const command: HoshinoLia.Command = {
             }, {});
             Object.keys(itemsCollected).forEach((key) => {
               const count = itemsCollected[key] || 0;
-              const item = allItems[key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())];
+              const itemName = key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());
+              const item = allItems[itemName];
               if (item && count > 0) {
                 const itemValue = count * item.value;
                 totalValue += itemValue;
@@ -300,7 +316,7 @@ const command: HoshinoLia.Command = {
               itemLines.push("No items collected yet.");
             }
             const multiplier = 1 + chickenFarmLevel * 0.5;
-            const boostedValue = totalValue * multiplier;
+            const boostedValue = Math.round(totalValue * multiplier);
             const chickenCounts = chickens.reduce((acc, { rarity }) => {
               acc[rarity] = (acc[rarity] || 0) + 1;
               return acc;
@@ -311,10 +327,10 @@ const command: HoshinoLia.Command = {
             const infoLines: string[] = [
               `Username: ${username}`,
               `Game ID: ${gameid}`,
-              `Balance: $${balance.toLocaleString("en-US")}`,
+              `Balance: $${Math.round(balance).toLocaleString("en-US")}`,
               `Land Owned: ${hasLand ? "Yes" : "No"}`,
               `Chickens Owned: ${chickens.length} (${chickenSummary || "None"})`,
-              `Farming for ${minutesElapsed} minute(s).`,
+              `Farming for ${Math.floor((Date.now() - chickenFarmStartTime) / 60000)} minute(s).`,
               `Chicken Farm Level: ${chickenFarmLevel} (x${multiplier.toFixed(1)} earnings)`,
               `Collected Items:`,
               ...itemLines,
@@ -357,6 +373,7 @@ const command: HoshinoLia.Command = {
                 goldenEgg: 0,
               },
               chickenFarmLevel = 0,
+              lastItemUpdate = chickenFarmStartTime || Date.now(),
             } = userData;
             if (!hasLand) {
               return await chat.reply(
@@ -374,7 +391,7 @@ const command: HoshinoLia.Command = {
               );
             }
             const minutesElapsed = Math.floor(
-              (Date.now() - chickenFarmStartTime) / 60000
+              (Date.now() - lastItemUpdate) / 60000
             );
             const itemsCollected = { ...chickenFarmItems };
             for (let i = 0; i < minutesElapsed; i++) {
@@ -383,14 +400,27 @@ const command: HoshinoLia.Command = {
                   const items = CHICKEN_ITEMS[rarity].filter(
                     (item) => item.name !== "Golden Egg"
                   );
+                  if (items.length === 0) {
+                    console.log(`No items available for rarity: ${rarity}`);
+                    continue;
+                  }
                   const item = items[Math.floor(Math.random() * items.length)];
                   const key = item.name.toLowerCase().replace(/\s+/g, "");
                   itemsCollected[key] = (itemsCollected[key] || 0) + 1;
+                  console.log(`Collected ${item.name} for ${rarity} chicken`);
                 }
                 if (rarity === "legendary" && Math.random() < 0.05) {
                   itemsCollected.goldenEgg = (itemsCollected.goldenEgg || 0) + 1;
+                  console.log("Collected Golden Egg for legendary chicken");
                 }
               }
+            }
+            if (minutesElapsed > 0) {
+              await hoshinoDB.set(userID, {
+                ...userData,
+                chickenFarmItems: itemsCollected,
+                lastItemUpdate: Date.now(),
+              });
             }
             let totalValue = 0;
             const itemLines: string[] = [];
@@ -405,7 +435,8 @@ const command: HoshinoLia.Command = {
             }, {});
             Object.keys(itemsCollected).forEach((key) => {
               const count = itemsCollected[key] || 0;
-              const item = allItems[key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())];
+              const itemName = key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());
+              const item = allItems[itemName];
               if (item && count > 0) {
                 const itemValue = count * item.value;
                 totalValue += itemValue;
@@ -415,7 +446,7 @@ const command: HoshinoLia.Command = {
               }
             });
             const multiplier = 1 + chickenFarmLevel * 0.5;
-            const boostedValue = totalValue * multiplier;
+            const boostedValue = Math.round(totalValue * multiplier);
             const infoLines: string[] = [];
             if (totalValue > 0) {
               infoLines.push(
@@ -431,7 +462,7 @@ const command: HoshinoLia.Command = {
             infoLines.push("Chicken farming continues for the next earnings!");
             await hoshinoDB.set(userID, {
               ...userData,
-              balance: balance + boostedValue,
+              balance: Math.round(balance + boostedValue),
               chickenFarmStartTime: Date.now(),
               chickenFarmItems: {
                 chickenEgg: 0,
@@ -448,6 +479,7 @@ const command: HoshinoLia.Command = {
                 combScrap: 0,
                 goldenEgg: 0,
               },
+              lastItemUpdate: Date.now(),
             });
             await chat.reply(infoLines.join("\n"));
           },
@@ -486,7 +518,7 @@ const command: HoshinoLia.Command = {
               return await chat.reply(
                 `You need $${chickenFarmUpgradeCost.toLocaleString(
                   "en-US"
-                )} to upgrade your chicken farm! Current balance: $${balance.toLocaleString(
+                )} to upgrade your chicken farm! Current balance: $${Math.round(balance).toLocaleString(
                   "en-US"
                 )}.`
               );
@@ -496,7 +528,7 @@ const command: HoshinoLia.Command = {
             const newMultiplier = 1 + newLevel * 0.5;
             await hoshinoDB.set(userID, {
               ...userData,
-              balance: balance - chickenFarmUpgradeCost,
+              balance: Math.round(balance - chickenFarmUpgradeCost),
               chickenFarmLevel: newLevel,
               chickenFarmUpgradeCost: newCost,
             });
