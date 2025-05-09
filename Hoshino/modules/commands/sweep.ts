@@ -1,16 +1,31 @@
 const { cleanUserID } = global.Hoshino.utils;
 
 const TRASH_ITEMS = [
-  { name: "Old Newspaper", emoji: "📰", value: 2 },
-  { name: "Plastic Bottle", emoji: "🥤", value: 3 },
-  { name: "Cardboard Box", emoji: "📦", value: 4 },
-  { name: "Tin Can", emoji: "🥫", value: 2.5 },
-  { name: "Scrap Metal", emoji: "🧷", value: 5 },
-  { name: "Worn Glove", emoji: "🧤", value: 1.5 },
-  { name: "Torn Paper", emoji: "📄", value: 1 },
-  { name: "Used Battery", emoji: "🔋", value: 3.5 },
-  { name: "Broken Toy", emoji: "🧩", value: 2 },
-  { name: "Old Shoe", emoji: "🥾", value: 4.5 },
+  { name: "Cockroach", emoji: "🪳", value: 12 },
+  { name: "Dust Pile", emoji: "💨", value: 10 },
+  { name: "Spider Web", emoji: "🕸️", value: 15 },
+  { name: "Dead Mosquito", emoji: "🦟", value: 11 },
+  { name: "Rat Droppings", emoji: "🐀", value: 20 },
+  { name: "Mold Patch", emoji: "🦠", value: 14 },
+  { name: "Ant Swarm", emoji: "🐜", value: 18 },
+  { name: "Decayed Leaf", emoji: "🍂", value: 10 },
+  { name: "Rotten Cheese", emoji: "🧀", value: 22 },
+  { name: "Dead Spider", emoji: "🕷️", value: 16 },
+  { name: "Scorpion Husk", emoji: "🦂", value: 25 },
+  { name: "Fly Carcass", emoji: "🪰", value: 13 },
+  { name: "Beetle Shell", emoji: "🐞", value: 17 },
+  { name: "Moldy Bread", emoji: "🍔", value: 14 },
+  { name: "Cricket Leg", emoji: "🦗", value: 19 },
+  { name: "Paw Print Mud", emoji: "🐾", value: 13 },
+  { name: "Lizard Tail", emoji: "🦎", value: 18 },
+  { name: "Snake Skin", emoji: "🐍", value: 21 },
+  { name: "Moth Wing", emoji: "🦋", value: 11 },
+  { name: "Fungal Growth", emoji: "🧫", value: 15 },
+  { name: "Frog Slime", emoji: "🐸", value: 12 },
+  { name: "Squid Ink Stain", emoji: "🦑", value: 16 },
+  { name: "Turtle Shell Fragment", emoji: "🐢", value: 20 },
+  { name: "Hedgehog Quill", emoji: "🦔", value: 14 },
+  { name: "Raccoon Fur Clump", emoji: "🦝", value: 18 },
 ];
 
 // DO NOT REMOVE HoshinoLia.Command, do not add types on async deploy ctx
@@ -19,9 +34,9 @@ const command: HoshinoLia.Command = {
     name: "sweep",
     aliases: ["swp"],
     version: "1.0",
-    developer: "Francis Loyd Raval & YhanDeva ( Yhander )",
+    developer: "Francis Loyd Raval & MrkimstersDev",
     description:
-      "Earn balance money by collecting random trash items. Sweeping is always active after starting; check progress, collect earnings, or upgrade to boost earnings.",
+      "Earn balance money by collecting gross debris like cockroaches and dust. Sweeping is always active after starting; check progress, collect earnings, or upgrade to boost earnings.",
     category: "Economy",
     usage: "sweep start | sweep status | sweep collect | sweep upgrade",
     config: {
@@ -45,7 +60,7 @@ const command: HoshinoLia.Command = {
         {
           subcommand: "start",
           aliases: ["begin", "s"],
-          description: "Start collecting trash items to earn balance money (remains active).",
+          description: "Start collecting gross debris to earn balance money (remains active).",
           usage: "sweep start",
           async deploy({ chat, event, hoshinoDB }) {
             const userID = cleanUserID(event.senderID);
@@ -64,29 +79,44 @@ const command: HoshinoLia.Command = {
               ...userData,
               sweepStartTime: Date.now(),
               sweepItems: {
-                newspaper: 0,
-                plasticBottle: 0,
-                cardboardBox: 0,
-                tinCan: 0,
-                scrapMetal: 0,
-                wornGlove: 0,
-                tornPaper: 0,
-                usedBattery: 0,
-                brokenToy: 0,
-                oldShoe: 0,
+                cockroach: 0,
+                dustPile: 0,
+                spiderWeb: 0,
+                deadMosquito: 0,
+                ratDroppings: 0,
+                moldPatch: 0,
+                antSwarm: 0,
+                decayedLeaf: 0,
+                rottenCheese: 0,
+                deadSpider: 0,
+                scorpionHusk: 0,
+                flyCarcass: 0,
+                beetleShell: 0,
+                moldyBread: 0,
+                cricketLeg: 0,
+                pawPrintMud: 0,
+                lizardTail: 0,
+                snakeSkin: 0,
+                mothWing: 0,
+                fungalGrowth: 0,
+                frogSlime: 0,
+                squidInkStain: 0,
+                turtleShellFragment: 0,
+                hedgehogQuill: 0,
+                raccoonFurClump: 0,
               },
               sweepLevel: userData.sweepLevel || 0,
               sweepUpgradeCost: userData.sweepUpgradeCost || 50,
             });
             await chat.reply(
-              "Started sweeping trash! Collect items like newspapers ($2 each) and bottles ($3 each) to earn balance (30% chance per minute). Sweeping will continue until you collect earnings."
+              "Started sweeping gross debris! Collect items like cockroaches ($12 each) and spider webs ($15 each) to earn balance (30% chance per minute). Sweeping will continue until you collect earnings."
             );
           },
         },
         {
           subcommand: "status",
           aliases: ["info", "i"],
-          description: "Check your trash collection progress and pending earnings.",
+          description: "Check your debris collection progress and pending earnings.",
           usage: "sweep status",
           async deploy({ chat, event, hoshinoDB }) {
             const userID = cleanUserID(event.senderID);
@@ -100,16 +130,31 @@ const command: HoshinoLia.Command = {
               balance = 0,
               sweepStartTime = null,
               sweepItems = {
-                newspaper: 0,
-                plasticBottle: 0,
-                cardboardBox: 0,
-                tinCan: 0,
-                scrapMetal: 0,
-                wornGlove: 0,
-                tornPaper: 0,
-                usedBattery: 0,
-                brokenToy: 0,
-                oldShoe: 0,
+                cockroach: 0,
+                dustPile: 0,
+                spiderWeb: 0,
+                deadMosquito: 0,
+                ratDroppings: 0,
+                moldPatch: 0,
+                antSwarm: 0,
+                decayedLeaf: 0,
+                rottenCheese: 0,
+                deadSpider: 0,
+                scorpionHusk: 0,
+                flyCarcass: 0,
+                beetleShell: 0,
+                moldyBread: 0,
+                cricketLeg: 0,
+                pawPrintMud: 0,
+                lizardTail: 0,
+                snakeSkin: 0,
+                mothWing: 0,
+                fungalGrowth: 0,
+                frogSlime: 0,
+                squidInkStain: 0,
+                turtleShellFragment: 0,
+                hedgehogQuill: 0,
+                raccoonFurClump: 0,
               },
               sweepLevel = 0,
               username,
@@ -117,7 +162,7 @@ const command: HoshinoLia.Command = {
             } = userData;
             if (!sweepStartTime) {
               return await chat.reply(
-                "You are not sweeping trash. Start with: sweep start"
+                "You are not sweeping debris. Start with: sweep start"
               );
             }
             const minutesElapsed = Math.floor(
@@ -145,7 +190,7 @@ const command: HoshinoLia.Command = {
               }
             });
             if (itemLines.length === 0) {
-              itemLines.push("No trash items collected yet.");
+              itemLines.push("No debris collected yet.");
             }
             const multiplier = 1 + sweepLevel * 0.5;
             const boostedValue = totalValue * multiplier;
@@ -179,22 +224,37 @@ const command: HoshinoLia.Command = {
               balance = 0,
               sweepStartTime = null,
               sweepItems = {
-                newspaper: 0,
-                plasticBottle: 0,
-                cardboardBox: 0,
-                tinCan: 0,
-                scrapMetal: 0,
-                wornGlove: 0,
-                tornPaper: 0,
-                usedBattery: 0,
-                brokenToy: 0,
-                oldShoe: 0,
+                cockroach: 0,
+                dustPile: 0,
+                spiderWeb: 0,
+                deadMosquito: 0,
+                ratDroppings: 0,
+                moldPatch: 0,
+                antSwarm: 0,
+                decayedLeaf: 0,
+                rottenCheese: 0,
+                deadSpider: 0,
+                scorpionHusk: 0,
+                flyCarcass: 0,
+                beetleShell: 0,
+                moldyBread: 0,
+                cricketLeg: 0,
+                pawPrintMud: 0,
+                lizardTail: 0,
+                snakeSkin: 0,
+                mothWing: 0,
+                fungalGrowth: 0,
+                frogSlime: 0,
+                squidInkStain: 0,
+                turtleShellFragment: 0,
+                hedgehogQuill: 0,
+                raccoonFurClump: 0,
               },
               sweepLevel = 0,
             } = userData;
             if (!sweepStartTime) {
               return await chat.reply(
-                "You are not sweeping trash. Start with: sweep start"
+                "You are not sweeping debris. Start with: sweep start"
               );
             }
             const minutesElapsed = Math.floor(
@@ -241,16 +301,31 @@ const command: HoshinoLia.Command = {
               balance: balance + boostedValue,
               sweepStartTime: Date.now(),
               sweepItems: {
-                newspaper: 0,
-                plasticBottle: 0,
-                cardboardBox: 0,
-                tinCan: 0,
-                scrapMetal: 0,
-                wornGlove: 0,
-                tornPaper: 0,
-                usedBattery: 0,
-                brokenToy: 0,
-                oldShoe: 0,
+                cockroach: 0,
+                dustPile: 0,
+                spiderWeb: 0,
+                deadMosquito: 0,
+                ratDroppings: 0,
+                moldPatch: 0,
+                antSwarm: 0,
+                decayedLeaf: 0,
+                rottenCheese: 0,
+                deadSpider: 0,
+                scorpionHusk: 0,
+                flyCarcass: 0,
+                beetleShell: 0,
+                moldyBread: 0,
+                cricketLeg: 0,
+                pawPrintMud: 0,
+                lizardTail: 0,
+                snakeSkin: 0,
+                mothWing: 0,
+                fungalGrowth: 0,
+                frogSlime: 0,
+                squidInkStain: 0,
+                turtleShellFragment: 0,
+                hedgehogQuill: 0,
+                raccoonFurClump: 0,
               },
             });
             await chat.reply(infoLines.join("\n"));
