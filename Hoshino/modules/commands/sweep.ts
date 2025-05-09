@@ -34,7 +34,7 @@ const command: HoshinoLia.Command = {
     name: "sweep",
     aliases: ["swp"],
     version: "1.0",
-    developer: "Francis Loyd Raval & MrkimstersDev",
+    developer: "Francis Loyd Raval & YhanDeva (Yhander)",
     description:
       "Earn balance money by collecting gross debris like cockroaches and dust. Sweeping is always active after starting; check progress, collect earnings, or upgrade to boost earnings.",
     category: "Economy",
