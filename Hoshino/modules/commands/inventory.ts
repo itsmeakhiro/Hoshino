@@ -49,7 +49,6 @@ const command: HoshinoLia.Command = {
               return await chat.reply("Your inventory is empty!");
             }
 
-            // Type assertion to specify the shape of items
             const items = (inventory.getAll() as Array<{
               key: string;
               name: string;
