@@ -6,6 +6,7 @@ class Inventory {
 
     this.inv = this.sanitize(JSON.parse(JSON.stringify(inventory)));
   }
+
   sanitize(inv = this.inv) {
     if (!Array.isArray(inv)) {
       throw new Error("Inventory must be an array.");
@@ -34,9 +35,11 @@ class Inventory {
         sellPrice: parseInt(sellPrice),
         cannotToss: !!cannotToss,
       };
-      if (type === "food") {
+      if (type === "food" || type === "potion") {
         result.heal ??= 0;
+        result.mana ??= 0; 
         result.heal = parseInt(result.heal);
+        result.mana = parseInt(result.mana);
       }
       if (type === "weapon" || type === "armor") {
         result.atk ??= 0;
@@ -57,14 +60,17 @@ class Inventory {
   getOne(key) {
     return this.inv.find((item) => item.key === key) || this.at(key);
   }
+
   get(key) {
     return this.inv.filter(
       (item) => item.key === key || item.key === this.keyAt(key)
     );
   }
+
   getAll() {
     return this.inv;
   }
+
   deleteRef(item) {
     let index = this.inv.indexOf(item);
 
@@ -82,6 +88,7 @@ class Inventory {
       this.deleteRef(item);
     }
   }
+
   findKey(callback) {
     const result = this.inv.find((item) => callback(item) || this.keyAt(item));
     if (result) {
@@ -90,18 +97,23 @@ class Inventory {
       return null;
     }
   }
+
   indexOf(item) {
     return this.inv.indexOf(item);
   }
+
   size() {
     return this.inv.length;
   }
+
   clone() {
     return new Inventory(this.inv);
   }
+
   toJSON() {
     return this.inv;
   }
+
   deleteOne(key) {
     let index = this.inv.findIndex(
       (item) => item.key === key || item.key === this.keyAt(key)
@@ -114,26 +126,32 @@ class Inventory {
     }
     this.inv = this.inv.filter((_, i) => i !== index);
   }
+
   keyAt(index) {
     return this.at(index)?.key;
   }
+
   delete(key) {
     this.inv = this.inv.filter(
-      (item) => item.key !== key || item.key !== this.keyAt(key)
+      (item) => item.key !== key && item.key !== this.keyAt(key)
     );
   }
+
   has(key) {
     return this.inv.some(
       (item) => item.key === key || item.key === this.keyAt(key)
     );
   }
+
   hasAmount(key, amount) {
     const length = this.getAmount(key);
     return length >= amount;
   }
+
   getAmount(key) {
     return this.get(key).length;
   }
+
   addOne(item) {
     return this.inv.push(item);
   }
@@ -141,6 +159,7 @@ class Inventory {
   add(item) {
     return this.inv.push(...item);
   }
+
   toss(key, amount) {
     if (amount === "all") {
       amount = this.getAmount(key);
@@ -150,6 +169,7 @@ class Inventory {
       this.deleteOne(key);
     }
   }
+
   tossDEPRECATED(key, amount) {
     if (amount === "all") {
       const i = this.getAmount(key);
@@ -166,25 +186,61 @@ class Inventory {
     }
     return r;
   }
+
   setAmount(key, amount) {
     const data = this.get(key);
     for (let i = 0; i < amount; i++) {
       this.addOne(data[i]);
     }
   }
+
   *[Symbol.iterator]() {
     yield* this.inv;
   }
+
   raw() {
     return Array.from(this.inv);
   }
+
   export() {
     return {
       inventory: this.raw(),
     };
   }
+
   *keys() {
     yield* this.inv.map((item) => item.key);
+  }
+
+  useHealingItem(key, user) {
+    const item = this.getOne(key);
+    if (!item) {
+      throw new Error(`Item with key ${key} does not exist in the inventory.`);
+    }
+    if (item.type !== "food" && item.type !== "potion") {
+      throw new Error(`Item with key ${key} is not a food or potion item.`);
+    }
+    if (!user || !user.setHealth || !user.setMana) {
+      throw new Error(
+        "Invalid user object: Must have setHealth and setMana methods."
+      );
+    }
+
+    if (item.heal > 0) {
+      const currentHealth = user.getHealth();
+      const newHealth = currentHealth + item.heal;
+      user.setHealth(newHealth);
+    }
+
+    if (item.mana > 0) {
+      const currentMana = user.getMana();
+      const newMana = currentMana + item.mana;
+      user.setMana(newMana);
+    }
+
+    this.deleteOne(key);
+
+    return true;
   }
 }
 
