@@ -5,13 +5,15 @@ import { promisify } from "util";
 import listener from "./listener";
 
 try {
-  require.resolve("chatbox-fca-remake");
+  require.resolve("facebook-chat-api");
 } catch (e) {
-  console.log("chatbox-fca-remake not found, installing...");
-  execSync("npm install chatbox-fca-remake", { stdio: "inherit" });
+  console.log("facebook-chat-api not found, installing...");
+  execSync("npm install ruingl/facebook-chat-api", { stdio: "inherit" });
 }
 
-const login = promisify(require("chatbox-fca-remake"));
+const fca = require("facebook-chat-api");
+fca.logging(false);
+const login = promisify(fca.login);
 
 export default async function initializeBot() {
   const appStatePath = join(__dirname, "..", "..", "appstate.json");
