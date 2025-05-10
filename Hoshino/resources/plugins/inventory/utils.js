@@ -37,7 +37,7 @@ class Inventory {
       };
       if (type === "food" || type === "potion") {
         result.heal ??= 0;
-        result.mana ??= 0; 
+        result.mana ??= 0;
         result.heal = parseInt(result.heal);
         result.mana = parseInt(result.mana);
       }
@@ -46,6 +46,10 @@ class Inventory {
         result.def ??= 0;
         result.atk = parseFloat(result.atk);
         result.def = parseFloat(result.def);
+      }
+      if (type === "chest") {
+        result.contents ??= [];
+        result.contents = Array.isArray(result.contents) ? result.contents : [];
       }
       return result;
     });
@@ -241,6 +245,28 @@ class Inventory {
     this.deleteOne(key);
 
     return true;
+  }
+
+  useItem(key, user) {
+    const item = this.getOne(key);
+    if (!item) {
+      throw new Error(`Item with key ${key} does not exist in the inventory.`);
+    }
+
+    if (item.type === "chest") {
+      if (!item.contents || !Array.isArray(item.contents)) {
+        throw new Error(`Chest with key ${key} has no valid contents.`);
+      }
+      for (const content of item.contents) {
+        this.addOne(content);
+      }
+      this.deleteOne(key);
+      return { opened: true, contents: item.contents };
+    } else if (item.type === "food" || item.type === "potion") {
+      return this.useHealingItem(key, user);
+    } else {
+      throw new Error(`Item with key ${key} cannot be used.`);
+    }
   }
 }
 
