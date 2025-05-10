@@ -1,5 +1,8 @@
 const { cleanUserID } = global.Hoshino.utils;
 
+type UseItemResult = true | { opened: boolean; contents: Array<{ name: string; [key: string]: any }> };
+
+// DO NOT REMOVE HoshinoLia.Command
 const command: HoshinoLia.Command = {
   manifest: {
     name: "inventory",
@@ -7,7 +10,7 @@ const command: HoshinoLia.Command = {
     version: "1.0",
     developer: "Francis And Liane",
     description: "Manage your inventory: check items, use food/potions/chests, or toss items.",
-    category: "Economy",
+    category: "RPG",
     usage: "inventory list | inventory use <item_key> | inventory toss <item_key> [amount]",
     config: {
       admin: false,
@@ -106,18 +109,17 @@ const command: HoshinoLia.Command = {
             }
 
             try {
-              const result = inventory.useItem(itemKey, exp);
               const item = inventory.getOne(itemKey) || {
                 name: "Unknown Item",
                 type: "generic",
                 heal: 0,
                 mana: 0,
               };
+              const result = inventory.useItem(itemKey, exp);
 
               let message = "";
-              if (item.type === "chest") {
-                const { contents } = result;
-                const contentNames = contents.map((c: any) => c.name).join(", ");
+              if (item.type === "chest" && result !== true) {
+                const contentNames = result.contents.map((c) => c.name).join(", ");
                 message = `You opened "${item.name}" and found: ${contentNames}!`;
               } else {
                 const healthRestored = item.heal > 0 ? `${item.heal} health` : "";
