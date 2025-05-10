@@ -1,14 +1,13 @@
 const { cleanUserID } = global.Hoshino.utils;
 
-// DO NOT REMOVE HoshinoLia.Command
 const command: HoshinoLia.Command = {
   manifest: {
     name: "inventory",
     aliases: ["inv", "items"],
     version: "1.0",
     developer: "Francis And Liane",
-    description: "Manage your inventory: check items, use food/potions, or toss items.",
-    category: "RPG",
+    description: "Manage your inventory: check items, use food/potions/chests, or toss items.",
+    category: "Economy",
     usage: "inventory list | inventory use <item_key> | inventory toss <item_key> [amount]",
     config: {
       admin: false,
@@ -73,7 +72,7 @@ const command: HoshinoLia.Command = {
         {
           subcommand: "use",
           aliases: ["heal", "consume"],
-          description: "Use a food or potion item to restore health or mana.",
+          description: "Use a food, potion, or chest item.",
           usage: "inventory use <item_key>",
           async deploy({ chat, args, event, hoshinoDB, HoshinoEXP, Inventory }) {
             if (args.length < 1) {
@@ -107,18 +106,27 @@ const command: HoshinoLia.Command = {
             }
 
             try {
-              inventory.useHealingItem(itemKey, exp);
+              const result = inventory.useItem(itemKey, exp);
               const item = inventory.getOne(itemKey) || {
                 name: "Unknown Item",
+                type: "generic",
                 heal: 0,
                 mana: 0,
               };
-              const healthRestored = item.heal > 0 ? `${item.heal} health` : "";
-              const manaRestored = item.mana > 0 ? `${item.mana} mana` : "";
-              const restored = [healthRestored, manaRestored].filter(Boolean).join(" and ");
-              const message = restored
-                ? `You used "${item.name}" and restored ${restored}!`
-                : `You used "${item.name}", but it had no effect.`;
+
+              let message = "";
+              if (item.type === "chest") {
+                const { contents } = result;
+                const contentNames = contents.map((c: any) => c.name).join(", ");
+                message = `You opened "${item.name}" and found: ${contentNames}!`;
+              } else {
+                const healthRestored = item.heal > 0 ? `${item.heal} health` : "";
+                const manaRestored = item.mana > 0 ? `${item.mana} mana` : "";
+                const restored = [healthRestored, manaRestored].filter(Boolean).join(" and ");
+                message = restored
+                  ? `You used "${item.name}" and restored ${restored}!`
+                  : `You used "${item.name}", but it had no effect.`;
+              }
 
               await hoshinoDB.set(cleanID, {
                 ...userData,
