@@ -35,12 +35,18 @@ const command: HoshinoLia.Command = {
           description: "Buy a ship to start your pirate adventure.",
           usage: "piratehunt buy <ship_type>",
           async deploy({ chat, args, event, hoshinoDB }) {
-            if (args.length < 1) {
+            if (args.length < 2) {
               return await chat.reply(
                 "Please provide a ship type (sloop, brig, galleon). Usage: piratehunt buy <ship_type>"
               );
             }
-            const shipType = args[0].toLowerCase().trim();
+            const shipType = args[1]
+              .toLowerCase()
+              .replace(/\s+/g, " ")
+              .trim()
+              .replace(/[^a-z]/g, "");
+            console.log("Debug: shipType =", JSON.stringify(shipType));
+
             const shipPrices: Record<string, { defense: number; cost: number }> = {
               sloop: { defense: 50, cost: 10000 },
               brig: { defense: 100, cost: 50000 },
@@ -49,7 +55,7 @@ const command: HoshinoLia.Command = {
 
             if (!shipPrices[shipType]) {
               return await chat.reply(
-                "Invalid ship type. Available: sloop, brig, galleon."
+                `Invalid ship type: "${shipType}". Available: sloop, brig, galleon.`
               );
             }
 
@@ -355,7 +361,7 @@ const command: HoshinoLia.Command = {
                 ...pirateHuntData,
                 soldiers: {
                   count: pirateHuntData.soldiers.count,
-                  abilityLevel: pirateHuntData.soldiers.abilityLevel + 1,
+                  abilityLevel: pirateHuntData.soldiers.abilityLevel + 1 | 0,
                 },
               },
             };
