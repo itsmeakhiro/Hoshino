@@ -216,37 +216,6 @@ class Inventory {
     yield* this.inv.map((item) => item.key);
   }
 
-  useHealingItem(key, user) {
-    const item = this.getOne(key);
-    if (!item) {
-      throw new Error(`Item with key ${key} does not exist in the inventory.`);
-    }
-    if (item.type !== "food" && item.type !== "potion") {
-      throw new Error(`Item with key ${key} is not a food or potion item.`);
-    }
-    if (!user || !user.setHealth || !user.setMana) {
-      throw new Error(
-        "Invalid user object: Must have setHealth and setMana methods."
-      );
-    }
-
-    if (item.heal > 0) {
-      const currentHealth = user.getHealth();
-      const newHealth = currentHealth + item.heal;
-      user.setHealth(newHealth);
-    }
-
-    if (item.mana > 0) {
-      const currentMana = user.getMana();
-      const newMana = currentMana + item.mana;
-      user.setMana(newMana);
-    }
-
-    this.deleteOne(key);
-
-    return true;
-  }
-
   useItem(key, user) {
     const item = this.getOne(key);
     if (!item) {
@@ -263,7 +232,26 @@ class Inventory {
       this.deleteOne(key);
       return { opened: true, contents: item.contents };
     } else if (item.type === "food" || item.type === "potion") {
-      return this.useHealingItem(key, user);
+      if (!user || !user.setHealth || !user.setMana) {
+        throw new Error(
+          "Invalid user object: Must have setHealth and setMana methods."
+        );
+      }
+
+      if (item.heal > 0) {
+        const currentHealth = user.getHealth();
+        const newHealth = currentHealth + item.heal;
+        user.setHealth(newHealth);
+      }
+
+      if (item.mana > 0) {
+        const currentMana = user.getMana();
+        const newMana = currentMana + item.mana;
+        user.setMana(newMana);
+      }
+
+      this.deleteOne(key);
+      return true;
     } else {
       throw new Error(`Item with key ${key} cannot be used.`);
     }
