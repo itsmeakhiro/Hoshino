@@ -55,13 +55,7 @@ const command: HoshinoLia.Command = {
               );
             }
             const cleanID = cleanUserID(event.senderID);
-            let userData;
-            try {
-              userData = (await hoshinoDB.get(cleanID)) || {};
-            } catch (error) {
-              console.error(`Database error for user ${cleanID}:`, error);
-              return await chat.reply("An error occurred. Please try again later.");
-            }
+            let userData = (await hoshinoDB.get(cleanID)) || {};
             if (!userData.username) {
               return await chat.reply(
                 "You need to register first! Use: profile register <username>"
@@ -82,13 +76,8 @@ const command: HoshinoLia.Command = {
                 ships: [...pirateHuntData.ships, { type: shipType, defense, upgradeLevel: 1 }],
               },
             };
-            try {
-              await hoshinoDB.set(cleanID, updatedData);
-              console.log(`User ${cleanID} bought ${shipType} for ${cost} gold`);
-            } catch (error) {
-              console.error(`Database save error for user ${cleanID}:`, error);
-              return await chat.reply("Failed to save purchase. Please try again.");
-            }
+            await hoshinoDB.set(cleanID, updatedData);
+            console.log(`User ${cleanID} bought ${shipType} for ${cost} gold`);
             await chat.reply(
               `You bought a ${shipType} for ${cost} gold! Ready to set sail.`
             );
@@ -101,13 +90,7 @@ const command: HoshinoLia.Command = {
           usage: "piratehunt sail",
           async deploy({ chat, event, hoshinoDB, Inventory }) {
             const cleanID = cleanUserID(event.senderID);
-            let userData;
-            try {
-              userData = (await hoshinoDB.get(cleanID)) || {};
-            } catch (error) {
-              console.error(`Database error for user ${cleanID}:`, error);
-              return await chat.reply("An error occurred. Please try again later.");
-            }
+            let userData = (await hoshinoDB.get(cleanID)) || {};
             if (!userData.username) {
               return await chat.reply(
                 "You need to register first! Use: profile register <username>"
@@ -181,6 +164,55 @@ const command: HoshinoLia.Command = {
                   sellPrice: 1500,
                   flavorText: "A statue gleaming with cursed splendor.",
                 },
+                {
+                  name: "Pearl Necklace",
+                  key: "pearl_necklace",
+                  type: "generic",
+                  sellPrice: 400,
+                  flavorText: "A string of lustrous pearls, harvested from the deep.",
+                },
+                {
+                  name: "Diamond Crown",
+                  key: "diamond_crown",
+                  type: "generic",
+                  sellPrice: 2000,
+                  flavorText: "A regal crown encrusted with flawless diamonds.",
+                },
+                {
+                  name: "Cursed Compass",
+                  key: "cursed_compass",
+                  type: "generic",
+                  sellPrice: 800,
+                  flavorText: "A compass that points to forbidden treasures.",
+                },
+                {
+                  name: "Mystic Orb",
+                  key: "mystic_orb",
+                  type: "generic",
+                  sellPrice: 1200,
+                  flavorText: "An orb swirling with arcane energy.",
+                },
+                {
+                  name: "Bronze Chalice",
+                  key: "bronze_chalice",
+                  type: "generic",
+                  sellPrice: 250,
+                  flavorText: "An ancient cup, etched with cryptic runes.",
+                },
+                {
+                  name: "Obsidian Dagger",
+                  key: "obsidian_dagger",
+                  type: "generic",
+                  sellPrice: 600,
+                  flavorText: "A sharp blade carved from volcanic glass.",
+                },
+                {
+                  name: "Starlight Pendant",
+                  key: "starlight_pendant",
+                  type: "generic",
+                  sellPrice: 900,
+                  flavorText: "A pendant that glows like a captured star.",
+                },
               ];
               const chests = [
                 {
@@ -204,6 +236,20 @@ const command: HoshinoLia.Command = {
                   icon: "🗝️",
                   flavorText: "A sacred chest, reclaimed from the ocean’s depths.",
                 },
+                {
+                  name: "Gilded Coffer",
+                  key: "gilded_coffer",
+                  type: "chest",
+                  icon: "✨",
+                  flavorText: "A golden chest radiating opulence.",
+                },
+                {
+                  name: "Abyssal Cache",
+                  key: "abyssal_cache",
+                  type: "chest",
+                  icon: "🌊",
+                  flavorText: "A chest pulled from the ocean’s darkest depths.",
+                },
               ];
               const selectedChest = chests[Math.floor(Math.random() * chests.length)];
               const selectedTreasure = treasures[Math.floor(Math.random() * treasures.length)];
@@ -216,20 +262,15 @@ const command: HoshinoLia.Command = {
             } else {
               message = "You sailed but found nothing. Try again!";
             }
-            try {
-              await hoshinoDB.set(cleanID, {
-                ...userData,
-                inventoryData: inventory.raw(),
-                pirateHuntData: {
-                  ...pirateHuntData,
-                  lastSail: Date.now(),
-                },
-              });
-              console.log(`User ${cleanID} sailed: ${message}`);
-            } catch (error) {
-              console.error(`Database save error for user ${cleanID}:`, error);
-              return await chat.reply("Failed to save sail results. Please try again.");
-            }
+            await hoshinoDB.set(cleanID, {
+              ...userData,
+              inventoryData: inventory.raw(),
+              pirateHuntData: {
+                ...pirateHuntData,
+                lastSail: Date.now(),
+              },
+            });
+            console.log(`User ${cleanID} sailed: ${message}`);
             await chat.reply(message);
           },
         },
@@ -249,13 +290,7 @@ const command: HoshinoLia.Command = {
               return await chat.reply("Amount must be a positive number.");
             }
             const cleanID = cleanUserID(event.senderID);
-            let userData;
-            try {
-              userData = (await hoshinoDB.get(cleanID)) || {};
-            } catch (error) {
-              console.error(`Database error for user ${cleanID}:`, error);
-              return await chat.reply("An error occurred. Please try again later.");
-            }
+            let userData = (await hoshinoDB.get(cleanID)) || {};
             if (!userData.username) {
               return await chat.reply(
                 "You need to register first! Use: profile register <username>"
@@ -280,13 +315,8 @@ const command: HoshinoLia.Command = {
                 },
               },
             };
-            try {
-              await hoshinoDB.set(cleanID, updatedData);
-              console.log(`User ${cleanID} recruited ${amount} soldiers for ${cost} gold`);
-            } catch (error) {
-              console.error(`Database save error for user ${cleanID}:`, error);
-              return await chat.reply("Failed to save recruitment. Please try again.");
-            }
+            await hoshinoDB.set(cleanID, updatedData);
+            console.log(`User ${cleanID} recruited ${amount} soldiers for ${cost} gold`);
             await chat.reply(
               `You recruited ${amount} soldiers for ${cost} gold! Ready for a raid.`
             );
@@ -299,13 +329,7 @@ const command: HoshinoLia.Command = {
           usage: "piratehunt raid",
           async deploy({ chat, event, hoshinoDB }) {
             const cleanID = cleanUserID(event.senderID);
-            let userData;
-            try {
-              userData = (await hoshinoDB.get(cleanID)) || {};
-            } catch (error) {
-              console.error(`Database error for user ${cleanID}:`, error);
-              return await chat.reply("An error occurred. Please try again later.");
-            }
+            let userData = (await hoshinoDB.get(cleanID)) || {};
             if (!userData.username) {
               return await chat.reply(
                 "You need to register first! Use: profile register <username>"
@@ -347,6 +371,7 @@ const command: HoshinoLia.Command = {
             let attackerBalance = userData.balance;
             let targetBalance = targetData.balance;
             let updatedSoldiers = { ...pirateHuntData.soldiers };
+            let soldiersLost = 0;
             if (isSuccess) {
               const loot = Math.min(5000, targetBalance);
               attackerBalance += loot;
@@ -356,7 +381,7 @@ const command: HoshinoLia.Command = {
               const loss = Math.min(1000, userData.balance);
               attackerBalance -= loss;
               const lossPercentage = Math.floor(Math.random() * 20) + 1;
-              const soldiersLost = Math.max(1, Math.floor(pirateHuntData.soldiers.count * (lossPercentage / 100)));
+              soldiersLost = Math.max(1, Math.floor(pirateHuntData.soldiers.count * (lossPercentage / 100)));
               updatedSoldiers.count = Math.max(1, pirateHuntData.soldiers.count - soldiersLost);
               updatedSoldiers.injuredSoldiers = (updatedSoldiers.injuredSoldiers || 0) + soldiersLost;
               updatedSoldiers.healUntil = Date.now() + 4 * 60 * 60 * 1000;
@@ -367,24 +392,19 @@ const command: HoshinoLia.Command = {
               updatedSoldiers.injuredSoldiers = 0;
               updatedSoldiers.healUntil = undefined;
             }
-            try {
-              await hoshinoDB.set(cleanID, {
-                ...userData,
-                balance: attackerBalance,
-                pirateHuntData: {
-                  ...pirateHuntData,
-                  soldiers: updatedSoldiers,
-                },
-              });
-              await hoshinoDB.set(target.uid, {
-                ...targetData,
-                balance: targetBalance,
-              });
-              console.log(`Raid by ${cleanID} on ${target.uid}: ${isSuccess ? "Success" : "Failure"}, soldiers lost: ${isSuccess ? 0 : soldiersLost}`);
-            } catch (error) {
-              console.error(`Database save error for raid by ${cleanID}:`, error);
-              return await chat.reply("Failed to save raid results. Please try again.");
-            }
+            await hoshinoDB.set(cleanID, {
+              ...userData,
+              balance: attackerBalance,
+              pirateHuntData: {
+                ...pirateHuntData,
+                soldiers: updatedSoldiers,
+              },
+            });
+            await hoshinoDB.set(target.uid, {
+              ...targetData,
+              balance: targetBalance,
+            });
+            console.log(`Raid by ${cleanID} on ${target.uid}: ${isSuccess ? "Success" : "Failure"}, soldiers lost: ${soldiersLost}`);
             await chat.reply(message);
           },
         },
@@ -404,13 +424,7 @@ const command: HoshinoLia.Command = {
               return await chat.reply("Invalid ship index. Must be a positive number.");
             }
             const cleanID = cleanUserID(event.senderID);
-            let userData;
-            try {
-              userData = (await hoshinoDB.get(cleanID)) || {};
-            } catch (error) {
-              console.error(`Database error for user ${cleanID}:`, error);
-              return await chat.reply("An error occurred. Please try again later.");
-            }
+            let userData = (await hoshinoDB.get(cleanID)) || {};
             if (!userData.username) {
               return await chat.reply(
                 "You need to register first! Use: profile register <username>"
@@ -445,13 +459,8 @@ const command: HoshinoLia.Command = {
                 ships: updatedShips,
               },
             };
-            try {
-              await hoshinoDB.set(cleanID, updatedData);
-              console.log(`User ${cleanID} upgraded ship ${ship.type} for ${cost} gold`);
-            } catch (error) {
-              console.error(`Database save error for user ${cleanID}:`, error);
-              return await chat.reply("Failed to save upgrade. Please try again.");
-            }
+            await hoshinoDB.set(cleanID, updatedData);
+            console.log(`User ${cleanID} upgraded ship ${ship.type} for ${cost} gold`);
             await chat.reply(
               `Upgraded your ${ship.type} for ${cost} gold! Defense increased to ${updatedShips[shipIndex].defense.toFixed(0)}.`
             );
@@ -464,13 +473,7 @@ const command: HoshinoLia.Command = {
           usage: "piratehunt train",
           async deploy({ chat, event, hoshinoDB }) {
             const cleanID = cleanUserID(event.senderID);
-            let userData;
-            try {
-              userData = (await hoshinoDB.get(cleanID)) || {};
-            } catch (error) {
-              console.error(`Database error for user ${cleanID}:`, error);
-              return await chat.reply("An error occurred. Please try again later.");
-            }
+            let userData = (await hoshinoDB.get(cleanID)) || {};
             if (!userData.username) {
               return await chat.reply(
                 "You need to register first! Use: profile register <username>"
@@ -502,20 +505,15 @@ const command: HoshinoLia.Command = {
               updatedSoldiers.healUntil = undefined;
             }
             updatedSoldiers.abilityLevel = Math.min(10, updatedSoldiers.abilityLevel + 1);
-            try {
-              await hoshinoDB.set(cleanID, {
-                ...userData,
-                balance: balance - cost,
-                pirateHuntData: {
-                  ...pirateHuntData,
-                  soldiers: updatedSoldiers,
-                },
-              });
-              console.log(`User ${cleanID} trained soldiers to ability level ${updatedSoldiers.abilityLevel} for ${cost} gold`);
-            } catch (error) {
-              console.error(`Database save error for user ${cleanID}:`, error);
-              return await chat.reply("Failed to save training results. Please try again.");
-            }
+            await hoshinoDB.set(cleanID, {
+              ...userData,
+              balance: balance - cost,
+              pirateHuntData: {
+                ...pirateHuntData,
+                soldiers: updatedSoldiers,
+              },
+            });
+            console.log(`User ${cleanID} trained soldiers to ability level ${updatedSoldiers.abilityLevel} for ${cost} gold`);
             await chat.reply(
               `Trained your soldiers for ${cost} gold! Ability level increased to ${updatedSoldiers.abilityLevel}.`
             );
