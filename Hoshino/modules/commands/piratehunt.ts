@@ -1,6 +1,5 @@
 const { cleanUserID } = global.Hoshino.utils;
 
-// DO NOT REMOVE HoshinoLia.Command
 const command: HoshinoLia.Command = {
   manifest: {
     name: "piratehunt",
@@ -116,17 +115,92 @@ const command: HoshinoLia.Command = {
             const outcome = Math.random();
             let message = "";
             if (outcome < 0.3) {
+              const treasures = [
+                {
+                  name: "Gold Coin",
+                  key: "gold_coin",
+                  type: "generic",
+                  sellPrice: 100,
+                  flavorText: "A shiny coin, coveted by all pirates.",
+                },
+                {
+                  name: "Sapphire Gem",
+                  key: "sapphire_gem",
+                  type: "generic",
+                  sellPrice: 500,
+                  flavorText: "A deep blue gem, glowing with inner light.",
+                },
+                {
+                  name: "Ancient Relic",
+                  key: "ancient_relic",
+                  type: "generic",
+                  sellPrice: 1000,
+                  flavorText: "An artifact from a long-forgotten civilization.",
+                },
+                {
+                  name: "Emerald Ring",
+                  key: "emerald_ring",
+                  type: "generic",
+                  sellPrice: 300,
+                  flavorText: "A ring sparkling with forbidden allure.",
+                },
+                {
+                  name: "Silver Doubloon",
+                  key: "silver_doubloon",
+                  type: "generic",
+                  sellPrice: 150,
+                  flavorText: "A pirate’s coin, heavy with tales of plunder.",
+                },
+                {
+                  name: "Ruby Amulet",
+                  key: "ruby_amulet",
+                  type: "generic",
+                  sellPrice: 700,
+                  flavorText: "A blood-red amulet, pulsing with mystery.",
+                },
+                {
+                  name: "Golden Idol",
+                  key: "golden_idol",
+                  type: "generic",
+                  sellPrice: 1500,
+                  flavorText: "A statue gleaming with cursed splendor.",
+                },
+              ];
+
+              const chests = [
+                {
+                  name: "Treasure Chest",
+                  key: "treasure_chest",
+                  type: "chest",
+                  icon: "📦",
+                  flavorText: "A weathered chest, lost to the tides of time.",
+                },
+                {
+                  name: "Pirate’s Trove",
+                  key: "pirate_trove",
+                  type: "chest",
+                  icon: "💰",
+                  flavorText: "A hoard stashed by a notorious pirate captain.",
+                },
+                {
+                  name: "Sunken Reliquary",
+                  key: "sunken_reliquary",
+                  type: "chest",
+                  icon: "🗝️",
+                  flavorText: "A sacred chest, reclaimed from the ocean’s depths.",
+                },
+              ];
+
+              const selectedChest = chests[Math.floor(Math.random() * chests.length)];
+              const selectedTreasure = treasures[Math.floor(Math.random() * treasures.length)];
+
               const chest = {
-                name: "Treasure Chest",
-                key: `treasure_chest_${Date.now()}`,
-                type: "chest",
-                icon: "📦",
-                contents: [
-                  { name: "Gold Coin", key: "gold_coin", type: "generic", sellPrice: 100 },
-                ],
+                ...selectedChest,
+                contents: [selectedTreasure],
               };
+
               inventory.addOne(chest);
-              message = "You found a Treasure Chest!";
+              message = `You found a ${selectedChest.name}!`;
             } else {
               message = "You sailed but found nothing. Try again!";
             }
@@ -150,7 +224,7 @@ const command: HoshinoLia.Command = {
                 "Please provide the number of soldiers to recruit. Usage: piratehunt recruit <amount>"
               );
             }
-            const amount = parseInt(args[0]);
+            const amount = parseInt(args[1]);
             if (isNaN(amount) || amount < 1) {
               return await chat.reply("Amount must be a positive number.");
             }
