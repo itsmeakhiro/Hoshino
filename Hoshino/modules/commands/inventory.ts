@@ -36,38 +36,40 @@ const command: HoshinoLia.Command = {
           description: "View all items in your inventory.",
           usage: "inventory list",
           async deploy({ chat, event, hoshinoDB, Inventory }) {
-            const cleanID = cleanUserID(event.senderID);
-            const userData = await hoshinoDB.get(cleanID);
-            if (!userData || !userData.username) {
-              return await chat.reply(
-                "You need to register first! Use: profile register <username>"
-              );
+           const cleanID = cleanUserID(event.senderID);
+           const userData = await hoshinoDB.get(cleanID);
+           if (!userData || !userData.username) {
+            return await chat.reply(
+             "You need to register first! Use: profile register <username>"
+           );
+         }
+
+          const { inventoryData = [] } = userData;
+          const inventory = new Inventory(inventoryData);
+
+          if (inventory.size() === 0) {
+           return await chat.reply("Your inventory is empty!");
+          }
+
+          const items = (inventory.getAll() as Array<{
+            key: string;
+            name: string;
+            icon: string;
+            heal?: number;
+            mana?: number;
+            flavorText?: string;
+           }>).map((item, index) => {
+           const effects: string[] = [];
+            if (typeof item.heal === 'number' && item.heal > 0) {
+             effects.push(`+${item.heal} HP`);
             }
-
-            const { inventoryData = [] } = userData;
-            const inventory = new Inventory(inventoryData);
-
-            if (inventory.size() === 0) {
-              return await chat.reply("Your inventory is empty!");
+            if (typeof item.mana === 'number' && item.mana > 0) {
+             effects.push(`+${item.mana} MP`);
             }
-
-            const items = (inventory.getAll() as Array<{
-              key: string;
-              name: string;
-              icon: string;
-              heal?: number;
-              mana?: number;
-            }>).map((item, index) => {
-              const effects: string[] = [];
-              if (typeof item.heal === 'number' && item.heal > 0) {
-                effects.push(`+${item.heal} HP`);
-              }
-              if (typeof item.mana === 'number' && item.mana > 0) {
-                effects.push(`+${item.mana} MP`);
-              }
-              const effectText = effects.length ? ` (${effects.join(", ")})` : "";
-              return `${index + 1}. ${item.icon} ${item.name} [${item.key}]${effectText}`;
-            });
+           const effectText = effects.length ? ` (${effects.join(", ")})` : "";
+            const flavorText = item.flavorText ? `\n   ${item.flavorText}` : "";
+            return `${index + 1}. ${item.icon} ${item.name} [${item.key}]${effectText}${flavorText}`;
+          });
             const inventoryList = `**Your Inventory (${inventory.size()}/${inventory.limit})**\n${items.join("\n")}`;
             await chat.reply(inventoryList);
           },
