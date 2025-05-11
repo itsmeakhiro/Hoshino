@@ -10,7 +10,7 @@ const command: HoshinoLia.Command = {
     version: "1.0",
     developer: "Francis And Liane",
     description: "Manage your inventory: check items, use food/potions/chests, or toss items.",
-    category: "RPG",
+    category: "Economy",
     usage: "inventory list | inventory use <item_key> | inventory toss <item_key> [amount]",
     config: {
       admin: false,
