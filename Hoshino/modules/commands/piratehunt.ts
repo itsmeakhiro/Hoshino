@@ -45,9 +45,9 @@ const command: HoshinoLia.Command = {
               .trim()
               .replace(/[^a-z]/g, "");
             const shipPrices = {
-              sloop: { defense: 50, cost: 10000 },
-              brig: { defense: 100, cost: 50000 },
-              galleon: { defense: 200, cost: 100000 },
+              sloop: { defense: 50, health: 100, cost: 10000 },
+              brig: { defense: 100, health: 200, cost: 50000 },
+              galleon: { defense: 200, health: 400, cost: 100000 },
             };
             if (!shipPrices[shipType]) {
               return await chat.reply(
@@ -62,7 +62,7 @@ const command: HoshinoLia.Command = {
               );
             }
             const { balance, pirateHuntData = { ships: [], soldiers: { count: 0, abilityLevel: 1, injuredSoldiers: 0 }, lastSail: 0 } } = userData;
-            const { cost, defense } = shipPrices[shipType];
+            const { cost, defense, health } = shipPrices[shipType];
             if (balance < cost) {
               return await chat.reply(
                 `You need ${cost} gold to buy a ${shipType}. Your balance: ${balance}.`
@@ -73,7 +73,7 @@ const command: HoshinoLia.Command = {
               balance: balance - cost,
               pirateHuntData: {
                 ...pirateHuntData,
-                ships: [...pirateHuntData.ships, { type: shipType, defense, upgradeLevel: 1 }],
+                ships: [...pirateHuntData.ships, { type: shipType, defense, health, upgradeLevel: 1 }],
               },
             };
             await hoshinoDB.set(cleanID, updatedData);
@@ -364,8 +364,9 @@ const command: HoshinoLia.Command = {
             const targetData = target.data;
             const targetShips = targetData.pirateHuntData.ships;
             const targetDefense = targetShips.reduce((sum, ship) => sum + ship.defense, 0);
+            const targetHealth = targetShips.reduce((sum, ship) => sum + ship.health, 0);
             const attackerStrength = pirateHuntData.soldiers.count * pirateHuntData.soldiers.abilityLevel * 10;
-            const successChance = Math.min(0.9, attackerStrength / (attackerStrength + targetDefense * 1.5));
+            const successChance = Math.min(0.9, attackerStrength / (attackerStrength + (targetDefense + targetHealth) * 0.75));
             const isSuccess = Math.random() < successChance;
             let message = "";
             let attackerBalance = userData.balance;
@@ -411,7 +412,7 @@ const command: HoshinoLia.Command = {
         {
           subcommand: "upgrade",
           aliases: ["enhance"],
-          description: "Upgrade a ship to increase its defense.",
+          description: "Upgrade a ship to increase its defense and health.",
           usage: "piratehunt upgrade <ship_index>",
           async deploy({ chat, args, event, hoshinoDB }) {
             if (args.length < 1) {
@@ -440,6 +441,7 @@ const command: HoshinoLia.Command = {
             const baseCost = 5000;
             const cost = baseCost * Math.pow(2, ship.upgradeLevel - 1);
             const defenseIncrease = ship.defense * 0.2;
+            const healthIncrease = ship.health * 0.2;
             if (balance < cost) {
               return await chat.reply(
                 `You need ${cost} gold to upgrade your ${ship.type}. Your balance: ${balance}.`
@@ -449,6 +451,7 @@ const command: HoshinoLia.Command = {
             updatedShips[shipIndex] = {
               ...ship,
               defense: ship.defense + defenseIncrease,
+              health: ship.health + healthIncrease,
               upgradeLevel: ship.upgradeLevel + 1,
             };
             const updatedData = {
@@ -462,7 +465,7 @@ const command: HoshinoLia.Command = {
             await hoshinoDB.set(cleanID, updatedData);
             console.log(`User ${cleanID} upgraded ship ${ship.type} for ${cost} gold`);
             await chat.reply(
-              `Upgraded your ${ship.type} for ${cost} gold! Defense increased to ${updatedShips[shipIndex].defense.toFixed(0)}.`
+              `Upgraded your ${ship.type} for ${cost} gold! Defense increased to ${updatedShips[shipIndex].defense.toFixed(0)}, Health increased to ${updatedShips[shipIndex].health.toFixed(0)}.`
             );
           },
         },
