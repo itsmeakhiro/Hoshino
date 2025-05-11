@@ -374,19 +374,20 @@ const command: HoshinoLia.Command = {
             let updatedSoldiers = { ...pirateHuntData.soldiers };
             let soldiersLost = 0;
             if (isSuccess) {
-              const loot = Math.min(5000, targetBalance);
+              const loot = Math.floor(targetBalance / 2);
               attackerBalance += loot;
               targetBalance -= loot;
               message = `Raid successful! You looted ${loot} gold from ${targetData.username}!`;
             } else {
-              const loss = Math.min(1000, userData.balance);
+              const loss = Math.floor(userData.balance / 2);
               attackerBalance -= loss;
+              targetBalance += loss;
               const lossPercentage = Math.floor(Math.random() * 20) + 1;
               soldiersLost = Math.max(1, Math.floor(pirateHuntData.soldiers.count * (lossPercentage / 100)));
               updatedSoldiers.count = Math.max(1, pirateHuntData.soldiers.count - soldiersLost);
               updatedSoldiers.injuredSoldiers = (updatedSoldiers.injuredSoldiers || 0) + soldiersLost;
               updatedSoldiers.healUntil = Date.now() + 4 * 60 * 60 * 1000;
-              message = `Raid failed! You lost ${loss} gold and ${soldiersLost} soldiers (${lossPercentage}%) to injuries against ${targetData.username}. Your ${updatedSoldiers.injuredSoldiers} injured soldiers need to heal for 4 hours.`;
+              message = `Raid failed! You lost ${loss} gold to ${targetData.username} and ${soldiersLost} soldiers (${lossPercentage}%) to injuries. Your ${updatedSoldiers.injuredSoldiers} injured soldiers need to heal for 4 hours.`;
             }
             if (updatedSoldiers.healUntil && Date.now() >= updatedSoldiers.healUntil) {
               updatedSoldiers.count += updatedSoldiers.injuredSoldiers;
