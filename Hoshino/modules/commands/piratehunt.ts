@@ -5,7 +5,7 @@ const command: HoshinoLia.Command = {
     name: "piratehunt",
     aliases: ["ph", "pirate"],
     version: "1.0",
-    developer: "Francis Loyd Raval",
+    developer: "Francis And Liane",
     description: "Sail the seas as a pirate: buy ships, scavenge chests, recruit soldiers, raid users, upgrade ships, and train soldiers.",
     category: "RPG",
     usage:
@@ -46,15 +46,15 @@ const command: HoshinoLia.Command = {
               .replace(/[^a-z]/g, "");
             console.log("Debug: shipType =", JSON.stringify(shipType));
 
-            const shipPrices: Record<string, { defense: number; cost: number; maxHealth: number }> = {
-              sloop: { defense: 50, cost: 10000, maxHealth: 100 },
-              brig: { defense: 100, cost: 50000, maxHealth: 200 },
-              galleon: { defense: 200, cost: 100000, maxHealth: 400 },
+            const shipPrices: Record<string, { defense: number; cost: number }> = {
+              sloop: { defense: 50, cost: 10000 },
+              brig: { defense: 100, cost: 50000 },
+              galleon: { defense: 200, cost: 100000 },
             };
 
             if (!shipPrices[shipType]) {
               return await chat.reply(
-                `Invalid ship type: "${shipType}". Available: sloop, brig, galleon."
+                `Invalid ship type: "${shipType}". Available: sloop, brig, galleon.`
               );
             }
 
@@ -66,8 +66,8 @@ const command: HoshinoLia.Command = {
               );
             }
 
-            const { balance, pirateHuntData = { ships: [], soldiers: { count: 0, abilityLevel: 1 }, injuredSoldiers: 0, healingUntil: 0, sailCooldownUntil: 0 } } = userData;
-            const { cost, defense, maxHealth } = shipPrices[shipType];
+            const { balance, pirateHuntData = { ships: [], soldiers: { count: 0, abilityLevel: 1 } } } = userData;
+            const { cost, defense } = shipPrices[shipType];
 
             if (balance < cost) {
               return await chat.reply(
@@ -80,7 +80,7 @@ const command: HoshinoLia.Command = {
               balance: balance - cost,
               pirateHuntData: {
                 ...pirateHuntData,
-                ships: [...pirateHuntData.ships, { type: shipType, defense, health: maxHealth, maxHealth, repairUntil: 0, upgradeLevel: 1 }],
+                ships: [...pirateHuntData.ships, { type: shipType, defense, upgradeLevel: 1 }],
               },
             };
 
@@ -104,33 +104,10 @@ const command: HoshinoLia.Command = {
               );
             }
 
-            const { pirateHuntData = { ships: [], soldiers: { count: 0, abilityLevel: 1 }, injuredSoldiers: 0, healingUntil: 0, sailCooldownUntil: 0 }, inventoryData = [] } = userData;
+            const { pirateHuntData = { ships: [], soldiers: { count: 0, abilityLevel: 1 } }, inventoryData = [] } = userData;
             if (pirateHuntData.ships.length === 0) {
               return await chat.reply(
                 "You need to buy a ship first! Use: piratehunt buy <ship_type>"
-              );
-            }
-
-            if (pirateHuntData.sailCooldownUntil > Date.now()) {
-              const remainingMs = pirateHuntData.sailCooldownUntil - Date.now();
-              const remainingMinutes = Math.ceil(remainingMs / 60000);
-              return await chat.reply(
-                `Your crew needs rest! Try sailing again in ${remainingMinutes} minute${remainingMinutes === 1 ? '' : 's'}.`
-              );
-            }
-
-            const updatedShips = pirateHuntData.ships.map(ship => 
-              ship.repairUntil && ship.repairUntil <= Date.now() 
-                ? { ...ship, health: ship.maxHealth, repairUntil: 0 }
-                : ship
-            );
-            const usableShips = updatedShips.filter(ship => ship.health > 0);
-            if (usableShips.length === 0) {
-              const nextRepair = Math.min(...updatedShips.filter(ship => ship.repairUntil > 0).map(ship => ship.repairUntil));
-              const remainingMs = nextRepair - Date.now();
-              const remainingHours = Math.ceil(remainingMs / 3600000);
-              return await chat.reply(
-                `All your ships are damaged! Try again in ${remainingHours} hour${remainingHours === 1 ? '' : 's'}.`
               );
             }
 
@@ -230,11 +207,6 @@ const command: HoshinoLia.Command = {
 
             await hoshinoDB.set(cleanID, {
               ...userData,
-              pirateHuntData: {
-                ...pirateHuntData,
-                ships: updatedShips,
-                sailCooldownUntil: Date.now() + 3600000,
-              },
               inventoryData: inventory.raw(),
             });
 
@@ -265,7 +237,7 @@ const command: HoshinoLia.Command = {
               );
             }
 
-            const { balance, pirateHuntData = { ships: [], soldiers: { count: 0, abilityLevel: 1 }, injuredSoldiers: 0, healingUntil: 0, sailCooldownUntil: 0 } } = userData;
+            const { balance, pirateHuntData = { ships: [], soldiers: { count: 0, abilityLevel: 1 } } } = userData;
             const cost = amount * 1000;
 
             if (balance < cost) {
@@ -306,7 +278,7 @@ const command: HoshinoLia.Command = {
               );
             }
 
-            const { pirateHuntData = { ships: [], soldiers: { count: 0, abilityLevel: 1 }, injuredSoldiers: 0, healingUntil: 0, sailCooldownUntil: 0 } } = userData;
+            const { pirateHuntData = { ships: [], soldiers: { count: 0, abilityLevel: 1 } } } = userData;
             if (pirateHuntData.ships.length === 0) {
               return await chat.reply(
                 "You need a ship to raid! Use: piratehunt buy <ship_type>"
@@ -315,28 +287,6 @@ const command: HoshinoLia.Command = {
             if (pirateHuntData.soldiers.count === 0) {
               return await chat.reply(
                 "You need soldiers to raid! Use: piratehunt recruit <amount>"
-              );
-            }
-            if (pirateHuntData.healingUntil > Date.now()) {
-              const remainingMs = pirateHuntData.healingUntil - Date.now();
-              const remainingHours = Math.ceil(remainingMs / 3600000);
-              return await chat.reply(
-                `Your soldiers are healing! Try again in ${remainingHours} hour${remainingHours === 1 ? '' : 's'}.`
-              );
-            }
-
-            const updatedShips = pirateHuntData.ships.map(ship => 
-              ship.repairUntil && ship.repairUntil <= Date.now() 
-                ? { ...ship, health: ship.maxHealth, repairUntil: 0 }
-                : ship
-            );
-            const usableShips = updatedShips.filter(ship => ship.health > 0);
-            if (usableShips.length === 0) {
-              const nextRepair = Math.min(...updatedShips.filter(ship => ship.repairUntil > 0).map(ship => ship.repairUntil));
-              const remainingMs = nextRepair - Date.now();
-              const remainingHours = Math.ceil(remainingMs / 3600000);
-              return await chat.reply(
-                `All your ships are damaged! Try again in ${remainingHours} hour${remainingHours === 1 ? '' : 's'}.`
               );
             }
 
@@ -353,54 +303,29 @@ const command: HoshinoLia.Command = {
             const targetData = target.data;
             const targetShips = targetData.pirateHuntData!.ships;
             const targetDefense = targetShips.reduce((sum: number, ship: any) => sum + ship.defense, 0);
-            const attackerStrength = pirateHuntData.soldiers.count * pirateHuntData.soldiers.abilityLevel * 5;
-            const successChance = attackerStrength / (attackerStrength + targetDefense * 1.5);
+            const attackerStrength = pirateHuntData.soldiers.count * pirateHuntData.soldiers.abilityLevel * 10;
+
+            const successChance = attackerStrength / (attackerStrength + targetDefense);
             const isSuccess = Math.random() < successChance;
 
             let message = "";
             let attackerBalance = userData.balance;
             let targetBalance = targetData.balance;
-            let updatedPirateHuntData = { ...pirateHuntData, ships: updatedShips };
 
             if (isSuccess) {
-              const loot = Math.floor(targetBalance / 2);
+              const loot = Math.min(5000, targetBalance);
               attackerBalance += loot;
               targetBalance -= loot;
-              message = `Raid successful! You looted ${loot} gold (half their balance) from ${targetData.username}!`;
+              message = `Raid successful! You looted ${loot} gold from ${targetData.username}!`;
             } else {
-              const loss = Math.floor(attackerBalance / 2);
+              const loss = Math.min(1000, userData.balance);
               attackerBalance -= loss;
-              targetBalance += loss;
-              const soldierLossPercent = Math.floor(Math.random() * 20) + 1;
-              const soldiersLost = Math.max(1, Math.floor(pirateHuntData.soldiers.count * (soldierLossPercent / 100)));
-              const shipIndex = Math.floor(Math.random() * usableShips.length);
-              const damagedShip = usableShips[shipIndex];
-              const shipDamagePercent = Math.floor(Math.random() * 16) + 5;
-              const healthLost = Math.floor(damagedShip.maxHealth * (shipDamagePercent / 100));
-              const newHealth = Math.max(0, damagedShip.health - healthLost);
-              const repairUntil = newHealth <= 0 ? Date.now() + 86400000 : damagedShip.repairUntil;
-              updatedShips[updatedShips.findIndex(ship => ship === damagedShip)] = {
-                ...damagedShip,
-                health: newHealth,
-                repairUntil,
-              };
-              updatedPirateHuntData = {
-                ...pirateHuntData,
-                ships: updatedShips,
-                soldiers: {
-                  count: Math.max(0, pirateHuntData.soldiers.count - soldiersLost),
-                  abilityLevel: pirateHuntData.soldiers.abilityLevel,
-                },
-                injuredSoldiers: pirateHuntData.injuredSoldiers + soldiersLost,
-                healingUntil: Date.now() + 86400000,
-              };
-              message = `Raid failed! You lost ${loss} gold (half your balance) to ${targetData.username}, ${soldiersLost} soldiers (${soldierLossPercent}%), and your ${damagedShip.type} took ${healthLost} damage (${shipDamagePercent}%). Soldiers and ship need 24 hours to recover.`;
+              message = `Raid failed! You lost ${loss} gold in the attempt against ${targetData.username}.`;
             }
 
             await hoshinoDB.set(cleanID, {
               ...userData,
               balance: attackerBalance,
-              pirateHuntData: updatedPirateHuntData,
             });
 
             await hoshinoDB.set(target.uid, {
@@ -414,7 +339,7 @@ const command: HoshinoLia.Command = {
         {
           subcommand: "upgrade",
           aliases: ["enhance"],
-          description: "Upgrade a ship to increase its defense and health.",
+          description: "Upgrade a ship to increase its defense.",
           usage: "piratehunt upgrade <ship_index>",
           async deploy({ chat, args, event, hoshinoDB }) {
             if (args.length < 1) {
@@ -435,7 +360,7 @@ const command: HoshinoLia.Command = {
               );
             }
 
-            const { balance, pirateHuntData = { ships: [], soldiers: { count: 0, abilityLevel: 1 }, injuredSoldiers: 0, healingUntil: 0, sailCooldownUntil: 0 } } = userData;
+            const { balance, pirateHuntData = { ships: [], soldiers: { count: 0, abilityLevel: 1 } } } = userData;
             if (shipIndex >= pirateHuntData.ships.length) {
               return await chat.reply(
                 `You only have ${pirateHuntData.ships.length} ship(s). Choose a valid index.`
@@ -446,9 +371,6 @@ const command: HoshinoLia.Command = {
             const baseCost = 5000;
             const cost = baseCost * Math.pow(2, ship.upgradeLevel - 1);
             const defenseIncrease = ship.defense * 0.2;
-            const baseMaxHealth = { sloop: 100, brig: 200, galleon: 400 }[ship.type];
-            const healthIncrease = baseMaxHealth * 0.2;
-            const newMaxHealth = ship.maxHealth + healthIncrease;
 
             if (balance < cost) {
               return await chat.reply(
@@ -460,9 +382,6 @@ const command: HoshinoLia.Command = {
             updatedShips[shipIndex] = {
               ...ship,
               defense: ship.defense + defenseIncrease,
-              maxHealth: newMaxHealth,
-              health: newMaxHealth,
-              repairUntil: 0,
               upgradeLevel: ship.upgradeLevel + 1,
             };
 
@@ -477,7 +396,7 @@ const command: HoshinoLia.Command = {
 
             await hoshinoDB.set(cleanID, updatedData);
             await chat.reply(
-              `Upgraded your ${ship.type} for ${cost} gold! Defense increased to ${updatedShips[shipIndex].defense.toFixed(0)}, max health to ${updatedShips[shipIndex].maxHealth.toFixed(0)}.`
+              `Upgraded your ${ship.type} for ${cost} gold! Defense increased to ${updatedShips[shipIndex].defense.toFixed(0)}.`
             );
           },
         },
@@ -495,17 +414,10 @@ const command: HoshinoLia.Command = {
               );
             }
 
-            const { balance, pirateHuntData = { ships: [], soldiers: { count: 0, abilityLevel: 1 }, injuredSoldiers: 0, healingUntil: 0, sailCooldownUntil: 0 } } = userData;
+            const { balance, pirateHuntData = { ships: [], soldiers: { count: 0, abilityLevel: 1 } } } = userData;
             if (pirateHuntData.soldiers.count === 0) {
               return await chat.reply(
                 "You need soldiers to train! Use: piratehunt recruit <amount>"
-              );
-            }
-            if (pirateHuntData.healingUntil > Date.now()) {
-              const remainingMs = pirateHuntData.healingUntil - Date.now();
-              const remainingHours = Math.ceil(remainingMs / 3600000);
-              return await chat.reply(
-                `Your soldiers are healing! Try again in ${remainingHours} hour${remainingHours === 1 ? '' : 's'}.`
               );
             }
 
@@ -525,8 +437,6 @@ const command: HoshinoLia.Command = {
                   count: pirateHuntData.soldiers.count,
                   abilityLevel: pirateHuntData.soldiers.abilityLevel + 1 | 0,
                 },
-                injuredSoldiers: 0,
-                healingUntil: 0,
               },
             };
 
