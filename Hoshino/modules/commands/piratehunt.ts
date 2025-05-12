@@ -280,7 +280,7 @@ const command: HoshinoLia.Command = {
           description: "Recruit soldiers for raiding.",
           usage: "piratehunt recruit <amount>",
           async deploy({ chat, args, event, hoshinoDB }) {
-            if (args.length < 1) {
+            if (args.length < 2) {
               return await chat.reply(
                 "Please provide the number of soldiers to recruit. Usage: piratehunt recruit <amount>"
               );
@@ -416,12 +416,12 @@ const command: HoshinoLia.Command = {
           description: "Upgrade a ship to increase its defense and health.",
           usage: "piratehunt upgrade <ship_index>",
           async deploy({ chat, args, event, hoshinoDB }) {
-            if (args.length < 1) {
+            if (args.length < 2) {
               return await chat.reply(
                 "Please provide the ship index. Usage: piratehunt upgrade <ship_index>"
               );
             }
-            const shipIndex = parseInt(args[0]) - 1;
+            const shipIndex = parseInt(args[1]) - 1;
             if (isNaN(shipIndex) || shipIndex < 0) {
               return await chat.reply("Invalid ship index. Must be a positive number.");
             }
