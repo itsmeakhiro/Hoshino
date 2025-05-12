@@ -125,6 +125,7 @@ declare global {
        * @param senderID - The user ID to clean
        * @returns - The cleaned user ID
        */
+      isLoading: boolean;
       cleanUserID(senderID: string): string;
       loadCommands(): Promise<void>;
       loadEvents(): Promise<void>;
