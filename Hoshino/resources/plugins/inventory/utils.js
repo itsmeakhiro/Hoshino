@@ -256,6 +256,34 @@ class Inventory {
       throw new Error(`Item with key ${key} cannot be used.`);
     }
   }
+
+  equipItem(key, user) {
+    const item = this.getOne(key);
+    if (!item) {
+      throw new Error(`Item with key ${key} does not exist in the inventory.`);
+    }
+
+    if (item.type !== "weapon" && item.type !== "armor") {
+      throw new Error(`Item with key ${key} is not a weapon or armor and cannot be equipped.`);
+    }
+
+    if (!user || !user.setAtk || !user.setDef) {
+      throw new Error("Invalid user object: Must have setAtk and setDef methods.");
+    }
+
+    if (item.type === "weapon") {
+      const currentAtk = user.getAtk ? user.getAtk() : 0;
+      user.setAtk(currentAtk + item.atk);
+    }
+
+    if (item.type === "armor") {
+      const currentDef = user.getDef ? user.getDef() : 0;
+      user.setDef(currentDef + item.def);
+    }
+
+    this.deleteOne(key);
+    return true;
+  }
 }
 
 module.exports = Inventory;
