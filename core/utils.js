@@ -1,9 +1,6 @@
 import { readdirSync } from "fs-extra";
 import { resolve, join } from "path";
 
-global.Hoshino = global.Hoshino || {};
-global.Hoshino.isLoading = false;
-
 /**
  * @type {HoshinoLia.HoshinoUtils}
  */
@@ -12,7 +9,7 @@ const utils = {
     return senderID.replace(/^web:/, "");
   },
   async loadCommands() {
-    global.Hoshino.isLoading = true; 
+    global.Hoshino.isLoading = true;
     try {
       const filePath = resolve(__dirname, "../Hoshino/modules/commands");
       console.log(`[DEBUG] Command file path: ${filePath}`);
@@ -42,7 +39,9 @@ const utils = {
         }
 
         if (!manifest.name) {
-          console.log(`[ERROR] Manifest missing 'name' for the command: ${file}`);
+          console.log(
+            `[ERROR] Manifest missing 'name' for the command: ${file}`
+          );
           continue;
         }
 
@@ -74,12 +73,12 @@ const utils = {
         }
       }
     } finally {
-      global.Hoshino.isLoading = false; 
+      global.Hoshino.isLoading = false;
     }
   },
 
   async loadEvents() {
-    global.Hoshino.isLoading = true; 
+    global.Hoshino.isLoading = true;
     try {
       const filePath = resolve(__dirname, "../Hoshino/modules/events");
       console.log(`[DEBUG] Event file path: ${filePath}`);
@@ -127,7 +126,7 @@ const utils = {
         }
       }
     } finally {
-      global.Hoshino.isLoading = false; 
+      global.Hoshino.isLoading = false;
     }
   },
 };

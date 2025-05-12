@@ -22,6 +22,7 @@ app.use("", hoshino);
 app.use("", api);
 
 global.Hoshino = {
+  isLoading: false,
   utils,
   get config() {
     try {

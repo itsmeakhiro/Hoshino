@@ -137,6 +137,7 @@ declare global {
       reacts: Map<string, any>;
       cooldowns: Map<string, Record<string, number>>;
       utils: HoshinoUtils;
+      isLoading?: boolean;
     }
   }
 
