@@ -1,5 +1,6 @@
 import { readdirSync } from "fs-extra";
 import { resolve, join } from "path";
+import { log } from "./views/custom"
 
 /**
  * @type {HoshinoLia.HoshinoUtils}
@@ -12,13 +13,13 @@ const utils = {
     global.Hoshino.isLoading = true;
     try {
       const filePath = resolve(__dirname, "../Hoshino/modules/commands");
-      console.log(`[DEBUG] Command file path: ${filePath}`);
+      log("DEBUG", `Deploying commands from ${filePath}`);
       const loadfiles = readdirSync(filePath).filter(
         (file) => file.endsWith(".js") || file.endsWith(".ts")
       );
 
       if (loadfiles.length === 0) {
-        console.log("[ERROR] No commands available to deploy");
+        log("SYSTEM", "No commands available to deploy, Proceeding to events...");
         return;
       }
 
@@ -34,40 +35,40 @@ const utils = {
         const { manifest, deploy } = command ?? {};
 
         if (!manifest) {
-          console.log(`[ERROR] Missing 'manifest' for the command: ${file}`);
+          log("WARNING", `Missing 'manifest' for the command: ${file}`);
           continue;
         }
 
         if (!manifest.name) {
           console.log(
-            `[ERROR] Manifest missing 'name' for the command: ${file}`
+            "ERROR", `Manifest missing 'name' for the command: ${file}`
           );
           continue;
         }
 
         if (typeof deploy !== "function") {
-          console.log(
-            `[ERROR] Invalid 'deploy' function for the command: ${file}`
+          log(
+            "WARNING", `Invalid 'deploy' function for the command: ${file}`
           );
           continue;
         }
 
         try {
-          console.log(`[COMMAND] Deployed ${manifest.name} successfully`);
+          log("COMMAND", `Deployed ${manifest.name} successfully`);
           global.Hoshino.commands.set(manifest.name, command);
 
           if (Array.isArray(manifest.aliases)) {
             for (const alias of manifest.aliases) {
               global.Hoshino.commands.set(alias, command);
-              console.log(
-                `[COMMAND] Alias "${alias}" registered for command "${manifest.name}"`
+              log(
+                "ALIAS", `Alias "${alias}" registered for command "${manifest.name}"`
               );
             }
           }
         } catch (error) {
           if (error instanceof Error)
-            console.log(
-              `[ERROR] Failed to deploy ${manifest.name}: ${error.stack}`
+            log(
+              "ERROR", `Failed to deploy ${manifest.name}: ${error.stack}`
             );
           else console.log(error);
         }
@@ -81,13 +82,13 @@ const utils = {
     global.Hoshino.isLoading = true;
     try {
       const filePath = resolve(__dirname, "../Hoshino/modules/events");
-      console.log(`[DEBUG] Event file path: ${filePath}`);
+      log("DEBUG", `Deploying events from ${filePath}`);
       const loadfiles = readdirSync(filePath).filter(
         (file) => file.endsWith(".js") || file.endsWith(".ts")
       );
 
       if (loadfiles.length === 0) {
-        console.log("[ERROR] No events available to deploy");
+        log("EVENT", "No events available to deploy, proceeding to login...");
         return;
       }
 
@@ -100,28 +101,28 @@ const utils = {
         const { manifest, onEvent } = event ?? {};
 
         if (!manifest) {
-          console.log(`[ERROR] Missing 'manifest' for the event: ${file}`);
+          log("WARNING", `Missing 'manifest' for the event: ${file}`);
           continue;
         }
 
         if (!manifest.name) {
-          console.log(`[ERROR] Manifest missing 'name' for the event: ${file}`);
+          log("WARNING", `Manifest missing 'name' for the event: ${file}`);
           continue;
         }
 
         if (typeof onEvent !== "function") {
-          console.log(
-            `[ERROR] Missing 'onEvent' function for the event: ${file}`
+          log(
+            "WARNING", `Missing 'onEvent' function for the event: ${file}`
           );
           continue;
         }
 
         try {
-          console.log(`[EVENT] Deployed ${manifest.name} successfully`);
+          log("EVENT", `Deployed ${manifest.name} successfully`);
           global.Hoshino.events.set(manifest.name, event);
         } catch (error) {
           if (error instanceof Error)
-            console.log(`[ERROR] Failed to deploy ${file}: ${error.stack}`);
+            log("ERROR", `Failed to deploy ${file}: ${error.stack}`);
           else console.log(error);
         }
       }
