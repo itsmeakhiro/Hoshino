@@ -2,6 +2,7 @@ import { readFileSync } from "fs-extra";
 import { execSync } from "child_process";
 import { join } from "path";
 import { promisify } from "util";
+import { log } from "../views/custom";
 import listener from "./listener";
 
 try {
@@ -29,11 +30,13 @@ export default async function initializeBot() {
     // let botId = api.getCurrentUserID();
     api.listenMqtt((err, event) => {
       if (err) {
-        return console.error("Listener error:", err);
+        log("ERROR", "Listener error:", err);
+        return;
       }
       listener({ api, event });
     });
   } catch (error) {
-    return console.error("Login error:", error);
+    console.log(`Login error:`, error);
+    return; 
   }
 };

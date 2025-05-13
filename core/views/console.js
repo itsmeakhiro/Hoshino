@@ -10,11 +10,16 @@ module.exports = async function cUI() {
      DEVELOPED BY: FRANCIS LOYD RAVAL`;
   log(top, "");
   console.log();
-  log("SYSTEM", "Loading Commands...");
+  log("SYSTEM", "Hello Developer, Welcome to Hoshino!");
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  log("SYSTEM", "Hoshino is now running...");
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   await util.loadCommands();
-  log("SYSTEM", "Loading Events...");
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   await util.loadEvents();
   log("LOGIN", "Accessing Appstate...");
   await login();
-  log("NOTE:", "This is a beta version of TokitoBot, please report any bugs to the developer.");
+  log("NOTE", "This is a beta version, please report any bugs to the developer.");
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+  log("SYSTEM", "Hoshino is now online and ready to use!")
 }

@@ -39,7 +39,20 @@ export default async function listener({ api, event }) {
   let [commandName, ...args] = event.body.split(" ");
   commandName = commandName.toLowerCase();
 
-  if (!hasPrefix) return;
+  if (!hasPrefix) {
+    if (
+      event.isWeb &&
+      !commandName &&
+      event.type !== "message_reply"
+    ) {
+      const chat = ChatContextor({ api, event, command: null, replies });
+      await chat.reply(
+        fonts.sans(`Please use the prefix "${prefix}" to invoke a command (e.g., ${prefix}help).`)
+      );
+      return;
+    }
+    return;
+  }
 
   if (hasPrefix) {
     commandName = commandName.slice(prefix.length);

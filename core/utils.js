@@ -9,11 +9,15 @@ const utils = {
   cleanUserID(senderID) {
     return senderID.replace(/^web:/, "");
   },
+
   async loadCommands() {
     global.Hoshino.isLoading = true;
+    let commandCount = 0;
     try {
       const filePath = resolve(__dirname, "../Hoshino/modules/commands");
       log("DEBUG", `Deploying commands from ${filePath}`);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      log("SYSTEM", "Loading commands...");
       const loadfiles = readdirSync(filePath).filter(
         (file) => file.endsWith(".js") || file.endsWith(".ts")
       );
@@ -56,12 +60,13 @@ const utils = {
         try {
           log("COMMAND", `Deployed ${manifest.name} successfully`);
           global.Hoshino.commands.set(manifest.name, command);
+          commandCount++; 
 
           if (Array.isArray(manifest.aliases)) {
             for (const alias of manifest.aliases) {
               global.Hoshino.commands.set(alias, command);
               log(
-                "ALIAS", `Alias "${alias}" registered for command "${manifest.name}"`
+                "ALIASES", `Registered aliases "${alias}"`
               );
             }
           }
@@ -73,6 +78,8 @@ const utils = {
           else console.log(error);
         }
       }
+
+      log("SYSTEM", `Successfully loaded ${commandCount} command(s)`);
     } finally {
       global.Hoshino.isLoading = false;
     }
@@ -80,9 +87,13 @@ const utils = {
 
   async loadEvents() {
     global.Hoshino.isLoading = true;
+    let eventCount = 0; 
     try {
       const filePath = resolve(__dirname, "../Hoshino/modules/events");
       log("DEBUG", `Deploying events from ${filePath}`);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      log("SYSTEM", "Loading events..."); 
+
       const loadfiles = readdirSync(filePath).filter(
         (file) => file.endsWith(".js") || file.endsWith(".ts")
       );
@@ -120,12 +131,15 @@ const utils = {
         try {
           log("EVENT", `Deployed ${manifest.name} successfully`);
           global.Hoshino.events.set(manifest.name, event);
+          eventCount++; 
         } catch (error) {
           if (error instanceof Error)
             log("ERROR", `Failed to deploy ${file}: ${error.stack}`);
           else console.log(error);
         }
       }
+
+      log("SYSTEM", `Successfully loaded ${eventCount} event(s)`);
     } finally {
       global.Hoshino.isLoading = false;
     }
