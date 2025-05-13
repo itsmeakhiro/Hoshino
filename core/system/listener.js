@@ -42,7 +42,7 @@ export default async function listener({ api, event }) {
   if (!hasPrefix) {
     if (
       event.isWeb &&
-      !commandName &&
+      event.body.trim() &&
       event.type !== "message_reply"
     ) {
       const chat = ChatContextor({ api, event, command: null, replies });
@@ -97,11 +97,12 @@ export default async function listener({ api, event }) {
         await target.callback({ ...entryObj, ReplyData: { ...target } });
       } catch (error) {
         console.log(
-          "ERROR",
+          "Reply callback error:",
           error instanceof Error ? error.stack : JSON.stringify(error)
         );
       }
     }
+    return; 
   }
 
   const senderID = event.senderID;
@@ -139,29 +140,41 @@ export default async function listener({ api, event }) {
       command.manifest?.config?.privateOnly &&
       event.threadID !== event.senderID
     ) {
-      return await chat.reply(
+      await chat.reply(
         fonts.sans("This command can only be used in private chats.")
       );
+      return;
     }
 
     if (command.manifest.config?.admin && !isAdmin) {
-      return await chat.reply(
+      await chat.reply(
         fonts.sans("This command is restricted to administrators.")
       );
+      return;
     }
 
     if (command.manifest.config?.moderator && !isModerator) {
-      return await chat.reply(
+      await chat.reply(
         fonts.sans("This command is restricted to moderators.")
       );
+      return;
     }
 
     try {
       await command.deploy(entryObj);
     } catch (err) {
       console.error(`Error executing command "${commandName}":`, err);
-      err instanceof Error ? await chat.reply(err?.stack ?? err.message) : null;
+      await chat.reply(
+        fonts.sans("Sorry, an error occurred. Please try again.")
+      );
     }
+    return;
+  }
+
+  if (event.isWeb && hasPrefix && !command) {
+    await chat.reply(
+      fonts.sans(`Unknown command: "${commandName}". Use "${prefix}help" to view available commands.`)
+    );
     return;
   }
 
