@@ -10,7 +10,8 @@ import commandHandler from "./handler/commandHandler";
 import route from "./handler/apiHandler";
 import HoshinoDB from "../../Hoshino/resources/plugins/database/utils";
 const hoshinoDB = new HoshinoDB();
-import {
+import
+{
   HoshinoUser,
   HoshinoEXP,
   HoshinoQuest,
@@ -26,8 +27,10 @@ import { ChatContextor, ChatResult } from "./handler/chat";
  * @param {{ api: any; event: HoshinoLia.Event }} param0
  * @returns
  */
-export default async function listener({ api, event }) {
-  if (!isConnected) {
+export default async function listener({ api, event })
+{
+  if (!isConnected)
+  {
     isConnected = true;
     await hoshinoDB.connect();
   }
@@ -39,12 +42,14 @@ export default async function listener({ api, event }) {
   let [commandName, ...args] = event.body.split(" ");
   commandName = commandName.toLowerCase();
 
-  if (!hasPrefix) {
+  if (!hasPrefix)
+  {
     if (
       event.isWeb &&
       event.body.trim() &&
       event.type !== "message_reply"
-    ) {
+    )
+    {
       const chat = ChatContextor({ api, event, command: null, replies });
       await chat.reply(
         fonts.sans(`Please use the prefix "${prefix}" to invoke a command (e.g., ${prefix}help).`)
@@ -54,7 +59,8 @@ export default async function listener({ api, event }) {
     return;
   }
 
-  if (hasPrefix) {
+  if (hasPrefix)
+  {
     commandName = commandName.slice(prefix.length);
   }
 
@@ -90,12 +96,17 @@ export default async function listener({ api, event }) {
     event.type === "message_reply" &&
     event.messageReply &&
     replies.has(event.messageReply.messageID)
-  ) {
+  )
+  {
     const target = replies.get(event.messageReply.messageID);
-    if (target) {
-      try {
+    if (target)
+    {
+      try
+      {
         await target.callback({ ...entryObj, ReplyData: { ...target } });
-      } catch (error) {
+      }
+      catch (error)
+      {
         console.log(
           "Reply callback error:",
           error instanceof Error ? error.stack : JSON.stringify(error)
@@ -110,7 +121,8 @@ export default async function listener({ api, event }) {
   const admins = global.Hoshino.config.admin || [];
   const moderators = global.Hoshino.config.moderator || [];
 
-  function hasPermission(type) {
+  function hasPermission(type)
+  {
     return (
       developer?.includes(senderID) ||
       (type === "admin"
@@ -122,63 +134,76 @@ export default async function listener({ api, event }) {
   const isAdmin = hasPermission("admin");
   const isModerator = hasPermission("moderator");
 
-  function antiNSFW(name) {
+  function antiNSFW(name)
+  {
     const nsfwKeywords = ["18+", "nsfw", "porn", "hentai", "lewd"];
     return nsfwKeywords.some((word) => name.includes(word));
   }
 
-  if (antiNSFW(commandName)) {
+  if (antiNSFW(commandName))
+  {
     await chat.reply(
       fonts.sans("Warning: NSFW content is not allowed on Hoshino.")
     );
     return;
   }
 
-  if (command) {
-    // Check command permissions before execution
+  if (command)
+  {
     if (
       command.manifest?.config?.privateOnly &&
       event.threadID !== event.senderID
-    ) {
+    )
+    {
       await chat.reply(
         fonts.sans("This command can only be used in private chats.")
       );
       return;
     }
 
-    if (command.manifest.config?.admin && !isAdmin) {
+    if (command.manifest.config?.admin && !isAdmin)
+    {
       await chat.reply(
         fonts.sans("This command is restricted to administrators.")
       );
       return;
     }
 
-    if (command.manifest.config?.moderator && !isModerator) {
+    if (command.manifest.config?.moderator && !isModerator)
+    {
       await chat.reply(
         fonts.sans("This command is restricted to moderators.")
       );
       return;
     }
 
-    try {
+    try
+    {
       await command.deploy(entryObj);
-    } catch (err) {
-      console.error(`Error executing command "${commandName}":`, err);
-      await chat.reply(
-        fonts.sans("Sorry, an error occurred. Please try again.")
-      );
+    }
+    catch (err)
+    {
+      if (err instanceof Error)
+      {
+        console.error(`Error executing command "${commandName}":`, err);
+        await chat.reply(
+          fonts.sans("Sorry, an error occurred. Please try again.")
+        );
+      }
     }
     return;
   }
 
-  if (event.isWeb && hasPrefix && !command) {
+  if (event.isWeb && hasPrefix && !command)
+  {
     await chat.reply(
       fonts.sans(`Unknown command: "${commandName}". Use "${prefix}help" to view available commands.`)
     );
     return;
   }
 
-  switch (event.type) {
+  switch (event.type)
+  {
     case "message":
       commandHandler({ ...entryObj });
       break;
