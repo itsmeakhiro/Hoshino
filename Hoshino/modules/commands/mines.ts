@@ -31,7 +31,7 @@ const command: HoshinoLia.Command = {
   manifest: {
     name: "mines",
     aliases: ["mine"],
-    version: "1.2",
+    version: "1.3",
     developer: "Francis Loyd Raval",
     description:
       "Manage a mining operation to earn balance money by collecting high-value ores like gold and diamonds, priced closer to real-world markets. Buy better pickaxes to mine premium ores; pickaxes have durability and revert to wooden when broken.",
@@ -401,10 +401,20 @@ const command: HoshinoLia.Command = {
               );
             }
             const { balance = 0, pickaxeType = "wooden" } = userData;
-            const pickaxe = (args[0] || "").toLowerCase();
+            const pickaxe = (args[1] || "").trim().toLowerCase();
+            if (!pickaxe) {
+              return await chat.reply(
+                "Please specify a pickaxe to buy! Use: mines buy <stone|iron|diamond|netherite>\n" +
+                  "Available pickaxes:\n" +
+                  "- Stone Pickaxe: $5,000 (100 uses, mines copper, silver, etc.)\n" +
+                  "- Iron Pickaxe: $25,000 (200 uses, mines gold, sapphires, etc.)\n" +
+                  "- Diamond Pickaxe: $75,000 (400 uses, mines emeralds, diamonds, etc.)\n" +
+                  "- Netherite Pickaxe: $150,000 (600 uses, mines all ores)"
+              );
+            }
             if (!["stone", "iron", "diamond", "netherite"].includes(pickaxe)) {
               return await chat.reply(
-                "Invalid pickaxe! Use: mines buy <stone|iron|diamond|netherite>\n" +
+                `Invalid pickaxe: ${pickaxe}! Use: mines buy <stone|iron|diamond|netherite>\n` +
                   "Available pickaxes:\n" +
                   "- Stone Pickaxe: $5,000 (100 uses, mines copper, silver, etc.)\n" +
                   "- Iron Pickaxe: $25,000 (200 uses, mines gold, sapphires, etc.)\n" +
