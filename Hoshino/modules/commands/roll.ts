@@ -1,3 +1,5 @@
+const { cleanUserID } = global.Hoshino.utils;
+
 const command: HoshinoLia.Command = {
   manifest: {
     name: "roll",
@@ -25,7 +27,7 @@ const command: HoshinoLia.Command = {
   },
   async deploy(ctx) {
     const { chat, event, hoshinoDB, args } = ctx;
-    const userID = String(event.senderID);
+    const userID = cleanUserID(event.senderID);
     const subcommand = (args[0] || "").toLowerCase();
 
     if (subcommand === "cooldown") {
