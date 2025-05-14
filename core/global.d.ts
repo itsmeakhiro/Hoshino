@@ -101,7 +101,7 @@ declare global {
     export interface RepliesArg {
       callback: (
         entryObj: EntryObj & { ReplyData: HoshinoLia.RepliesArg }
-      ) => void;
+      ) => void | Promise<void>;
       [key: string]: any;
     }
 

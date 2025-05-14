@@ -39,21 +39,6 @@ export default async function listener({ api, event }) {
   let [commandName, ...args] = event.body.split(" ");
   commandName = commandName.toLowerCase();
 
-  if (!hasPrefix) {
-    if (
-      event.isWeb &&
-      event.body.trim() &&
-      event.type !== "message_reply"
-    ) {
-      const chat = ChatContextor({ api, event, command: null, replies });
-      await chat.reply(
-        fonts.sans(`Please use the prefix "${prefix}" to invoke a command (e.g., ${prefix}help).`)
-      );
-      return;
-    }
-    return;
-  }
-
   if (hasPrefix) {
     commandName = commandName.slice(prefix.length);
   }
@@ -102,7 +87,7 @@ export default async function listener({ api, event }) {
         );
       }
     }
-    return; 
+    return;
   }
 
   const senderID = event.senderID;
@@ -153,16 +138,14 @@ export default async function listener({ api, event }) {
     }
 
     if (command.manifest.config?.moderator && !isModerator) {
-      await chat.reply(
-        fonts.sans("This command is restricted to moderators.")
-      );
+      await chat.reply(fonts.sans("This command is restricted to moderators."));
       return;
     }
 
     try {
       const result = await command.deploy(entryObj);
       if (result && typeof result === "object" && result.status === "success") {
-        return; 
+        return;
       }
     } catch (err) {
       if (err instanceof Error) {
@@ -175,11 +158,24 @@ export default async function listener({ api, event }) {
     return;
   }
 
-  if (event.isWeb && hasPrefix && !command) {
+  if (hasPrefix && !command) {
     await chat.reply(
-      fonts.sans(`Unknown command: "${commandName}". Use "${prefix}help" to view available commands.`)
+      fonts.sans(
+        `Unknown command: "${commandName}". Use "${prefix}help" to view available commands.`
+      )
     );
     return;
+  }
+
+  if (!hasPrefix) {
+    if (event.isWeb && event.body.trim() && event.type !== "message_reply") {
+      await chat.reply(
+        fonts.sans(
+          `Please use the prefix "${prefix}" to invoke a command (e.g., ${prefix}help).`
+        )
+      );
+      return;
+    }
   }
 
   switch (event.type) {
