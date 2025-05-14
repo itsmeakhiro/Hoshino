@@ -6,10 +6,10 @@ const command: HoshinoLia.Command = {
     aliases: ["ph", "pirate"],
     version: "1.0",
     developer: "Francis Loyd Raval",
-    description: "Sail the seas as a pirate: buy ships, scavenge chests, recruit soldiers, raid users, upgrade ships, and train soldiers.",
+    description: "Sail the seas as a pirate: buy ships, scavenge chests, recruit soldiers, raid users, upgrade ships, train soldiers, and equip weapons to ships.",
     category: "RPG",
     usage:
-      "piratehunt buy <ship_type> | piratehunt sail | piratehunt recruit <amount> | piratehunt raid | piratehunt upgrade <ship_index> | piratehunt train",
+      "piratehunt buy <ship_type> | piratehunt sail | piratehunt recruit <amount> | piratehunt raid | piratehunt upgrade <ship_index> | piratehunt train | piratehunt armory <ship_index> <item_key>",
     config: {
       admin: false,
       moderator: false,
@@ -45,9 +45,9 @@ const command: HoshinoLia.Command = {
               .trim()
               .replace(/[^a-z]/g, "");
             const shipPrices = {
-              sloop: { defense: 50, health: 100, cost: 10000 },
-              brig: { defense: 100, health: 200, cost: 50000 },
-              galleon: { defense: 200, health: 400, cost: 100000 },
+              sloop: { defense: 50, health: 100, cost: 10000, atk: 0 },
+              brig: { defense: 100, health: 200, cost: 50000, atk: 0 },
+              galleon: { defense: 200, health: 400, cost: 100000, atk: 0 },
             };
             if (!shipPrices[shipType]) {
               return await chat.reply(
@@ -62,7 +62,7 @@ const command: HoshinoLia.Command = {
               );
             }
             const { balance, pirateHuntData = { ships: [], soldiers: { count: 0, abilityLevel: 1, injuredSoldiers: 0 }, lastSail: 0 } } = userData;
-            const { cost, defense, health } = shipPrices[shipType];
+            const { cost, defense, health, atk } = shipPrices[shipType];
             if (balance < cost) {
               return await chat.reply(
                 `You need ${cost} gold to buy a ${shipType}. Your balance: ${balance}.`
@@ -73,11 +73,10 @@ const command: HoshinoLia.Command = {
               balance: balance - cost,
               pirateHuntData: {
                 ...pirateHuntData,
-                ships: [...pirateHuntData.ships, { type: shipType, defense, health, upgradeLevel: 1 }],
+                ships: [...pirateHuntData.ships, { type: shipType, defense, health, atk, upgradeLevel: 1 }],
               },
             };
             await hoshinoDB.set(cleanID, updatedData);
-            console.log(`User ${cleanID} bought ${shipType} for ${cost} gold`);
             await chat.reply(
               `You bought a ${shipType} for ${cost} gold! Ready to set sail.`
             );
@@ -213,6 +212,15 @@ const command: HoshinoLia.Command = {
                   sellPrice: 900,
                   flavorText: "A pendant that glows like a captured star.",
                 },
+                {
+                  name: "Cannon",
+                  key: "cannon",
+                  type: "weapon",
+                  atk: 50,
+                  def: 0,
+                  flavorText: "A powerful cannon to arm your ship.",
+                  sellPrice: 2000,
+                },
               ];
               const chests = [
                 {
@@ -270,7 +278,6 @@ const command: HoshinoLia.Command = {
                 lastSail: Date.now(),
               },
             });
-            console.log(`User ${cleanID} sailed: ${message}`);
             await chat.reply(message);
           },
         },
@@ -316,7 +323,6 @@ const command: HoshinoLia.Command = {
               },
             };
             await hoshinoDB.set(cleanID, updatedData);
-            console.log(`User ${cleanID} recruited ${amount} soldiers for ${cost} gold`);
             await chat.reply(
               `You recruited ${amount} soldiers for ${cost} gold! Ready for a raid.`
             );
@@ -363,9 +369,10 @@ const command: HoshinoLia.Command = {
             const target = validTargets[Math.floor(Math.random() * validTargets.length)];
             const targetData = target.data;
             const targetShips = targetData.pirateHuntData.ships;
-            const targetDefense = targetShips.reduce((sum, ship) => sum + ship.defense, 0);
-            const targetHealth = targetShips.reduce((sum, ship) => sum + ship.health, 0);
-            const attackerStrength = pirateHuntData.soldiers.count * pirateHuntData.soldiers.abilityLevel * 10;
+            const targetDefense = targetShips.reduce((sum, ship) => sum + (ship.defense || 0), 0);
+            const targetHealth = targetShips.reduce((sum, ship) => sum + (ship.health || 0), 0);
+            const attackerShipAtk = pirateHuntData.ships.reduce((sum, ship) => sum + (ship.atk || 0), 0);
+            const attackerStrength = pirateHuntData.soldiers.count * pirateHuntData.soldiers.abilityLevel * 10 + attackerShipAtk;
             const successChance = Math.min(0.9, attackerStrength / (attackerStrength + (targetDefense + targetHealth) * 0.75));
             const isSuccess = Math.random() < successChance;
             let message = "";
@@ -406,14 +413,13 @@ const command: HoshinoLia.Command = {
               ...targetData,
               balance: targetBalance,
             });
-            console.log(`Raid by ${cleanID} on ${target.uid}: ${isSuccess ? "Success" : "Failure"}, soldiers lost: ${soldiersLost}`);
             await chat.reply(message);
           },
         },
         {
           subcommand: "upgrade",
           aliases: ["enhance"],
-          description: "Upgrade a ship to increase its defense and health.",
+          description: "Upgrade a ship to increase its defense, health, and attack.",
           usage: "piratehunt upgrade <ship_index>",
           async deploy({ chat, args, event, hoshinoDB }) {
             if (args.length < 2) {
@@ -443,6 +449,7 @@ const command: HoshinoLia.Command = {
             const cost = baseCost * Math.pow(2, ship.upgradeLevel - 1);
             const defenseIncrease = ship.defense * 0.2;
             const healthIncrease = ship.health * 0.2;
+            const atkIncrease = (ship.atk || 0) * 0.2;
             if (balance < cost) {
               return await chat.reply(
                 `You need ${cost} gold to upgrade your ${ship.type}. Your balance: ${balance}.`
@@ -453,6 +460,7 @@ const command: HoshinoLia.Command = {
               ...ship,
               defense: ship.defense + defenseIncrease,
               health: ship.health + healthIncrease,
+              atk: (ship.atk || 0) + atkIncrease,
               upgradeLevel: ship.upgradeLevel + 1,
             };
             const updatedData = {
@@ -464,9 +472,8 @@ const command: HoshinoLia.Command = {
               },
             };
             await hoshinoDB.set(cleanID, updatedData);
-            console.log(`User ${cleanID} upgraded ship ${ship.type} for ${cost} gold`);
             await chat.reply(
-              `Upgraded your ${ship.type} for ${cost} gold! Defense increased to ${updatedShips[shipIndex].defense.toFixed(0)}, Health increased to ${updatedShips[shipIndex].health.toFixed(0)}.`
+              `Upgraded your ${ship.type} for ${cost} gold! Defense increased to ${updatedShips[shipIndex].defense.toFixed(0)}, Health increased to ${updatedShips[shipIndex].health.toFixed(0)}, Attack increased to ${updatedShips[shipIndex].atk.toFixed(0)}.`
             );
           },
         },
@@ -517,10 +524,72 @@ const command: HoshinoLia.Command = {
                 soldiers: updatedSoldiers,
               },
             });
-            console.log(`User ${cleanID} trained soldiers to ability level ${updatedSoldiers.abilityLevel} for ${cost} gold`);
             await chat.reply(
               `Trained your soldiers for ${cost} gold! Ability level increased to ${updatedSoldiers.abilityLevel}.`
             );
+          },
+        },
+        {
+          subcommand: "armory",
+          aliases: ["equip"],
+          description: "Equip a weapon to a ship to increase its attack power.",
+          usage: "piratehunt armory <ship_index> <item_key>",
+          async deploy({ chat, args, event, hoshinoDB, Inventory }) {
+            if (args.length < 3) {
+              return await chat.reply(
+                "Please provide the ship index and item key. Usage: piratehunt armory <ship_index> <item_key>"
+              );
+            }
+            const shipIndex = parseInt(args[1]) - 1;
+            const itemKey = args[2].toLowerCase().trim();
+            if (isNaN(shipIndex) || shipIndex < 0) {
+              return await chat.reply("Invalid ship index. Must be a positive number.");
+            }
+            if (!itemKey) {
+              return await chat.reply("Invalid item key. Please provide a valid item key.");
+            }
+            const cleanID = cleanUserID(event.senderID);
+            let userData = (await hoshinoDB.get(cleanID)) || {};
+            if (!userData.username) {
+              return await chat.reply(
+                "You need to register first! Use: profile register <username>"
+              );
+            }
+            const { pirateHuntData = { ships: [], soldiers: { count: 0, abilityLevel: 1, injuredSoldiers: 0 }, lastSail: 0 }, inventoryData = [] } = userData;
+            if (shipIndex >= pirateHuntData.ships.length) {
+              return await chat.reply(
+                `You only have ${pirateHuntData.ships.length} ship(s). Choose a valid index.`
+              );
+            }
+            const inventory = new Inventory(inventoryData);
+            if (!inventory.has(itemKey)) {
+              return await chat.reply(
+                `You don't have an item with key "${itemKey}" in your inventory.`
+              );
+            }
+            const ship = { ...pirateHuntData.ships[shipIndex] };
+            ship.getAtk = () => ship.atk || 0;
+            ship.setAtk = (atk) => (ship.atk = atk);
+            ship.getDef = () => ship.defense || 0;
+            ship.setDef = (def) => (ship.defense = def);
+            try {
+              inventory.equipItem(itemKey, ship);
+              const updatedShips = [...pirateHuntData.ships];
+              updatedShips[shipIndex] = ship;
+              await hoshinoDB.set(cleanID, {
+                ...userData,
+                inventoryData: inventory.raw(),
+                pirateHuntData: {
+                  ...pirateHuntData,
+                  ships: updatedShips,
+                },
+              });
+              await chat.reply(
+                `Equipped ${inventory.getOne(itemKey)?.name || itemKey} to your ${ship.type}! Ship attack increased to ${ship.atk.toFixed(0)}.`
+              );
+            } catch (error) {
+              await chat.reply(`Failed to equip item: ${error.message}`);
+            }
           },
         },
       ],
