@@ -80,66 +80,67 @@ const command: HoshinoLia.Command = {
           description: "Use a food, potion, or chest item.",
           usage: "inventory use <item_key>",
           async deploy({ chat, args, event, hoshinoDB, HoshinoEXP, Inventory }) {
-            if (args.length < 1) {
+           const itemKeyArgs = args[0]?.toLowerCase() === "use" ? args.slice(1) : args;
+            if (itemKeyArgs.length < 1) {
+             return await chat.reply(
+              "Please provide an item key. Usage: inventory use <item_key>"
+             );
+           }
+            const itemKey = itemKeyArgs.join(" ").trim().toLowerCase();
+             if (!itemKey) {
               return await chat.reply(
-                "Please provide an item key. Usage: inventory use <item_key>"
-              );
-            }
-            const itemKey = args.join(" ").trim();
-            if (!itemKey) {
-              return await chat.reply(
-                "Invalid item key. Usage: inventory use <item_key>"
+               "Invalid item key. Usage: inventory use <item_key>"
               );
             }
 
-            const cleanID = cleanUserID(event.senderID);
-            const userData = await hoshinoDB.get(cleanID);
+           const cleanID = cleanUserID(event.senderID);
+           const userData = await hoshinoDB.get(cleanID);
             if (!userData || !userData.username) {
-              return await chat.reply(
-                "You need to register first! Use: profile register <username>"
+             return await chat.reply(
+              "You need to register first! Use: profile register <username>"
               );
-            }
+            } 
 
-            const { expData = { exp: 0, mana: 100, health: 100 }, inventoryData = [] } = userData;
-            const exp = new HoshinoEXP(expData);
-            const inventory = new Inventory(inventoryData);
+           const { expData = { exp: 0, mana: 100, health: 100 }, inventoryData = [] } = userData;
+           const exp = new HoshinoEXP(expData);
+           const inventory = new Inventory(inventoryData);
 
             if (!inventory.has(itemKey)) {
-              return await chat.reply(
-                `You don't have an item with key "${itemKey}" in your inventory!`
-              );
-            }
+             return await chat.reply(
+             `You don't have an item with key "${itemKey}" in your inventory!`
+            );
+          }
 
-            try {
-              const item = inventory.getOne(itemKey) || {
-                name: "Unknown Item",
-                type: "generic",
-                heal: 0,
-                mana: 0,
-              };
-              const result = inventory.useItem(itemKey, exp);
+          try {
+           const item = inventory.getOne(itemKey) || {
+            name: "Unknown Item",
+            type: "generic",
+            heal: 0,
+            mana: 0,
+           };
+            const result = inventory.useItem(itemKey, exp);
 
-              let message = "";
-              if (item.type === "chest" && result !== true) {
-                const contentNames = result.contents.map((c) => c.name).join(", ");
-                message = `You opened "${item.name}" and found: ${contentNames}!`;
-              } else {
-                const healthRestored = item.heal > 0 ? `${item.heal} health` : "";
-                const manaRestored = item.mana > 0 ? `${item.mana} mana` : "";
-                const restored = [healthRestored, manaRestored].filter(Boolean).join(" and ");
-                message = restored
-                  ? `You used "${item.name}" and restored ${restored}!`
-                  : `You used "${item.name}", but it had no effect.`;
-              }
+            let message = "";
+             if (item.type === "chest" && result !== true) {
+              const contentNames = result.contents.map((c) => c.name).join(", ");
+              message = `You opened "${item.name}" and found: ${contentNames}!`;
+           } else {
+            const healthRestored = item.heal > 0 ? `${item.heal} health` : "";
+            const manaRestored = item.mana > 0 ? `${item.mana} mana` : "";
+            const restored = [healthRestored, manaRestored].filter(Boolean).join(" and ");
+            message = restored
+              ? `You used "${item.name}" and restored ${restored}!`
+              : `You used "${item.name}", but it had no effect.`;
+          } 
 
-              await hoshinoDB.set(cleanID, {
-                ...userData,
-                expData: exp.raw(),
-                inventoryData: inventory.raw(),
-              });
+          await hoshinoDB.set(cleanID, {
+            ...userData,
+              expData: exp.raw(),
+              inventoryData: inventory.raw(),
+            });
 
-              await chat.reply(
-                `${message}\nCurrent Health: ${exp.getHealth()}/${exp.getMaxHealth()}\nCurrent Mana: ${exp.getMana()}/${exp.getMaxMana()}`
+            await chat.reply(
+             `${message}\nCurrent Health: ${exp.getHealth()}/${exp.getMaxHealth()}\nCurrent Mana: ${exp.getMana()}/${exp.getMaxMana()}`
               );
             } catch (error: unknown) {
               const errorMessage = error instanceof Error ? error.message : "Unknown error";
