@@ -572,24 +572,20 @@ const command: HoshinoLia.Command = {
             ship.setAtk = (atk) => (ship.atk = atk);
             ship.getDef = () => ship.defense || 0;
             ship.setDef = (def) => (ship.defense = def);
-            try {
-              inventory.equipItem(itemKey, ship);
-              const updatedShips = [...pirateHuntData.ships];
-              updatedShips[shipIndex] = ship;
-              await hoshinoDB.set(cleanID, {
-                ...userData,
-                inventoryData: inventory.raw(),
-                pirateHuntData: {
-                  ...pirateHuntData,
-                  ships: updatedShips,
-                },
-              });
-              await chat.reply(
-                `Equipped ${inventory.getOne(itemKey)?.name || itemKey} to your ${ship.type}! Ship attack increased to ${ship.atk.toFixed(0)}.`
-              );
-            } catch (error) {
-              await chat.reply(`Failed to equip item: ${error.message}`);
-            }
+            inventory.equipItem(itemKey, ship);
+            const updatedShips = [...pirateHuntData.ships];
+            updatedShips[shipIndex] = ship;
+            await hoshinoDB.set(cleanID, {
+              ...userData,
+              inventoryData: inventory.raw(),
+              pirateHuntData: {
+                ...pirateHuntData,
+                ships: updatedShips,
+              },
+            });
+            await chat.reply(
+              `Equipped ${inventory.getOne(itemKey)?.name || itemKey} to your ${ship.type}! Ship attack increased to ${ship.atk.toFixed(0)}.`
+            );
           },
         },
       ],
