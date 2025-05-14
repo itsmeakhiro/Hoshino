@@ -1,3 +1,5 @@
+const { cleanUserID } = global.Hoshino.utils;
+
 // DO NOT REMOVE HoshinoLia.Command, do not add types on async deploy ctx
 const command: HoshinoLia.Command = {
   manifest: {
@@ -32,7 +34,8 @@ const command: HoshinoLia.Command = {
         const winnings = Math.floor(Math.random() * (1000 - 500 + 1)) + 500;
         let { balance = 0 } = await hoshinoDB.get(event.senderID);
         balance += winnings;
-        await hoshinoDB.set(event.senderID, { balance });
+        const cleanID = cleanUserID(event.senderID);
+        await hoshinoDB.set(cleanID, { balance });
         await chat.send(
           `Enebe... nacutetan ako sa UwU mo, eto $${winnings} para sayo, mwaps. So pera mo ngayon is nasa $${balance}.`
         );
