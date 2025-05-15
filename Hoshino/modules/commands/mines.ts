@@ -35,24 +35,23 @@ const ENCHANTMENTS = {
   efficiency: {
     cost: (level) => 5000 * level,
     maxLevel: 5,
-    miningChanceIncrease: (level) => 0.1 * level, 
-    durabilityDrainMultiplier: (level) => 1 + 0.5 * level, 
+    miningChanceIncrease: (level) => 0.1 * level,
+    durabilityDrainMultiplier: (level) => 1 + 0.5 * level,
   },
   unbreaking: {
     cost: (level) => 7500 * level,
     maxLevel: 5,
-    durabilityDrainReduction: (level) => 1 - 0.2 * level, 
-    earningsMultiplierReduction: (level) => 1 - 0.1 * level, 
+    durabilityDrainReduction: (level) => 1 - 0.2 * level,
+    earningsMultiplierReduction: (level) => 1 - 0.1 * level,
   },
   fortune: {
     cost: (level) => 10000 * level,
     maxLevel: 5,
     tierChanceIncrease: (level) => 0.1 * level,
-    costMultiplierIncrease: (level) => 1 + 0.2 * level, 
+    costMultiplierIncrease: (level) => 1 + 0.2 * level,
   },
 };
 
-// DO NOT REMOVE HoshinoLia.Command, do not add types on async deploy ctx
 const command: HoshinoLia.Command = {
   manifest: {
     name: "mines",
@@ -201,17 +200,17 @@ const command: HoshinoLia.Command = {
             const unbreakingLevel = pickaxeEnchantments.unbreaking || 0;
             const fortuneLevel = pickaxeEnchantments.fortune || 0;
             const miningChance =
-              0.3 + (efficiencyLevel * 0.1); 
+              0.3 + (efficiencyLevel * 0.1);
             const durabilityDrain =
-              (1 + efficiencyLevel * 0.5) * (1 - unbreakingLevel * 0.2); 
+              (1 + efficiencyLevel * 0.5) * (1 - unbreakingLevel * 0.2);
             const earningsMultiplier =
-              (1 + mineLevel * 0.5) * (1 - unbreakingLevel * 0.1); 
+              (1 + mineLevel * 0.5) * (1 - unbreakingLevel * 0.1);
             const tierWeights = {
               low: 1 - fortuneLevel * 0.1,
               mid: 1,
               high: 1 + fortuneLevel * 0.1,
               rare: 1 + fortuneLevel * 0.2,
-              legendary: 1 + fortuneLevel * 0.3, 
+              legendary: 1 + fortuneLevel * 0.3,
             };
             const totalWeight = availableItems.reduce(
               (sum, item) => sum + (tierWeights[item.tier] || 1),
@@ -247,7 +246,7 @@ const command: HoshinoLia.Command = {
               }
             }
             let totalValue = 0;
-            const itemLines: string[] = [];
+            const itemLines = [];
             MINE_ITEMS.forEach((item) => {
               const key = item.name.toLowerCase().replace(/\s+/g, "");
               const count = itemsCollected[key] || 0;
@@ -286,7 +285,7 @@ const command: HoshinoLia.Command = {
                 `Fortune ${fortuneLevel}: +${fortuneLevel * 20}% rare-tier chance, +${fortuneLevel * 30}% legendary-tier chance`
               );
             }
-            const infoLines: string[] = [
+            const infoLines = [
               `Username: ${username}`,
               `Game ID: ${gameid}`,
               `Balance: $${balance.toLocaleString("en-US")}`,
@@ -366,17 +365,17 @@ const command: HoshinoLia.Command = {
             const unbreakingLevel = pickaxeEnchantments.unbreaking || 0;
             const fortuneLevel = pickaxeEnchantments.fortune || 0;
             const miningChance =
-              0.3 + (efficiencyLevel * 0.1); 
+              0.3 + (efficiencyLevel * 0.1);
             const durabilityDrain =
-              (1 + efficiencyLevel * 0.5) * (1 - unbreakingLevel * 0.2); 
+              (1 + efficiencyLevel * 0.5) * (1 - unbreakingLevel * 0.2);
             const earningsMultiplier =
-              (1 + mineLevel * 0.5) * (1 - unbreakingLevel * 0.1); 
+              (1 + mineLevel * 0.5) * (1 - unbreakingLevel * 0.1);
             const tierWeights = {
               low: 1 - fortuneLevel * 0.1,
               mid: 1,
               high: 1 + fortuneLevel * 0.1,
               rare: 1 + fortuneLevel * 0.2,
-              legendary: 1 + fortuneLevel * 0.3, 
+              legendary: 1 + fortuneLevel * 0.3,
             };
             const totalWeight = availableItems.reduce(
               (sum, item) => sum + (tierWeights[item.tier] || 1),
@@ -413,7 +412,7 @@ const command: HoshinoLia.Command = {
               }
             }
             let totalValue = 0;
-            const itemLines: string[] = [];
+            const itemLines = [];
             MINE_ITEMS.forEach((item) => {
               const key = item.name.toLowerCase().replace(/\s+/g, "");
               const count = itemsCollected[key] || 0;
@@ -426,7 +425,7 @@ const command: HoshinoLia.Command = {
               }
             });
             const boostedValue = totalValue * earningsMultiplier;
-            const infoLines: string[] = [];
+            const infoLines = [];
             if (totalValue > 0) {
               infoLines.push(
                 `Collected $${boostedValue.toLocaleString(
@@ -576,7 +575,7 @@ const command: HoshinoLia.Command = {
               balance: balance - pickaxeData.cost,
               pickaxeType: pickaxe,
               pickaxeDurability: pickaxeData.maxDurability,
-              pickaxeEnchantments: { efficiency: 0, unbreaking: 0, fortune: 0 }, 
+              pickaxeEnchantments: { efficiency: 0, unbreaking: 0, fortune: 0 },
             });
             const accessibleItems = MINE_ITEMS.filter((item) =>
               pickaxeData.accessibleTiers.includes(item.tier)
@@ -594,7 +593,7 @@ const command: HoshinoLia.Command = {
           description: "Enchant your current pickaxe to enhance mining capabilities (e.g., Efficiency speeds up mining).",
           usage: "mines enchant <efficiency|unbreaking|fortune>",
           async deploy({ chat, event, hoshinoDB, args }) {
-            console.log("Enchant args:", args); 
+            console.log("Enchant args:", args);
             const userID = cleanUserID(event.senderID);
             const userData = await hoshinoDB.get(userID);
             if (!userData || !userData.username) {
@@ -607,6 +606,11 @@ const command: HoshinoLia.Command = {
               pickaxeType = "wooden",
               pickaxeEnchantments = { efficiency: 0, unbreaking: 0, fortune: 0 },
             } = userData;
+            const enchantments = pickaxeEnchantments as {
+              efficiency: number;
+              unbreaking: number;
+              fortune: number;
+            };
             const enchantment = (args[1] || "").trim().toLowerCase();
             if (!enchantment) {
               return await chat.reply(
@@ -631,16 +635,20 @@ const command: HoshinoLia.Command = {
                 "You cannot enchant a wooden pickaxe! Buy a better pickaxe first (e.g., mines buy stone)."
               );
             }
-            const currentLevel = pickaxeEnchantments[enchantment] || 0;
+            const currentLevel = enchantments[enchantment as keyof typeof enchantments] || 0;
             const newLevel = currentLevel + 1;
-            if (newLevel > ENCHANTMENTS[enchantment].maxLevel) {
+            if (newLevel > ENCHANTMENTS[enchantment as keyof typeof ENCHANTMENTS].maxLevel) {
               return await chat.reply(
-                `${enchantment.charAt(0).toUpperCase() + enchantment.slice(1)} is already at max level ${ENCHANTMENTS[enchantment].maxLevel}!`
+                `${enchantment.charAt(0).toUpperCase() + enchantment.slice(1)} is already at max level ${
+                  ENCHANTMENTS[enchantment as keyof typeof ENCHANTMENTS].maxLevel
+                }!`
               );
             }
-            const fortuneLevel = pickaxeEnchantments.fortune || 0;
-            const costMultiplier = 1 + fortuneLevel * 0.2; 
-            const enchantCost = Math.round(ENCHANTMENTS[enchantment].cost(newLevel) * costMultiplier);
+            const fortuneLevel = enchantments.fortune || 0;
+            const costMultiplier = 1 + fortuneLevel * 0.2;
+            const enchantCost = Math.round(
+              ENCHANTMENTS[enchantment as keyof typeof ENCHANTMENTS].cost(newLevel) * costMultiplier
+            );
             if (balance < enchantCost) {
               return await chat.reply(
                 `You need $${enchantCost.toLocaleString(
@@ -650,7 +658,7 @@ const command: HoshinoLia.Command = {
                 )}.`
               );
             }
-            const newEnchantments = { ...pickaxeEnchantments, [enchantment]: newLevel };
+            const newEnchantments = { ...enchantments, [enchantment]: newLevel };
             await hoshinoDB.set(userID, {
               ...userData,
               balance: balance - enchantCost,
