@@ -14,6 +14,8 @@ const VEHICLE_TIERS = {
   tesla_cybercab: { cost: 0, minLevel: 40, multiplier: 3, emoji: "🤖", accessibleFares: ["low", "mid", "high"] },
 };
 
+const vehicleOrder = ["old_normal_taxi", "refurbished_taxi", "modern_taxi", "luxury_taxi", "tesla_cybercab"];
+
 // DO NOT REMOVE HoshinoLia.Command, do not add types on async deploy ctx
 const command: HoshinoLia.Command = {
   manifest: {
@@ -117,8 +119,6 @@ const command: HoshinoLia.Command = {
                 "You are not operating a taxi. Start with: taxi start"
               );
             }
-            // Check for vehicle upgrade
-            const vehicleOrder = ["old_normal_taxi", "refurbished_taxi", "modern_taxi", "luxury_taxi", "tesla_cybercab"];
             let newVehicleType = vehicleType;
             let upgradeMessage = "";
             for (const tier of vehicleOrder) {
@@ -149,12 +149,12 @@ const command: HoshinoLia.Command = {
               return count > 0
                 ? `${f.emoji} ${f.name}: ${count} ($${f.value.toLocaleString("en-US")} each)`
                 : null;
-            }).filter(Boolean);
+            }).filter((line): line is string => line !== null);
             const accessibleFaresText = FARE_TYPES.filter((f) =>
               accessibleFares.includes(f.tier)
             ).map((f) => `${f.emoji} ${f.name} ($${f.value.toLocaleString("en-US")})`);
             const minutesElapsed = Math.floor((Date.now() - taxiStartTime) / 60000);
-            const infoLines = [
+            const infoLines: string[] = [
               `Username: ${username}`,
               `Game ID: ${gameid}`,
               `Balance: $${balance.toLocaleString("en-US")}`,
@@ -204,7 +204,6 @@ const command: HoshinoLia.Command = {
               );
             }
             // Check for vehicle upgrade
-            const vehicleOrder = ["old_normal_taxi", "refurbished_taxi", "modern_taxi", "luxury_taxi", "tesla_cybercab"];
             let newVehicleType = vehicleType;
             let upgradeMessage = "";
             for (const tier of vehicleOrder) {
@@ -213,7 +212,6 @@ const command: HoshinoLia.Command = {
                 upgradeMessage = `Your taxi upgraded to a ${newVehicleType.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase())} ${VEHICLE_TIERS[newVehicleType].emoji}! Now earning x${VEHICLE_TIERS[newVehicleType].multiplier} fares.`;
               }
             }
-            // Complete a new ride
             const accessibleFares = VEHICLE_TIERS[newVehicleType].accessibleFares;
             const fare = FARE_TYPES.find((f) => accessibleFares.includes(f.tier)) || FARE_TYPES[0];
             const levelMultiplier = 1 + taxiLevel * 0.05;
@@ -229,8 +227,8 @@ const command: HoshinoLia.Command = {
               return count > 0
                 ? `${f.emoji} ${f.name}: ${count} ($${f.value.toLocaleString("en-US")} each)`
                 : null;
-            }).filter(Boolean);
-            const infoLines = [];
+            }).filter((line): line is string => line !== null);
+            const infoLines: string[] = [];
             if (totalEarnings > 0) {
               infoLines.push(
                 `Collected $${totalEarnings.toLocaleString("en-US")} from taxi rides!`
@@ -297,7 +295,6 @@ const command: HoshinoLia.Command = {
       ],
       "◆"
     );
-    const vehicleOrder = ["old_normal_taxi", "refurbished_taxi", "modern_taxi", "luxury_taxi", "tesla_cybercab"];
     await home.runInContext(ctx);
   },
 };
