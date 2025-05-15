@@ -16,6 +16,10 @@ const MINE_ITEMS = [
   { name: "Diamond Dust", emoji: "💎", value: 5000, tier: "rare" },
   { name: "Amethyst Cluster", emoji: "💜", value: 2000, tier: "rare" },
   { name: "Platinum Grain", emoji: "⚪", value: 4500, tier: "rare" },
+  { name: "Mythril Shard", emoji: "✨", value: 1000000, tier: "legendary" },
+  { name: "Dragonstone", emoji: "🐉", value: 2000000, tier: "legendary" },
+  { name: "Starlight Gem", emoji: "🌟", value: 3500000, tier: "legendary" },
+  { name: "Void Crystal", emoji: "🌀", value: 5000000, tier: "legendary" },
 ];
 
 const PICKAXE_TIERS = {
@@ -24,6 +28,8 @@ const PICKAXE_TIERS = {
   iron: { cost: 25000, maxDurability: 200, accessibleTiers: ["low", "mid", "high"] },
   diamond: { cost: 75000, maxDurability: 400, accessibleTiers: ["low", "mid", "high", "rare"] },
   netherite: { cost: 150000, maxDurability: 600, accessibleTiers: ["low", "mid", "high", "rare"] },
+  // Added Asgardian Pickaxe
+  asgardian: { cost: 100000000000, maxDurability: 1000, accessibleTiers: ["low", "mid", "high", "rare", "legendary"] },
 };
 
 // DO NOT REMOVE HoshinoLia.Command, do not add types on async deploy ctx
@@ -92,6 +98,11 @@ const command: HoshinoLia.Command = {
                 diamondDust: 0,
                 amethystCluster: 0,
                 platinumGrain: 0,
+                // Added legendary ore keys
+                mythrilShard: 0,
+                dragonstone: 0,
+                starlightGem: 0,
+                voidCrystal: 0,
               },
               mineLevel: userData.mineLevel || 0,
               mineUpgradeCost: userData.mineUpgradeCost || 50,
@@ -135,6 +146,11 @@ const command: HoshinoLia.Command = {
                 diamondDust: 0,
                 amethystCluster: 0,
                 platinumGrain: 0,
+                // Added legendary ore keys
+                mythrilShard: 0,
+                dragonstone: 0,
+                starlightGem: 0,
+                voidCrystal: 0,
               },
               mineLevel = 0,
               pickaxeType = "wooden",
@@ -249,6 +265,10 @@ const command: HoshinoLia.Command = {
                 diamondDust: 0,
                 amethystCluster: 0,
                 platinumGrain: 0,
+                mythrilShard: 0,
+                dragonstone: 0,
+                starlightGem: 0,
+                voidCrystal: 0,
               },
               mineLevel = 0,
               pickaxeType = "wooden",
@@ -337,6 +357,10 @@ const command: HoshinoLia.Command = {
                 diamondDust: 0,
                 amethystCluster: 0,
                 platinumGrain: 0,
+                mythrilShard: 0,
+                dragonstone: 0,
+                starlightGem: 0,
+                voidCrystal: 0,
               },
               pickaxeType: currentPickaxeType,
               pickaxeDurability: currentDurability,
@@ -391,7 +415,7 @@ const command: HoshinoLia.Command = {
           subcommand: "buy",
           aliases: ["purchase", "b"],
           description: "Buy a better pickaxe to mine higher-value ores.",
-          usage: "mines buy <stone|iron|diamond|netherite>",
+          usage: "mines buy <stone|iron|diamond|netherite|asgardian>",
           async deploy({ chat, event, hoshinoDB, args }) {
             const userID = cleanUserID(event.senderID);
             const userData = await hoshinoDB.get(userID);
@@ -404,22 +428,24 @@ const command: HoshinoLia.Command = {
             const pickaxe = (args[1] || "").trim().toLowerCase();
             if (!pickaxe) {
               return await chat.reply(
-                "Please specify a pickaxe to buy! Use: mines buy <stone|iron|diamond|netherite>\n" +
+                "Please specify a pickaxe to buy! Use: mines buy <stone|iron|diamond|netherite|asgardian>\n" +
                   "Available pickaxes:\n" +
                   "- Stone Pickaxe: $5,000 (100 uses, mines copper, silver, etc.)\n" +
                   "- Iron Pickaxe: $25,000 (200 uses, mines gold, sapphires, etc.)\n" +
                   "- Diamond Pickaxe: $75,000 (400 uses, mines emeralds, diamonds, etc.)\n" +
-                  "- Netherite Pickaxe: $150,000 (600 uses, mines all ores)"
+                  "- Netherite Pickaxe: $150,000 (600 uses, mines all ores)\n" +
+                  "- Asgardian Pickaxe: $100,000,000,000 (1000 uses, mines legendary ores like mythril, void crystal)"
               );
             }
-            if (!["stone", "iron", "diamond", "netherite"].includes(pickaxe)) {
+            if (!["stone", "iron", "diamond", "netherite", "asgardian"].includes(pickaxe)) {
               return await chat.reply(
-                `Invalid pickaxe: ${pickaxe}! Use: mines buy <stone|iron|diamond|netherite>\n` +
+                `Invalid pickaxe: ${pickaxe}! Use: mines buy <stone|iron|diamond|netherite|asgardian>\n` +
                   "Available pickaxes:\n" +
                   "- Stone Pickaxe: $5,000 (100 uses, mines copper, silver, etc.)\n" +
                   "- Iron Pickaxe: $25,000 (200 uses, mines gold, sapphires, etc.)\n" +
                   "- Diamond Pickaxe: $75,000 (400 uses, mines emeralds, diamonds, etc.)\n" +
-                  "- Netherite Pickaxe: $150,000 (600 uses, mines all ores)"
+                  "- Netherite Pickaxe: $150,000 (600 uses, mines all ores)\n" +
+                  "- Asgardian Pickaxe: $100,000,000,000 (1000 uses, mines legendary ores like mythril, void crystal)"
               );
             }
             const pickaxeData = PICKAXE_TIERS[pickaxe];
