@@ -11,11 +11,12 @@ import styler from './styler';
 class HoshinoHM {
   /**
    * @param {Command[]} commands - An array of command objects.
+   * @param {string} commandName - The name of the command (e.g., 'Bot').
    * @param {string} [icon="✦"] - The icon to use for the commands.
    * @param {Object} [style] - Styling options for the command list.
    * @param {Object} [font] - Font styles for title, content, and footer.
    */
-  constructor(commands, icon = "✦", style = {}, font = {}) {
+  constructor(commands, commandName, icon = "✦", style = {}, font = {}) {
     if (!Array.isArray(commands)) {
       throw new Error("Commands must be an array.");
     }
@@ -28,10 +29,19 @@ class HoshinoHM {
         }
       }
     }
+    this.commandName = commandName;
     this.icon = icon;
     this.style = style;
     this.font = font;
-    console.log('HoshinoHM initialized with:', { style: this.style, font: this.font });
+    console.log('HoshinoHM initialized with:', { commandName: this.commandName, style: this.style, font: this.font });
+  }
+
+  /**
+  —this.commandName = commandName;
+    this.icon = icon;
+    this.style = style;
+    this.font = font;
+    console.log('HoshinoHM initialized with:', { commandName: this.commandName, style: this.style, font: this.font });
   }
 
   /**
@@ -41,23 +51,30 @@ class HoshinoHM {
     const { args, chat, hoshinoDB, fonts, event } = ctx;
     const subcommand = args[0];
 
-    if (!subcommand || !this.commands.has(subcommand)) {
-      const list = [...new Set(this.commands.values())]
-        .map((cmd) => {
-          const aliases = cmd.aliases && cmd.aliases.length ? ` (aliases: ${cmd.aliases.join(", ")})` : "";
-          const description = `${this.icon} ${cmd.subcommand}${aliases} → ${cmd.description}`;
-          return cmd.usage ? `${description}\n   **Usage:** ${cmd.usage}` : description;
-        })
-        .join("\n\n");
+    const stylerFn = ctx.styler || styler;
+    const fontStyles = {
+      title: this.font.title || undefined,
+      content: this.font.content || undefined,
+      footer: this.font.footer || undefined
+    };
 
-      const stylerFn = ctx.styler || styler;
+    if (!subcommand || !this.commands.has(subcommand) || subcommand === 'help') {
+      let list;
+      if (subcommand === 'help') {
+        list = [...new Set(this.commands.values())]
+          .map((cmd) => {
+            const aliases = cmd.aliases && cmd.aliases.length ? ` (aliases: ${cmd.aliases.join(", ")})` : "";
+            const description = `${this.icon} ${cmd.subcommand}${aliases} → ${cmd.description}`;
+            return cmd.usage ? `${description}\n   **Usage:** ${cmd.usage}` : description;
+          })
+          .join("\n\n");
+      } else {
+        list = [...new Set(this.commands.values())]
+          .map((cmd) => `(${this.commandName}) ${cmd.subcommand}`)
+          .join("\n");
+      }
 
       try {
-        const fontStyles = {
-          title: this.font.title || undefined,
-          content: this.font.content || undefined,
-          footer: this.font.footer || undefined
-        };
         console.log('Applying styler with:', {
           type: this.style.type || 'default',
           title: this.style.title || '',
