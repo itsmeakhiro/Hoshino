@@ -7,7 +7,7 @@ const command: HoshinoLia.Command = {
     version: "1.0.0",
     developer: "Francis Loyd Raval",
     description:
-      "Take aim and shoot an arrow at an apple! Hit it to win your bet, or miss and pay a random user your bet as compensation!",
+      "Take aim and shoot an arrow at an apple! Hit it to double or triple your bet, or miss and pay a random user your bet as compensation!",
     category: "Gambling Games",
     usage: "appleshot <bet> | appleshot cooldown",
     config: {
@@ -91,18 +91,20 @@ const command: HoshinoLia.Command = {
       );
     }
 
-    const hitChance = 0.5; 
+    const hitChance = 0.5;
     const isHit = Math.random() < hitChance;
-    let resultMessage: string[] = [];
+    let resultMessage = [];
     let finalBalance = balance;
     let newAppleWins = appleWins;
 
     if (isHit) {
-      finalBalance += bet;
+      const multiplier = Math.random() < 0.5 ? 2 : 3;
+      const winnings = bet * multiplier;
+      finalBalance += winnings;
       newAppleWins += 1;
       resultMessage = [
         `🎯 **Bullseye!** You hit the apple!`,
-        `🍎 You won **${bet.toLocaleString("en-US")}** coins!`,
+        `🍎 You won **${winnings.toLocaleString("en-US")}** coins (${multiplier}x your bet)!`,
       ];
     } else {
       const allUsers = await hoshinoDB.getAll();
@@ -130,7 +132,6 @@ const command: HoshinoLia.Command = {
       }
     }
 
-    // Update shooter's data
     await hoshinoDB.set(userID, {
       ...userData,
       balance: finalBalance,
