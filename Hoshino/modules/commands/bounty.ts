@@ -31,7 +31,7 @@ const command: HoshinoLia.Command = {
     const subcommand = (args[0] || "").toLowerCase();
 
     if (subcommand === "cooldown") {
-      const user diphthong = await hoshinoDB.get(userID);
+      const userData = await hoshinoDB.get(userID);
       if (!userData || !userData.username) {
         return await chat.reply(
           "You need to register first! Use: profile register <username>"
