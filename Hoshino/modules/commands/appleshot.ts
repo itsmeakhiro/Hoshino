@@ -18,7 +18,7 @@ const command: HoshinoLia.Command = {
   style: {
     type: "lines1",
     title: "〘 🍎🏹 〙 APPLE SHOT",
-    footer: "**Developed by**: Francis Loyd Raval & Liane",
+    footer: "**Developed by**: Francis Loyd Raval",
   },
   font: {
     title: "bold",
@@ -93,7 +93,7 @@ const command: HoshinoLia.Command = {
 
     const hitChance = 0.5;
     const isHit = Math.random() < hitChance;
-    let resultMessage = [];
+    let resultMessage: string[] = [];
     let finalBalance = balance;
     let newAppleWins = appleWins;
 
