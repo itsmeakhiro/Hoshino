@@ -22,7 +22,7 @@ const command: HoshinoLia.Command = {
   },
   font: {
     title: "bold",
-    content: "fancy",
+    content: "sans",
     footer: "sans",
   },
   async deploy(ctx) {
