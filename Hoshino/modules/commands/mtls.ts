@@ -348,6 +348,7 @@ export default {
   manifest,
   style,
   deploy,
+  font,
 } as HoshinoLia.Command;
 
 function isInvalidAm(amount: number, balance: number) {

@@ -23,7 +23,7 @@ const command: HoshinoLia.Command = {
   manifest: {
     name: "beefarm",
     aliases: ["bfarm"],
-    version: "1.0",
+    version: "1.0.0",
     developer: "Francis Loyd Raval",
     description:
       "Manage a bee farm to earn balance money by collecting bee-related items like honey jars and beeswax. Farming is always active after starting; check progress, collect earnings, or upgrade to boost earnings.",

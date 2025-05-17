@@ -7,7 +7,7 @@ const command: HoshinoLia.Command = {
   manifest: {
     name: "inventory",
     aliases: ["inv", "items"],
-    version: "1.0",
+    version: "1.0.0",
     developer: "Francis And Liane",
     description: "Manage your inventory: check items, use food/potions/chests, or toss items.",
     category: "Economy",

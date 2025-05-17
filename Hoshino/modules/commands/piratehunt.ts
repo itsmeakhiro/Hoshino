@@ -4,7 +4,7 @@ const command: HoshinoLia.Command = {
   manifest: {
     name: "piratehunt",
     aliases: ["ph", "pirate"],
-    version: "1.0",
+    version: "1.0.0",
     developer: "Francis Loyd Raval",
     description: "Sail the seas as a pirate: buy ships, scavenge chests, recruit soldiers, raid users, upgrade ships, train soldiers, and equip weapons to ships.",
     category: "RPG",

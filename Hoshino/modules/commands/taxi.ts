@@ -21,7 +21,7 @@ const command: HoshinoLia.Command = {
   manifest: {
     name: "taxi",
     aliases: ["cab"],
-    version: "1.0",
+    version: "1.0.0",
     developer: "Francis Loyd Raval",
     description:
       "Run a taxi service to earn money by completing passenger rides. Buy an Old Normal Taxi to start, and it upgrades to new branded models (e.g., Tesla Cybercab at level 40) as your level increases, boosting earnings with better fares and multipliers.",

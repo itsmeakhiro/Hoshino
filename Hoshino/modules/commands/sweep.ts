@@ -33,7 +33,7 @@ const command: HoshinoLia.Command = {
   manifest: {
     name: "sweep",
     aliases: ["swp"],
-    version: "1.0",
+    version: "1.0.0",
     developer: "Francis Loyd Raval & YhanDeva (Yhander)",
     description:
       "Earn balance money by collecting gross debris like cockroaches and dust. Sweeping is always active after starting; check progress, collect earnings, or upgrade to boost earnings.",
@@ -60,7 +60,8 @@ const command: HoshinoLia.Command = {
         {
           subcommand: "start",
           aliases: ["begin", "s"],
-          description: "Start collecting gross debris to earn balance money (remains active).",
+          description:
+            "Start collecting gross debris to earn balance money (remains active).",
           usage: "sweep start",
           async deploy({ chat, event, hoshinoDB }) {
             const userID = cleanUserID(event.senderID);
@@ -116,7 +117,8 @@ const command: HoshinoLia.Command = {
         {
           subcommand: "status",
           aliases: ["info", "i"],
-          description: "Check your debris collection progress and pending earnings.",
+          description:
+            "Check your debris collection progress and pending earnings.",
           usage: "sweep status",
           async deploy({ chat, event, hoshinoDB }) {
             const userID = cleanUserID(event.senderID);
@@ -171,7 +173,8 @@ const command: HoshinoLia.Command = {
             const itemsCollected = { ...sweepItems };
             for (let i = 0; i < minutesElapsed; i++) {
               if (Math.random() < 0.3) {
-                const item = TRASH_ITEMS[Math.floor(Math.random() * TRASH_ITEMS.length)];
+                const item =
+                  TRASH_ITEMS[Math.floor(Math.random() * TRASH_ITEMS.length)];
                 const key = item.name.toLowerCase().replace(/\s+/g, "");
                 itemsCollected[key] = (itemsCollected[key] || 0) + 1;
               }
@@ -185,7 +188,9 @@ const command: HoshinoLia.Command = {
               totalValue += itemValue;
               if (count > 0) {
                 itemLines.push(
-                  `${item.emoji} ${item.name}: ${count} ($${itemValue.toLocaleString("en-US")})`
+                  `${item.emoji} ${
+                    item.name
+                  }: ${count} ($${itemValue.toLocaleString("en-US")})`
                 );
               }
             });
@@ -210,7 +215,8 @@ const command: HoshinoLia.Command = {
         {
           subcommand: "collect",
           aliases: ["claim", "c"],
-          description: "Collect your pending balance and reset earnings for continued sweeping.",
+          description:
+            "Collect your pending balance and reset earnings for continued sweeping.",
           usage: "sweep collect",
           async deploy({ chat, event, hoshinoDB }) {
             const userID = cleanUserID(event.senderID);
@@ -263,7 +269,8 @@ const command: HoshinoLia.Command = {
             const itemsCollected = { ...sweepItems };
             for (let i = 0; i < minutesElapsed; i++) {
               if (Math.random() < 0.3) {
-                const item = TRASH_ITEMS[Math.floor(Math.random() * TRASH_ITEMS.length)];
+                const item =
+                  TRASH_ITEMS[Math.floor(Math.random() * TRASH_ITEMS.length)];
                 const key = item.name.toLowerCase().replace(/\s+/g, "");
                 itemsCollected[key] = (itemsCollected[key] || 0) + 1;
               }
@@ -277,7 +284,9 @@ const command: HoshinoLia.Command = {
               totalValue += itemValue;
               if (count > 0) {
                 itemLines.push(
-                  `${item.emoji} ${item.name}: ${count} ($${itemValue.toLocaleString("en-US")})`
+                  `${item.emoji} ${
+                    item.name
+                  }: ${count} ($${itemValue.toLocaleString("en-US")})`
                 );
               }
             });

@@ -15,7 +15,7 @@ declare global {
     export interface CommandManifest {
       name: string;
       aliases?: string[];
-      version?: string;
+      version?: `${number}.${number}.${number}`;
       author?: string;
       developer?: string;
       description: string;

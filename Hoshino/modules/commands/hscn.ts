@@ -5,7 +5,7 @@ const command: HoshinoLia.Command = {
   manifest: {
     name: "hscn",
     aliases: ["hc"],
-    version: "1.0",
+    version: "1.0.0",
     developer: "Francis Loyd Raval & MrkimstersDev",
     description:
       "Manage your Hcoins: earn coins, check balance and gameid, convert to money, or collect earnings. Earning may incur costs.",

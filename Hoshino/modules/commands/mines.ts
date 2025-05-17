@@ -37,7 +37,7 @@ const command: HoshinoLia.Command = {
   manifest: {
     name: "mines",
     aliases: ["mine"],
-    version: "1.3",
+    version: "1.3.0",
     developer: "Francis Loyd Raval",
     description:
       "Manage a mining operation to earn balance money by collecting high-value ores like gold and diamonds, priced closer to real-world markets. Buy better pickaxes to mine premium ores; pickaxes have durability and revert to wooden when broken.",

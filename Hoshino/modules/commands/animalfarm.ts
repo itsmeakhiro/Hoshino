@@ -13,7 +13,7 @@ const command: HoshinoLia.Command = {
   manifest: {
     name: "animalfarm",
     aliases: ["afarm"],
-    version: "1.0",
+    version: "1.0.0",
     developer: "Francis Loyd Raval",
     description:
       "Earn balance money by collecting resources from farm animals after buying land. Recruit helpers to boost earnings (with salary tax), check progress, collect earnings, or upgrade to boost earnings further. Resource values reflect real-world prices.",

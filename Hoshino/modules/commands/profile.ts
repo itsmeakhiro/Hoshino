@@ -3,7 +3,7 @@ const { cleanUserID } = global.Hoshino.utils;
 function generateGameID() {
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const randomLetter = letters[Math.floor(Math.random() * letters.length)];
-  const randomNumber = Math.floor(10000000 + Math.random() * 90000000); 
+  const randomNumber = Math.floor(10000000 + Math.random() * 90000000);
   return `${randomLetter}${randomNumber}`;
 }
 
@@ -12,7 +12,7 @@ const command: HoshinoLia.Command = {
   manifest: {
     name: "profile",
     aliases: ["prof"],
-    version: "1.0",
+    version: "1.0.0",
     developer: "Francis Loyd Raval",
     description:
       "Check your profile info (balance, diamonds, gameid), register, or change your username.",
@@ -73,7 +73,9 @@ const command: HoshinoLia.Command = {
               diamonds: 0,
               expData: exp.raw(),
             });
-            await chat.reply(`Successfully registered as ${username}! Your Game ID: ${gameid}`);
+            await chat.reply(
+              `Successfully registered as ${username}! Your Game ID: ${gameid}`
+            );
           },
         },
         {

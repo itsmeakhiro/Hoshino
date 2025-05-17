@@ -180,13 +180,13 @@ export default async function listener({ api, event }) {
 
   switch (event.type) {
     case "message":
-      commandHandler({ ...entryObj });
+      // commandHandler({ ...entryObj });
       break;
     case "event":
       eventHandler({ ...entryObj });
       break;
     case "message_reply":
-      commandHandler({ ...entryObj });
+      // commandHandler({ ...entryObj });
       break;
     default:
       console.log(`Unhandled event type: ${event.type}`);
