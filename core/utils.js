@@ -1,6 +1,7 @@
 import { readdirSync } from "fs-extra";
 import { resolve, join } from "path";
-import { log } from "./views/custom"
+import { log } from "./views/custom";
+import { inspect } from "util";
 
 /**
  * @type {HoshinoLia.HoshinoUtils}
@@ -23,7 +24,10 @@ const utils = {
       );
 
       if (loadfiles.length === 0) {
-        log("SYSTEM", "No commands available to deploy, Proceeding to events...");
+        log(
+          "SYSTEM",
+          "No commands available to deploy, Proceeding to events..."
+        );
         return;
       }
 
@@ -32,7 +36,13 @@ const utils = {
         /**
          * @type {HoshinoLia.Command | { default: HoshinoLia.Command }}
          */
-        let command = require(commandPath);
+        let command;
+        try {
+          command = require(commandPath);
+        } catch (error) {
+          log(error instanceof Error ? error.stack : inspect(error));
+          continue;
+        }
         if ("default" in command) {
           command = command.default;
         }
@@ -45,36 +55,31 @@ const utils = {
 
         if (!manifest.name) {
           console.log(
-            "ERROR", `Manifest missing 'name' for the command: ${file}`
+            "ERROR",
+            `Manifest missing 'name' for the command: ${file}`
           );
           continue;
         }
 
         if (typeof deploy !== "function") {
-          log(
-            "WARNING", `Invalid 'deploy' function for the command: ${file}`
-          );
+          log("WARNING", `Invalid 'deploy' function for the command: ${file}`);
           continue;
         }
 
         try {
           log("COMMAND", `Deployed ${manifest.name} successfully`);
           global.Hoshino.commands.set(manifest.name, command);
-          commandCount++; 
+          commandCount++;
 
           if (Array.isArray(manifest.aliases)) {
             for (const alias of manifest.aliases) {
               global.Hoshino.commands.set(alias, command);
-              log(
-                "ALIASES", `Registered aliases "${alias}"`
-              );
+              log("ALIASES", `Registered aliases "${alias}"`);
             }
           }
         } catch (error) {
           if (error instanceof Error)
-            log(
-              "ERROR", `Failed to deploy ${manifest.name}: ${error.stack}`
-            );
+            log("ERROR", `Failed to deploy ${manifest.name}: ${error.stack}`);
           else console.log(error);
         }
       }
@@ -87,12 +92,12 @@ const utils = {
 
   async loadEvents() {
     global.Hoshino.isLoading = true;
-    let eventCount = 0; 
+    let eventCount = 0;
     try {
       const filePath = resolve(__dirname, "../Hoshino/modules/events");
       log("DEBUG", `Deploying events from ${filePath}`);
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      log("SYSTEM", "Loading events..."); 
+      log("SYSTEM", "Loading events...");
 
       const loadfiles = readdirSync(filePath).filter(
         (file) => file.endsWith(".js") || file.endsWith(".ts")
@@ -122,16 +127,14 @@ const utils = {
         }
 
         if (typeof onEvent !== "function") {
-          log(
-            "WARNING", `Missing 'onEvent' function for the event: ${file}`
-          );
+          log("WARNING", `Missing 'onEvent' function for the event: ${file}`);
           continue;
         }
 
         try {
           log("EVENT", `Deployed ${manifest.name} successfully`);
           global.Hoshino.events.set(manifest.name, event);
-          eventCount++; 
+          eventCount++;
         } catch (error) {
           if (error instanceof Error)
             log("ERROR", `Failed to deploy ${file}: ${error.stack}`);

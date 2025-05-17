@@ -31,6 +31,8 @@ declare global {
       };
     }
 
+    export type FontTypes = keyof typeof FontSys;
+
     export interface Command {
       manifest: CommandManifest;
       deploy(ctx: EntryObj): Promise<any> | any;
@@ -40,9 +42,9 @@ declare global {
         footer: string;
       };
       font?: {
-        title?: string | string[];
-        content?: string | string[];
-        footer?: string | string[];
+        title?: FontTypes | FontTypes[];
+        content?: FontTypes | FontTypes[];
+        footer?: FontTypes | FontTypes[];
       };
     }
 
