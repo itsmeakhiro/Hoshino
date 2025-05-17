@@ -11,37 +11,52 @@ import styler from './styler';
 class HoshinoHM {
   /**
    * @param {Command[]} commands - An array of command objects.
-   * @param {string} commandName - The name of the command (e.g., 'Bot').
    * @param {string} [icon="✦"] - The icon to use for the commands.
    * @param {Object} [style] - Styling options for the command list.
    * @param {Object} [font] - Font styles for title, content, and footer.
+   * @param {string} [introMessage] - Optional introductory message for the command list.
    */
-  constructor(commands, commandName, icon = "✦", style = {}, font = {}) {
+  constructor(commands, icon = "✦", style = {}, font = {}, introMessage = "") {
     if (!Array.isArray(commands)) {
       throw new Error("Commands must be an array.");
     }
     this.commands = new Map();
     for (const cmd of commands) {
+      if (!cmd.subcommand || !cmd.description || !cmd.deploy) {
+        throw new Error(`Invalid command object: ${JSON.stringify(cmd)}`);
+      }
       this.commands.set(cmd.subcommand, cmd);
       if (cmd.aliases && Array.isArray(cmd.aliases)) {
         for (const alias of cmd.aliases) {
-          this.commands.set(alias, cmd);
+          if (this.commands.has(alias)) {
+            console.warn(`Alias "${alias}" already exists for another command.`);
+          } else {
+            this.commands.set(alias, cmd);
+          }
         }
       }
     }
-    this.commandName = commandName;
     this.icon = icon;
     this.style = style;
     this.font = font;
-    console.log('HoshinoHM initialized with:', { commandName: this.commandName, style: this.style, font: this.font });
+    this.introMessage = introMessage;
+    console.log('HoshinoHM initialized with:', { style: this.style, font: this.font, introMessage: this.introMessage });
   }
 
   /**
-  —this.commandName = commandName;
-    this.icon = icon;
-    this.style = style;
-    this.font = font;
-    console.log('HoshinoHM initialized with:', { commandName: this.commandName, style: this.style, font: this.font });
+   * Formats the command list with an optional introductory message.
+   * @private
+   * @returns {string} The formatted command list.
+   */
+  formatCommandList() {
+    const commandList = [...new Set(this.commands.values())]
+      .map((cmd) => {
+        const aliases = cmd.aliases && cmd.aliases.length ? ` (aliases: ${cmd.aliases.join(", ")})` : "";
+        const description = `${this.icon} ${cmd.subcommand}${aliases} → ${cmd.description}`;
+        return cmd.usage ? `${description}\n   **Usage:** ${cmd.usage}` : description;
+      })
+      .join("\n\n");
+    return this.introMessage ? `${this.introMessage}\n\n${commandList}` : commandList;
   }
 
   /**
@@ -51,30 +66,20 @@ class HoshinoHM {
     const { args, chat, hoshinoDB, fonts, event } = ctx;
     const subcommand = args[0];
 
-    const stylerFn = ctx.styler || styler;
-    const fontStyles = {
-      title: this.font.title || undefined,
-      content: this.font.content || undefined,
-      footer: this.font.footer || undefined
-    };
-
-    if (!subcommand || !this.commands.has(subcommand) || subcommand === 'help') {
-      let list;
-      if (subcommand === 'help') {
-        list = [...new Set(this.commands.values())]
-          .map((cmd) => {
-            const aliases = cmd.aliases && cmd.aliases.length ? ` (aliases: ${cmd.aliases.join(", ")})` : "";
-            const description = `${this.icon} ${cmd.subcommand}${aliases} → ${cmd.description}`;
-            return cmd.usage ? `${description}\n   **Usage:** ${cmd.usage}` : description;
-          })
-          .join("\n\n");
-      } else {
-        list = [...new Set(this.commands.values())]
-          .map((cmd) => `(${this.commandName}) ${cmd.subcommand}`)
-          .join("\n");
+    if (!subcommand || !this.commands.has(subcommand)) {
+      const list = this.formatCommandList();
+      const stylerFn = typeof ctx.styler === 'function' ? ctx.styler : styler;
+      if (typeof stylerFn !== 'function') {
+        console.error('Styler function is not defined.');
+        return await chat.reply(`Error: Styler function unavailable.\n${list}`);
       }
 
       try {
+        const fontStyles = {
+          title: this.font.title || 'Arial',
+          content: this.font.content || 'Arial',
+          footer: this.font.footer || 'Arial'
+        };
         console.log('Applying styler with:', {
           type: this.style.type || 'default',
           title: this.style.title || '',
@@ -98,7 +103,12 @@ class HoshinoHM {
       }
     }
 
-    return this.commands.get(subcommand)?.deploy(ctx);
+    try {
+      return await this.commands.get(subcommand)?.deploy(ctx);
+    } catch (error) {
+      console.error(`Error executing command ${subcommand}:`, error);
+      return await chat.reply(`Error executing command: ${subcommand}`);
+    }
   }
 }
 
