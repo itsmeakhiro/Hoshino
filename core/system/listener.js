@@ -47,25 +47,20 @@ function restrictCooldown(senderID, commandName, cooldownSeconds = 5) {
 }
 
 /**
- * Restricts web users from accessing developer, admin, or moderator functions.
+ * Restricts web users from accessing developer, admin, or moderator functions if the command requires them.
  * @param {HoshinoLia.Event} event - The event object containing isWeb and senderID.
  * @param {string} senderID - The ID of the sender.
  * @param {string[]} developer - Array of developer IDs from config.
  * @param {string[]} admins - Array of admin IDs from config.
  * @param {string[]} moderators - Array of moderator IDs from config.
+ * @param {any} command - The command object from global.Hoshino.commands.
  * @returns {boolean} - Returns true if the user is allowed to proceed, false if blocked.
  */
-function restrictWebPermissions(event, senderID, developer, admins, moderators) {
-  if (event.isWeb) {
-    if (
-      developer?.includes(senderID) ||
-      admins.includes(senderID) ||
-      moderators.includes(senderID)
-    ) {
-      return false; 
-    }
+function restrictWebPermissions(event, senderID, developer, admins, moderators, command) {
+  if (event.isWeb && command?.manifest?.config && (command.manifest.config.admin || command.manifest.config.moderator)) {
+    return developer?.includes(senderID) || admins.includes(senderID) || moderators.includes(senderID);
   }
-  return true; 
+  return true;
 }
 
 /**
@@ -141,7 +136,7 @@ export default async function listener({ api, event }) {
   const admins = global.Hoshino.config.admin || [];
   const moderators = global.Hoshino.config.moderator || [];
 
-  if (!restrictWebPermissions(event, senderID, developer, admins, moderators)) {
+  if (!restrictWebPermissions(event, senderID, developer, admins, moderators, command)) {
     await chat.reply(
       fonts.sans("Web users cannot access developer, admin, or moderator functions.")
     );
@@ -201,7 +196,9 @@ export default async function listener({ api, event }) {
     }
 
     if (command.manifest.config?.moderator && !isModerator) {
-      await chat.reply(fonts.sans("This command is restricted to moderators."));
+      await chat.reply(
+        fonts.sans("This command is restricted to moderators.")
+      );
       return;
     }
 
