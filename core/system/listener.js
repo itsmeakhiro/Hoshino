@@ -22,6 +22,28 @@ import HoshinoHM from "../../Hoshino/resources/styler/hoshinohomemodular";
 import { ChatContextor, ChatResult } from "./handler/chat";
 
 /**
+ * Restricts web users from accessing developer, admin, or moderator functions.
+ * @param {HoshinoLia.Event} event - The event object containing isWeb and senderID.
+ * @param {string} senderID - The ID of the sender.
+ * @param {string[]} developer - Array of developer IDs from config.
+ * @param {string[]} admins - Array of admin IDs from config.
+ * @param {string[]} moderators - Array of moderator IDs from config.
+ * @returns {boolean} - Returns true if the user is allowed to proceed, false if blocked.
+ */
+function restrictWebPermissions(event, senderID, developer, admins, moderators) {
+  if (event.isWeb) {
+    if (
+      developer?.includes(senderID) ||
+      admins.includes(senderID) ||
+      moderators.includes(senderID)
+    ) {
+      return false; 
+    }
+  }
+  return true; 
+}
+
+/**
  *
  * @param {{ api: any; event: HoshinoLia.Event }} param0
  * @returns
@@ -91,9 +113,15 @@ export default async function listener({ api, event }) {
   }
 
   const senderID = event.senderID;
-
   const admins = global.Hoshino.config.admin || [];
   const moderators = global.Hoshino.config.moderator || [];
+
+  if (!restrictWebPermissions(event, senderID, developer, admins, moderators)) {
+    await chat.reply(
+      fonts.sans("Web users cannot access developer, admin, or moderator functions.")
+    );
+    return;
+  }
 
   function hasPermission(type) {
     return (
