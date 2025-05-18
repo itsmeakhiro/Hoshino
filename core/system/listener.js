@@ -47,7 +47,7 @@ function restrictCooldown(senderID, commandName, cooldownSeconds = 5) {
 }
 
 /**
- * Restricts web users from accessing developer, admin, or moderator functions if the command requires them.
+ * Restricts web users from accessing commands with admin or moderator permissions.
  * @param {HoshinoLia.Event} event - The event object containing isWeb and senderID.
  * @param {string} senderID - The ID of the sender.
  * @param {string[]} developer - Array of developer IDs from config.
@@ -58,7 +58,7 @@ function restrictCooldown(senderID, commandName, cooldownSeconds = 5) {
  */
 function restrictWebPermissions(event, senderID, developer, admins, moderators, command) {
   if (event.isWeb && command?.manifest?.config && (command.manifest.config.admin || command.manifest.config.moderator)) {
-    return developer?.includes(senderID) || admins.includes(senderID) || moderators.includes(senderID);
+    return false;
   }
   return true;
 }
