@@ -144,7 +144,10 @@ export async function deploy(ctx) {
         );
       },
     },
-  ]);
+  ],
+  "➥",
+  "Welcome to **Profile**, here are the available commands:",
+);
   return home.runInContext(ctx);
 }
 
