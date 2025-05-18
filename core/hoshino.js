@@ -69,13 +69,11 @@ router.get("/postWReply", async (req, res) => {
   res.json(botResponse);
 });
 
-const pref = "web:"
-
 function formatIP(ip) {
   try {
     ip = ip?.replaceAll("custom_", "");
     const formattedIP = ip;
-    return `${pref}${formattedIP}`;
+    return `${formattedIP}`;
   } catch (error) {
     console.error("Error in formatting IP:", error);
     return ip;
