@@ -8,6 +8,7 @@ function generateGameID() {
 
 const manifest: HoshinoLia.CommandManifest = {
   name: "profile",
+  aliases: ["pf", "pf"],
   description:
     "Check your profile info (balance, diamonds, gameid), register, or change your username.",
   author: "Francis Loyd Raval",

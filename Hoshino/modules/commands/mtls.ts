@@ -1,5 +1,6 @@
 const manifest: HoshinoLia.CommandManifest = {
   name: "mtls",
+  aliases: ["mtlslite"],
   description: "Minting Token and Lending Service. (Rework 3.6.0)",
   author: "Liane Cagara",
   version: "4.2.0",
@@ -55,7 +56,7 @@ export async function deploy(ctx: HoshinoLia.EntryObj) {
       aliases: ["-le"],
       async deploy({ hoshinoDB, event, chat, args }) {
         const userData = await hoshinoDB.get(event.senderID);
-        const amount = parseInt(args[0]);
+        const amount = parseInt(args[1]);
 
         if (isInvalidAm(amount, userData.balance)) {
           return chat.reply(
@@ -193,7 +194,7 @@ export async function deploy(ctx: HoshinoLia.EntryObj) {
       aliases: ["-tr", "-se", "transfer"],
       async deploy({ hoshinoDB, event, chat, Inventory, args }) {
         const userData = await hoshinoDB.get(event.senderID);
-        const targTest = args[0];
+        const targTest = args[1];
         const inventory = new Inventory(userData.inventory);
 
         let recipient;
@@ -232,7 +233,7 @@ export async function deploy(ctx: HoshinoLia.EntryObj) {
           return chat.reply(`❕ | You cannot send money **to yourself**!`);
         }
 
-        const amount = parseInt(args[1]);
+        const amount = parseInt(args[2]);
 
         if (isInvalidAm(amount, userData.balance)) {
           return chat.reply(
@@ -248,9 +249,7 @@ export async function deploy(ctx: HoshinoLia.EntryObj) {
 
         if (
           reciBal < recipient.balance ||
-          isNaN(reciBal) ||
-          isNaN(newBal) ||
-          isNaN(amount)
+          isNaN(reciBal) || isNaN(newBal) || isNaN(amount)
         ) {
           console.log({
             reciBal,
@@ -289,7 +288,7 @@ export async function deploy(ctx: HoshinoLia.EntryObj) {
       usage: "inspect <name|uid> <amount>",
       aliases: ["-ins"],
       async deploy({ hoshinoDB, chat, args }) {
-        const targTest = args[0];
+        const targTest = args[1];
 
         let recipient;
 
