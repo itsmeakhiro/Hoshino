@@ -21,6 +21,31 @@ import fonts from "../../Hoshino/resources/styler/fonts";
 import HoshinoHM from "../../Hoshino/resources/styler/hoshinohomemodular";
 import { ChatContextor, ChatResult } from "./handler/chat";
 
+const commandCooldowns = new Map();
+
+/**
+ * Restricts command usage based on cooldown per user and command.
+ * @param {string} senderID - The ID of the sender.
+ * @param {string} commandName - The name of the command.
+ * @param {number} cooldownSeconds - Cooldown duration in seconds.
+ * @returns {{ allowed: boolean, remaining?: number }} - Whether the command is allowed and remaining cooldown time (if blocked).
+ */
+function restrictCooldown(senderID, commandName, cooldownSeconds = 5) {
+  const key = `${senderID}:${commandName}`;
+  const lastUsed = commandCooldowns.get(key);
+  const now = Date.now();
+
+  if (lastUsed) {
+    const elapsedSeconds = (now - lastUsed) / 1000;
+    if (elapsedSeconds < cooldownSeconds) {
+      return { allowed: false, remaining: Math.ceil(cooldownSeconds - elapsedSeconds) };
+    }
+  }
+
+  commandCooldowns.set(key, now);
+  return { allowed: true };
+}
+
 /**
  * Restricts web users from accessing developer, admin, or moderator functions.
  * @param {HoshinoLia.Event} event - The event object containing isWeb and senderID.
@@ -148,6 +173,16 @@ export default async function listener({ api, event }) {
   }
 
   if (command) {
+    const cooldownCheck = restrictCooldown(senderID, commandName, command.manifest?.cooldown ?? 5);
+    if (!cooldownCheck.allowed) {
+      await chat.reply(
+        fonts.sans(
+          `Please wait ${cooldownCheck.remaining} seconds before using "${commandName}" again.`
+        )
+      );
+      return;
+    }
+
     if (
       command.manifest?.config?.privateOnly &&
       event.threadID !== event.senderID

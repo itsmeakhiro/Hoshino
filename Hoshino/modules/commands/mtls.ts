@@ -4,6 +4,7 @@ const manifest: HoshinoLia.CommandManifest = {
   author: "Liane Cagara",
   version: "4.2.0",
   category: "Finance",
+  cooldown: 5,
   developer: "Liane Cagara",
   config: {
     admin: false,
