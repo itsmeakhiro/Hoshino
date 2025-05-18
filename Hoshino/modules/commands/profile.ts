@@ -41,12 +41,12 @@ export async function deploy(ctx) {
       usage: "profile register <username>",
       aliases: ["reg", "signup"],
       async deploy({ chat, args, event, hoshinoDB, HoshinoUser, HoshinoEXP }) {
-        if (args.length < 1) {
+        if (args.length < 1 || !args[0]) {
           return chat.reply(
             "📋 | Please provide a username. Usage: profile register <username>"
           );
         }
-        const username = args.slice(0).join(" ").trim();
+        const username = args[0].trim();
         if (username.length < 1 || username.length > 20) {
           return chat.reply("📋 | Username must be 1-20 characters long.");
         }
@@ -108,12 +108,12 @@ export async function deploy(ctx) {
       usage: "profile changeusername <newusername>",
       aliases: ["rename", "chname"],
       async deploy({ chat, args, event, hoshinoDB, HoshinoUser, HoshinoEXP }) {
-        if (args.length < 1 || !args[0]) {
+        if (args.length < 2 || !args[1]) {
           return chat.reply(
             "📋 | Please provide a new username. Usage: profile changeusername <newusername>"
           );
         }
-        const newUsername = args[0].trim(); 
+        const newUsername = args[1].trim();
         if (newUsername.length < 1 || newUsername.length > 20) {
           return chat.reply("📋 | New username must be 1-20 characters long.");
         }
