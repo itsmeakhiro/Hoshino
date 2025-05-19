@@ -2,7 +2,10 @@
   "scripts": {
     "start": "node index"
   },
+  "name": "hoshino",
+  "version": "1.2.1",
   "dependencies": {
+    "@xaviabot/fca-unofficial": "^1.4.0",
     "axios": "^1.8.4",
     "cassidy-styler": "^1.2.3",
     "chalk": "^4.1.2",
@@ -16,7 +19,8 @@
     "lia-mongo": "^1.2.1",
     "net": "^1.0.2",
     "nodemon": "^3.1.9",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.1",

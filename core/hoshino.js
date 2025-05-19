@@ -82,7 +82,7 @@ function formatIP(ip) {
 
 class Event {
   /**
-   * @type {HoshinoLia.Event["messageReply"]}
+   * @type {HoshinoLia.EventOld["messageReply"]}
    */
   messageReply = undefined;
   /**
@@ -126,9 +126,7 @@ class Event {
       typeof this.messageReply === "object" &&
       this.messageReply
     ) {
-      this.messageReply.senderID = formatIP(
-        this.messageReply.senderID || "0"
-      );
+      this.messageReply.senderID = formatIP(this.messageReply.senderID || "0");
     }
     this.participantIDs ??= [];
     if (Array.isArray(this.participantIDs)) {

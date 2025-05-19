@@ -6,6 +6,8 @@ import {
   HoshinoQuest,
 } from "../Hoshino/resources/plugins/level/utils";
 import * as ccc from "./system/handler/chat";
+import { restrictCooldown, restrictWebPermissions } from "./system/listener";
+import { IFCAU_API, IFCAU_ListenMessage } from "@xaviabot/fca-unofficial";
 
 declare global {
   var bot: import("events").EventEmitter;
@@ -35,7 +37,9 @@ declare global {
 
     export interface Command {
       manifest: CommandManifest;
-      deploy(ctx: EntryObj): Promise<any> | any;
+      deploy(
+        ctx: EntryObj & { event: Extract<EntryObj["event"], { body: string }> }
+      ): Promise<any> | any;
       style?: {
         type: string;
         title: string;
@@ -73,7 +77,7 @@ declare global {
     export interface ChatContextor extends CC {}
 
     export interface EntryObj {
-      api: any;
+      api: IFCAU_API;
       chat: ChatInstance;
       event: Event;
       args: string[];
@@ -89,6 +93,12 @@ declare global {
       HoshinoQuest: typeof HoshinoQuest;
       HoshinoEXP: typeof HoshinoEXP;
       ChatResult: typeof ccc.ChatResult;
+      restrictWebPermissions: typeof restrictWebPermissions;
+      restrictCooldown: typeof restrictCooldown;
+      command: HoshinoLia.Command | undefined;
+      hasPrefix: boolean;
+      commandName: string;
+      get entryObj(): EntryObj;
     }
     export type CommandContext = EntryObj;
 
@@ -107,7 +117,7 @@ declare global {
       [key: string]: any;
     }
 
-    export interface Event {
+    export interface EventOld {
       body: string;
       senderID: string;
       threadID: string;
@@ -121,8 +131,13 @@ declare global {
       [key: string]: any;
     }
 
+    export type Event = EventOld &
+      IFCAU_ListenMessage & {
+        isWeb?: boolean;
+      };
+
     export interface HoshinoUtils {
-      formatCash(num: number, emoji: string | boolean, bold: boolean): string
+      formatCash(num: number, emoji: string | boolean, bold: boolean): string;
       loadCommands(): Promise<void>;
       loadEvents(): Promise<void>;
     }

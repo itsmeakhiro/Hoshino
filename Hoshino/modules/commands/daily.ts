@@ -47,9 +47,7 @@ const command: HoshinoLia.Command = {
           `Please wait ${hours}h ${minutes}m ${seconds}s before claiming again.`
         );
       }
-      return await chat.reply(
-        `You can claim now! Use: daily`
-      );
+      return await chat.reply(`You can claim now! Use: daily`);
     }
 
     const userData = await hoshinoDB.get(userID);
@@ -60,19 +58,15 @@ const command: HoshinoLia.Command = {
       );
     }
 
-    const {
-      balance = 0,
-      dailyCooldown = 0,
-      isAdmin = false,
-    } = userData;
+    const { balance = 0, dailyCooldown = 0, isAdmin = false } = userData;
     const cooldownTime = 24 * 60 * 60 * 1000;
     const timeNow = Date.now();
     const timeLeft = Math.max(0, dailyCooldown - timeNow);
 
     if (timeLeft > 0 && !isAdmin) {
       const hours = Math.floor(timeLeft / 1000 / 3600);
-      const minutes = Math.floor((timeLeft / 1000 % 3600) / 60);
-      const seconds = Math.floor(timeLeft / 1000 % 60);
+      const minutes = Math.floor(((timeLeft / 1000) % 3600) / 60);
+      const seconds = Math.floor((timeLeft / 1000) % 60);
       return await chat.reply(
         `Please wait ${hours}h ${minutes}m ${seconds}s before claiming again.`
       );
@@ -89,7 +83,9 @@ const command: HoshinoLia.Command = {
 
     let resultMessage: string[] = [
       `💸 **Daily Reward Claimed!**`,
-      `You've claimed **${reward.toLocaleString("en-US")}** for today, comeback tomorrow for your free earnings!`,
+      `You've claimed **${reward.toLocaleString(
+        "en-US"
+      )}** for today, comeback tomorrow for your free earnings!`,
       `💰 **New Balance**: ${finalBalance.toLocaleString("en-US")} coins.`,
     ];
 

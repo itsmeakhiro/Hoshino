@@ -18,12 +18,24 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "strictFunctionTypes": true,
-    "exactOptionalPropertyTypes": true,
+    "exactOptionalPropertyTypes": false,
     "noImplicitAny": false,
     "useUnknownInCatchVariables": true,
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "paths": {
+      "@root/*": ["./*"],
+      "@core/*": ["./core/*"],
+      "@system/*": ["./core/system/*"],
+      "@sys-handler/*": ["./core/system/handler/*"],
+      "@views/*": ["./core/views/*"],
+      "@hoshino/*": ["./Hoshino/*"],
+      "@commands/*": ["./Hoshino/modules/commands/*"],
+      "@resources/*": ["./Hoshino/resources/*"],
+      "@plugins/*": ["./Hoshino/resources/plugins/*"],
+      "@styler/*": ["./Hoshino/resources/styler/*"]
+    }
   },
   "include": ["**/*.js", "**/*.ts"],
   "exclude": ["node_modules", "dist"]
