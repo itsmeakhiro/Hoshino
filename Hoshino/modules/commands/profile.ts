@@ -162,4 +162,4 @@ export default {
   style,
   deploy,
   font,
-} as HoshinoLia.command;
+} as HoshinoLia.Command;
