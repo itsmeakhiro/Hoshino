@@ -7,17 +7,17 @@ function generateGameID() {
   return `${randomLetter}${randomNumber}`;
 }
 
-const command: HoshinoLia.Command = {
-  manifest: {
-   name: "profile",
-   aliases: ["p", "pf"],
-   description:
+const manifest: HoshinoLia.CommandManifest = {
+  name: "profile",
+  aliases: ["p", "pf"],
+  description:
     "Check your profile info (balance, diamonds, gameid), register, or change your username.",
-   developer: "Francis Loyd Raval",
-   version: "1.0.0",
-   category: "Economy",
-   cooldown: 5,
-   config: {
+  author: "Francis Loyd Raval",
+  version: "1.0.0",
+  category: "Economy",
+  cooldown: 5,
+  developer: "Francis Loyd Raval",
+  config: {
     admin: false,
     moderator: false,
   },
@@ -27,13 +27,13 @@ const style: HoshinoLia.Command["style"] = {
   title: `〘 👤 〙 PROFILE`,
   footer: "Made with 🤍 by **Francis Loyd Raval**",
   type: "lines1",
-},
+};
 
 const font: HoshinoLia.Command["font"] = {
   title: "bold",
   content: "sans",
   footer: "sans",
-},
+};
 
 export async function deploy(ctx) {
   const home = new ctx.HoshinoHM([
@@ -157,4 +157,9 @@ export async function deploy(ctx) {
   return home.runInContext(ctx);
 }
 
-export default command;
+export default {
+  manifest,
+  style,
+  deploy,
+  font,
+} as HoshinoLia.command;

@@ -53,7 +53,8 @@ export async function deploy(ctx: HoshinoLia.EntryObj) {
       subcommand: "lend",
       description: "Lend money and retrieve it later with potential interest.",
       usage: "lend <amount>",
-      aliases: ["-le"],
+      icon: "💸",
+      aliases: ["le"],
       async deploy({ hoshinoDB, event, chat, args }) {
         const userData = await hoshinoDB.get(event.senderID);
         const amount = parseInt(args[1]);
@@ -107,7 +108,8 @@ export async function deploy(ctx: HoshinoLia.EntryObj) {
     {
       subcommand: "retrieve",
       description: "Retrieve lent amount and view earned interest.",
-      aliases: ["-re"],
+      aliases: ["re"],
+      icon: "📥",
       usage: "retrieve [force]",
       async deploy({ hoshinoDB, event, chat, args }) {
         const userData = await hoshinoDB.get(event.senderID);
@@ -191,6 +193,7 @@ export async function deploy(ctx: HoshinoLia.EntryObj) {
       subcommand: "send",
       description: "Transfer money to another user at no cost.",
       usage: "send <name|uid> <amount>",
+      icon: "📤",
       aliases: ["-tr", "-se", "transfer"],
       async deploy({ hoshinoDB, event, chat, Inventory, args }) {
         const userData = await hoshinoDB.get(event.senderID);
@@ -286,7 +289,8 @@ export async function deploy(ctx: HoshinoLia.EntryObj) {
       subcommand: "inspect",
       description: "View financial details of a user by name or ID",
       usage: "inspect <name|uid> <amount>",
-      aliases: ["-ins"],
+      icon: "🔍",
+      aliases: ["ins"],
       async deploy({ hoshinoDB, chat, args }) {
         const targTest = args[1];
 
