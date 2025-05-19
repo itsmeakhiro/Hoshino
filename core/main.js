@@ -71,17 +71,10 @@ import cUI from "./views/console";
 async function start() {
   app.use(express.static(join(__dirname, "views", "web")));
 
-  const server = app.listen(8080, () => {
+  app.listen(8080, () => {
     console.log("Server running on port 8080");
     cUI();
   });
-
-  setInterval(() => {
-    server.close(() => {
-      console.log("Server restarting...");
-      start();
-    });
-  }, 30 * 60 * 1000);
 }
 
 start();
