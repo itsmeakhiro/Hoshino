@@ -1,9 +1,9 @@
 const SLOTS_SYMBOLS = ["🍒", "🍋", "⭐", "💎", "🔔"];
-const ROULETTE_NUMBERS = Array.from({ length: 37 }, (_, i) => i); // 0–36
+const ROULETTE_NUMBERS = Array.from({ length: 37 }, (_, i) => i); 
 const ROULETTE_RED = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
 const ROULETTE_BLACK = ROULETTE_NUMBERS.filter(n => n !== 0 && !ROULETTE_RED.includes(n));
 
-const getCardValue = () => Math.floor(Math.random() * 13) + 1; // 1–13 (Ace–King)
+const getCardValue = () => Math.floor(Math.random() * 13) + 1;
 const calculateHand = (cards) => {
   let sum = 0, aces = 0;
   for (const card of cards) {
@@ -23,15 +23,16 @@ const calculateHand = (cards) => {
   return sum;
 };
 
+// DO NOT REMOVE HoshinoLia.Command, do not add types on async deploy ctx
 const command: HoshinoLia.Command = {
   manifest: {
     name: "casino",
     aliases: ["csn"],
-    version: "1.0.2",
+    version: "1.0",
     developer: "Francis Loyd Raval",
     description:
       "Play gambling games like Slots, Blackjack, Coin Flip, and Roulette to win or lose balance money. Wager responsibly with bets between $10 and $1000.",
-    category: "Gambling",
+    category: "Economy",
     usage:
       "casino slots <bet> | casino blackjack <bet> | casino coinflip <bet> [heads|tails] | casino roulette <bet> [red|black|<number>] | casino balance | casino rules",
     config: {
@@ -42,7 +43,7 @@ const command: HoshinoLia.Command = {
   style: {
     type: "lines1",
     title: "〘 🎰 〙 CASINO",
-    footer: "Made with 👼 by **Francis Loyd Raval**.",
+    footer: "**Developed by**: Francis Loyd Raval",
   },
   font: {
     title: "bold",
@@ -71,6 +72,11 @@ const command: HoshinoLia.Command = {
                 "Invalid bet! Use a number between $10 and $1000."
               );
             }
+            if (args[1]) {
+              return await chat.reply(
+                "Slots only requires a bet amount. Example: casino slots 50"
+              );
+            }
             if (userData.balance < bet) {
               return await chat.reply(
                 `Insufficient balance! You have $${userData.balance.toLocaleString(
@@ -85,9 +91,9 @@ const command: HoshinoLia.Command = {
             ];
             let payout = 0;
             if (reels[0] === reels[1] && reels[1] === reels[2]) {
-              payout = bet * 5; 
+              payout = bet * 5; // 3 matches
             } else if (reels[0] === reels[1] || reels[1] === reels[2] || reels[0] === reels[2]) {
-              payout = bet * 2; 
+              payout = bet * 2; // 2 matches
             }
             const newBalance = userData.balance - bet + payout;
             await hoshinoDB.set(userID, { ...userData, balance: newBalance });
@@ -118,6 +124,11 @@ const command: HoshinoLia.Command = {
             if (isNaN(bet) || bet < 10 || bet > 1000) {
               return await chat.reply(
                 "Invalid bet! Use a number between $10 and $1000."
+              );
+            }
+            if (args[1]) {
+              return await chat.reply(
+                "Blackjack only requires a bet amount. Example: casino blackjack 100"
               );
             }
             if (userData.balance < bet) {
@@ -274,12 +285,17 @@ const command: HoshinoLia.Command = {
           aliases: ["bal"],
           description: "Check your current balance and user info.",
           usage: "casino balance",
-          async deploy({ chat, event, hoshinoDB }) {
+          async deploy({ chat, event, hoshinoDB, args }) {
             const userID = event.senderID;
             const userData = await hoshinoDB.get(userID);
             if (!userData || !userData.username) {
               return await chat.reply(
                 "You need to register first! Use: profile register <username>"
+              );
+            }
+            if (args[0]) {
+              return await chat.reply(
+                "Balance command takes no arguments. Example: casino balance"
               );
             }
             const { balance = 0, username, gameid = "N/A" } = userData;
@@ -296,7 +312,12 @@ const command: HoshinoLia.Command = {
           aliases: ["help"],
           description: "View rules and payouts for all casino games.",
           usage: "casino rules",
-          async deploy({ chat }) {
+          async deploy({ chat, args }) {
+            if (args[0]) {
+              return await chat.reply(
+                "Rules command takes no arguments. Example: casino rules"
+              );
+            }
             const infoLines: string[] = [
               "🎰 **Casino Games Rules**",
               "",
