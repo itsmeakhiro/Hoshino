@@ -35,7 +35,7 @@ const command: HoshinoLia.Command = {
         );
       }
       const { dailyCooldown = 0 } = userData;
-      const cooldownTime = 24 * 60 * 60;
+      const cooldownTime = 24 * 60 * 60 * 1000;
       const timeNow = Date.now();
       const timeLeft = Math.max(0, Math.ceil((dailyCooldown - timeNow) / 1000));
 
@@ -75,9 +75,10 @@ const command: HoshinoLia.Command = {
           "Why are you replying? Just wait for your dam reward."
         );
       });
+      return;
     }
 
-    const reward = Math.floor(Math.random() * (10000 - 1 + 1)) + 1;
+    const reward = Math.floor(Math.random() * 10000) + 1;
     const finalBalance = balance + reward;
 
     await hoshinoDB.set(userID, {
