@@ -7,8 +7,18 @@ import { inspect } from "util";
  * @type {HoshinoLia.HoshinoUtils}
  */
 const utils = {
-  cleanUserID(senderID) {
-    return senderID.replace(/^web:/, "");
+  formatCash(
+    number = 0,
+    emoji = "💵",
+    bold = false
+  ) {
+    if (typeof emoji === "boolean") {
+      bold = emoji;
+      emoji = "💵";
+    }
+    return `${bold ? "**" : ""}$${Number(number).toLocaleString()}${
+      emoji || "💵"
+    }${bold ? "**" : ""}`;
   },
 
   async loadCommands() {

@@ -1,3 +1,5 @@
+import { formatCash } from global.Hoshino.utils;
+
 function generateGameID() {
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const randomLetter = letters[Math.floor(Math.random() * letters.length)];
@@ -5,17 +7,17 @@ function generateGameID() {
   return `${randomLetter}${randomNumber}`;
 }
 
-const manifest: HoshinoLia.CommandManifest = {
-  name: "profile",
-  aliases: ["p", "pf"],
-  description:
+const command: HoshinoLia.Command = {
+  manifest: {
+   name: "profile",
+   aliases: ["p", "pf"],
+   description:
     "Check your profile info (balance, diamonds, gameid), register, or change your username.",
-  author: "Francis Loyd Raval",
-  version: "1.0.0",
-  category: "Economy",
-  cooldown: 5,
-  developer: "Francis Loyd Raval",
-  config: {
+   developer: "Francis Loyd Raval",
+   version: "1.0.0",
+   category: "Economy",
+   cooldown: 5,
+   config: {
     admin: false,
     moderator: false,
   },
@@ -25,13 +27,13 @@ const style: HoshinoLia.Command["style"] = {
   title: `〘 👤 〙 PROFILE`,
   footer: "Made with 🤍 by **Francis Loyd Raval**",
   type: "lines1",
-};
+},
 
 const font: HoshinoLia.Command["font"] = {
   title: "bold",
   content: "sans",
   footer: "sans",
-};
+},
 
 export async function deploy(ctx) {
   const home = new ctx.HoshinoHM([
@@ -155,23 +157,4 @@ export async function deploy(ctx) {
   return home.runInContext(ctx);
 }
 
-export function formatCash(
-  number: number = 0,
-  emoji: string | boolean = "💵",
-  bold = false
-) {
-  if (typeof emoji === "boolean") {
-    bold = emoji;
-    emoji = "💵";
-  }
-  return `${bold ? "**" : ""}$${Number(number).toLocaleString()}${
-    emoji || "💵"
-  }${bold ? "**" : ""}`;
-}
-
-export default {
-  manifest,
-  style,
-  deploy,
-  font,
-} as HoshinoLia.Command;
+export default command;
