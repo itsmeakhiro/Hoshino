@@ -7,9 +7,9 @@ function generateGameID() {
 
 const manifest: HoshinoLia.CommandManifest = {
   name: "profile",
-  aliases: ["pf", "pf"],
+  aliases: ["p", "pf"],
   description:
-    "Check your profile info (balance, diamonds, gameid), register, change your username, or fix user data (admin only).",
+    "Check your profile info (balance, diamonds, gameid), register, or change your username.",
   author: "Francis Loyd Raval",
   version: "1.0.0",
   category: "Economy",
@@ -39,6 +39,7 @@ export async function deploy(ctx) {
       subcommand: "register",
       description: "Register with a username to use the economy system.",
       usage: "profile register <username>",
+      icon: "®️",
       aliases: ["reg", "signup"],
       async deploy({ chat, args, event, hoshinoDB, HoshinoUser, HoshinoEXP }) {
         if (args.length < 1 || !args[0]) {
@@ -49,13 +50,6 @@ export async function deploy(ctx) {
         const username = args[0].trim();
         if (username.length < 1 || username.length > 20) {
           return chat.reply("📋 | Username must be 1-20 characters long.");
-        }
-        const allUsers = await hoshinoDB.getAll();
-        const usernameExists = Object.values(allUsers).some(
-          (user) => user.username && user.username.toLowerCase() === username.toLowerCase()
-        );
-        if (usernameExists) {
-          return chat.reply("📋 | This username is already taken! Please choose another one.");
         }
         const userData = await hoshinoDB.get(event.senderID);
         if (userData && userData.username) {
@@ -81,6 +75,7 @@ export async function deploy(ctx) {
       subcommand: "info",
       description: "Check your balance, diamonds, and gameid.",
       usage: "profile info",
+      icon: "ℹ️",
       aliases: ["me", "i"],
       async deploy({ chat, args, event, hoshinoDB, HoshinoUser, HoshinoEXP }) {
         const userData = await hoshinoDB.get(event.senderID);
@@ -115,6 +110,7 @@ export async function deploy(ctx) {
       subcommand: "changeusername",
       description: "Change your username for 5,000.",
       usage: "profile changeusername <newusername>",
+      icon: "🔁",
       aliases: ["rename", "chname"],
       async deploy({ chat, args, event, hoshinoDB, HoshinoUser, HoshinoEXP }) {
         if (args.length < 2 || !args[1]) {
@@ -132,13 +128,6 @@ export async function deploy(ctx) {
             "📋 | You need to register first! Use: profile register <username>"
           );
         }
-        const allUsers = await hoshinoDB.getAll();
-        const usernameExists = Object.values(allUsers).some(
-          (user) => user.username && user.username.toLowerCase() === newUsername.toLowerCase()
-        );
-        if (usernameExists) {
-          return chat.reply("📋 | This username is already taken! Please choose another one.");
-        }
         if (userData.balance < 5000) {
           return chat.reply(
             `📋 | You need ${formatCash(5000, true)} to change your username!`
@@ -150,8 +139,8 @@ export async function deploy(ctx) {
           balance: userData.balance - 5000,
           diamonds: userData.diamonds || 0,
           gameid: userData.gameid || generateGameID(),
-          isAdmin: userData.isAdmin || false,
-          isModerator: userData.isModerator || false,
+          isAdmin: false,
+          isModerator: false,
         });
         return chat.reply(
           `💌 | Username changed to **${newUsername}**! ${formatCash(
@@ -161,73 +150,7 @@ export async function deploy(ctx) {
         );
       },
     },
-    {
-      subcommand: "fix",
-      description: "Fix a user's data without altering existing values (admin only).",
-      usage: "profile fix <userID>",
-      aliases: ["repair", "reset"],
-      async deploy({ chat, args, event, hoshinoDB, HoshinoUser, HoshinoEXP }) {
-        const userData = await hoshinoDB.get(event.senderID);
-        if (!userData || !userData.isAdmin) {
-          return chat.reply("📋 | You need to be an admin to use this command!");
-        }
-        if (args.length < 1 || !args[0]) {
-          return chat.reply(
-            "📋 | Please provide a user ID. Usage: profile fix <userID>"
-          );
-        }
-        const targetUserID = args[0].trim();
-        const targetUserData = await hoshinoDB.get(targetUserID);
-        if (!targetUserData) {
-          return chat.reply("📋 | No user found with that ID!");
-        }
-        const allUsers = await hoshinoDB.getAll();
-        let fixedUsername = targetUserData.username;
-        if (!fixedUsername || typeof fixedUsername !== "string" || fixedUsername.length < 1 || fixedUsername.length > 20) {
-          fixedUsername = `User_${targetUserID.slice(0, 8)}`;
-          let counter = 1;
-          while (Object.values(allUsers).some(
-            (user) => user.username && user.username.toLowerCase() === fixedUsername.toLowerCase()
-          )) {
-            fixedUsername = `User_${targetUserID.slice(0, 8)}_${counter}`;
-            counter++;
-          }
-        }
-        const fixedGameID = targetUserData.gameid && typeof targetUserData.gameid === "string" && targetUserData.gameid.match(/^[A-Z]\d{8}$/)
-          ? targetUserData.gameid
-          : generateGameID();
-        const fixedBalance = typeof targetUserData.balance === "number" && targetUserData.balance >= 0
-          ? targetUserData.balance
-          : 0;
-        const fixedDiamonds = typeof targetUserData.diamonds === "number" && targetUserData.diamonds >= 0
-          ? targetUserData.diamonds
-          : 0;
-        const fixedExpData = targetUserData.expData && typeof targetUserData.expData === "object"
-          ? {
-              exp: typeof targetUserData.expData.exp === "number" && targetUserData.expData.exp >= 0 ? targetUserData.expData.exp : 0,
-              mana: typeof targetUserData.expData.mana === "number" && targetUserData.expData.mana >= 0 ? targetUserData.expData.mana : 100,
-              health: typeof targetUserData.expData.health === "number" && targetUserData.expData.health >= 0 ? targetUserData.expData.health : 100,
-            }
-          : { exp: 0, mana: 100, health: 100 };
-        const fixedIsAdmin = typeof targetUserData.isAdmin === "boolean" ? targetUserData.isAdmin : false;
-        const fixedIsModerator = typeof targetUserData.isModerator === "boolean" ? targetUserData.isModerator : false;
-        await hoshinoDB.set(targetUserID, {
-          username: fixedUsername,
-          gameid: fixedGameID,
-          balance: fixedBalance,
-          diamonds: fixedDiamonds,
-          expData: fixedExpData,
-          isAdmin: fixedIsAdmin,
-          isModerator: fixedIsModerator,
-        });
-        return chat.reply(
-          `💌 | Successfully fixed data for user ID **${targetUserID}**! Username set to **${fixedUsername}**.`
-        );
-      },
-    },
   ],
-  "➥",
-  "Welcome to **Profile**, here are the available commands:",
 );
   return home.runInContext(ctx);
 }
