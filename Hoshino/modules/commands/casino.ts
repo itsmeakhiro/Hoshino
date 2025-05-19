@@ -27,7 +27,7 @@ const command: HoshinoLia.Command = {
   manifest: {
     name: "casino",
     aliases: ["csn"],
-    version: "1.0",
+    version: "1.0.2",
     developer: "Francis Loyd Raval",
     description:
       "Play gambling games like Slots, Blackjack, Coin Flip, and Roulette to win or lose balance money. Wager responsibly with bets between $10 and $1000.",
