@@ -11,9 +11,18 @@
     "lastModified": 1744172119284
   },
   "100075058221244": {
-    "balance": 0,
+    "balance": 8799,
     "diamonds": 0,
-    "username": null,
-    "lastModified": 1747652393709
+    "username": "register",
+    "lastModified": 1747652726859,
+    "gameid": "U61725539",
+    "expData": {
+      "exp": 0,
+      "mana": 100,
+      "health": 100
+    },
+    "isAdmin": false,
+    "isModerator": false,
+    "dailyCooldown": 1747739126859
   }
 }

@@ -67,9 +67,14 @@ const command: HoshinoLia.Command = {
       const hours = Math.floor(timeLeft / 1000 / 3600);
       const minutes = Math.floor(((timeLeft / 1000) % 3600) / 60);
       const seconds = Math.floor((timeLeft / 1000) % 60);
-      return await chat.reply(
+      const info = await chat.reply(
         `Please wait ${hours}h ${minutes}m ${seconds}s before claiming again.`
       );
+      info.addReply((ctx) => {
+        return ctx.chat.reply(
+          "Why are you replying? Just wait for your dam reward."
+        );
+      });
     }
 
     const reward = Math.floor(Math.random() * (10000 - 1 + 1)) + 1;
@@ -89,7 +94,12 @@ const command: HoshinoLia.Command = {
       `💰 **New Balance**: ${finalBalance.toLocaleString("en-US")} coins.`,
     ];
 
-    await chat.reply(resultMessage.join("\n"));
+    const info = await chat.reply(resultMessage.join("\n"));
+    info.addReply((ctx) => {
+      if (ctx.event.body === "thanks") {
+        return ctx.chat.reply("Finally, someone finally said **thanks**!");
+      }
+    });
   },
 };
 
