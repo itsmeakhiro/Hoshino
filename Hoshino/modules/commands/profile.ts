@@ -1,5 +1,3 @@
-import { formatCash } from global.Hoshino.utils;
-
 function generateGameID() {
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const randomLetter = letters[Math.floor(Math.random() * letters.length)];
@@ -12,11 +10,11 @@ const manifest: HoshinoLia.CommandManifest = {
   aliases: ["p", "pf"],
   description:
     "Check your profile info (balance, diamonds, gameid), register, or change your username.",
-  author: "Francis Loyd Raval",
   version: "1.0.0",
   category: "Economy",
   cooldown: 5,
   developer: "Francis Loyd Raval",
+  usage: "profile [ register | info | changeusername ]",
   config: {
     admin: false,
     moderator: false,
@@ -155,6 +153,20 @@ export async function deploy(ctx) {
   ],
 );
   return home.runInContext(ctx);
+}
+
+export function formatCash(
+  number: number = 0,
+  emoji: string | boolean = "💵",
+  bold = false
+) {
+  if (typeof emoji === "boolean") {
+    bold = emoji;
+    emoji = "💵";
+  }
+  return `${bold ? "**" : ""}$${Number(number).toLocaleString()}${
+    emoji || "💵"
+  }${bold ? "**" : ""}`;
 }
 
 export default {
