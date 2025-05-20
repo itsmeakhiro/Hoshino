@@ -164,7 +164,7 @@ export async function deploy(ctx) {
         }
         const { fishing } = userData;
         let catches = fishing.catches || [];
-        let totalValue = catches.reduce((sum, fish) => sum + fish.value, 0);
+        let totalValue = catches.reduce((sum, fish) => sum + (fish ? fish.value : 0), 0);
         if (fishing.isFishing) {
           const timePassed = (Date.now() - fishing.lastFished) / FISHING_INTERVAL_MS;
           const fishCaught = Math.floor(timePassed * fishing.level);
@@ -172,12 +172,16 @@ export async function deploy(ctx) {
           for (let i = 0; i < fishCaught; i++) {
             const fishName = fishPool[Math.floor(Math.random() * fishPool.length)];
             const fish = FISH_TYPES.find(f => f.name === fishName);
-            catches.push({ name: fish.name, value: fish.value });
-            totalValue += fish.value;
+            if (fish) {
+              catches.push({ name: fish.name, value: fish.value });
+              totalValue += fish.value;
+            }
           }
         }
         const fishCount = catches.reduce((acc, fish) => {
-          acc[fish.name] = (acc[fish.name] || 0) + 1;
+          if (fish) {
+            acc[fish.name] = (acc[fish.name] || 0) + 1;
+          }
           return acc;
         }, {});
         const texts = [
@@ -187,7 +191,10 @@ export async function deploy(ctx) {
           `💰 | **Total Earnings**: ${formatCash(totalValue, true)}`,
           `📦 | **Caught Fish**:`,
           ...Object.entries(fishCount).map(
-            ([name, count]) => `  - ${name}: ${count} ($${FISH_TYPES.find(f => f.name === name).value} each, ${FISH_TYPES.find(f => f.name === name).quality})`
+            ([name, count]) => {
+              const fish = FISH_TYPES.find(f => f.name === name);
+              return `  - ${name}: ${count} ($${fish ? fish.value : 0} each, ${fish ? fish.quality : "Unknown"})`;
+            }
           ),
           `🎣 | **Available Fish**: ${ROD_TYPES[fishing.rodType].fishPool.join(", ")}`,
         ];
@@ -224,10 +231,12 @@ export async function deploy(ctx) {
           for (let i = 0; i < fishCaught; i++) {
             const fishName = fishPool[Math.floor(Math.random() * fishPool.length)];
             const fish = FISH_TYPES.find(f => f.name === fishName);
-            catches.push({ name: fish.name, value: fish.value });
+            if (fish) {
+              catches.push({ name: fish.name, value: fish.value });
+            }
           }
         }
-        const totalValue = catches.reduce((sum, fish) => sum + fish.value, 0);
+        const totalValue = catches.reduce((sum, fish) => sum + (fish ? fish.value : 0), 0);
         if (totalValue <= 0) {
           return chat.reply("📋 | No fish to sell yet!");
         }
