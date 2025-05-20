@@ -1,227 +1,236 @@
-function formatItem(item: any, bold = false): string {
-  const prefix = bold ? '**' : '';
-  const suffix = bold ? '**' : '';
-  let details = `${prefix}${item.name} (${item.key}, ${item.type})${suffix}`;
-  if (item.type === 'food' || item.type === 'potion') {
-    details += ` [heal: ${item.heal}, mana: ${item.mana}]`;
-  } else if (item.type === 'weapon' || item.type === 'armor') {
-    details += ` [atk: ${item.atk}, def: ${item.def}]`;
-  } else if (item.type === 'utility') {
-    details += ` [utility: ${item.utilityEffect}]`;
-  } else if (item.type === 'chest') {
-    details += ` [contents: ${item.contents.map((c: any) => c.key).join(', ')}]`;
-  }
-  return details;
-}
+type UseItemResult = true | { opened: boolean; contents: Array<{ name: string; [key: string]: any }> };
 
-const INVENTORY_LIMIT = 10;
-
-const manifest: HoshinoLia.CommandManifest = {
-  name: 'inventory',
-  aliases: ['inv', 'items'],
-  description: 'Manage your inventory: use, equip, unequip, toss, or list items.',
-  version: '1.0.0',
-  category: 'Inventory',
-  cooldown: 3,
-  developer: 'Francis Loyd Raval',
-  usage: 'inventory [ list | use | equip | unequip | toss | status ]',
-  config: {
-    admin: false,
-    moderator: false,
+const command: HoshinoLia.Command = {
+  manifest: {
+    name: 'inventory',
+    aliases: ['inv', 'items'],
+    version: '1.0.0',
+    developer: 'xAI Team',
+    description: 'Manage your inventory: check items, use items, equip/unequip gear, or toss items.',
+    category: 'Inventory',
+    usage: 'inventory list | inventory use <item_key> | inventory equip <item_key> | inventory unequip <item_key> <type> <value1> <value2> <name> | inventory toss <item_key> [amount] | inventory status',
+    config: {
+      admin: false,
+      moderator: false,
+    },
+  },
+  style: {
+    type: 'lines1',
+    title: '〘 🎒 〙 INVENTORY',
+    footer: '**Developed by**: xAI Team',
+  },
+  font: {
+    title: 'bold',
+    content: 'sans',
+    footer: 'sans',
+  },
+  async deploy(ctx) {
+    const home = new ctx.HoshinoHM(
+      [
+        {
+          subcommand: 'list',
+          aliases: ['view', 'check'],
+          description: 'View all items in your inventory.',
+          usage: 'inventory list',
+          async deploy({ chat, args, event, hoshinoDB, Inventory }) {
+            const cleanID = ctx.utils.cleanUserID(event.senderID);
+            const userData = await hoshinoDB.get(cleanID);
+            if (!userData || !userData.username) {
+              return await chat.reply('You need to register first! Use: profile register <username>');
+            }
+            const { inventoryData = [] } = userData;
+            const inventory = new Inventory(inventoryData, 10);
+            if (inventory.size() === 0) {
+              return await chat.reply('Your inventory is empty!');
+            }
+            const items = inventory.getAll().map((item: any, index: number) => {
+              const effects: string[] = [];
+              if (item.heal > 0) effects.push(`+${item.heal} HP`);
+              if (item.mana > 0) effects.push(`+${item.mana} MP`);
+              if (item.atk > 0) effects.push(`+${item.atk} ATK`);
+              if (item.def > 0) effects.push(`+${item.def} DEF`);
+              if (item.utilityEffect > 0) effects.push(`+${item.utilityEffect} UTIL`);
+              const effectText = effects.length ? ` (${effects.join(', ')})` : '';
+              const flavorText = item.flavorText ? `\n   ${item.flavorText}` : '';
+              return `${index + 1}. ${item.icon || '📦'} ${item.name} [${item.key}]${effectText}${flavorText}`;
+            });
+            return await chat.reply(`**Your Inventory (${inventory.size()}/10)**\n${items.join('\n')}`);
+          },
+        },
+        {
+          subcommand: 'use',
+          aliases: ['consume', 'activate'],
+          description: 'Use a food, potion, or chest item.',
+          usage: 'inventory use <item_key>',
+          async deploy({ chat, args, event, hoshinoDB, Inventory }) {
+            const cleanID = ctx.utils.cleanUserID(event.senderID);
+            const userData = await hoshinoDB.get(cleanID);
+            if (!userData || !userData.username) {
+              return await chat.reply('You need to register first! Use: profile register <username>');
+            }
+            if (!args[1]) {
+              return await chat.reply('Please provide an item key. Usage: inventory use <item_key>');
+            }
+            const itemKey = args[1].toLowerCase();
+            const { statsData = { health: 100, mana: 50, atk: 10, def: 5, utility: 0 }, inventoryData = [] } = userData;
+            const inventory = new Inventory(inventoryData, 10);
+            if (!inventory.has(itemKey)) {
+              return await chat.reply(`You don't have an item with key "${itemKey}" in your inventory!`);
+            }
+            const item = inventory.getOne(itemKey) || { name: 'Unknown Item', type: 'generic', heal: 0, mana: 0 };
+            const result = inventory.useItem(itemKey, statsData);
+            let message = '';
+            if (item.type === 'chest' && result !== true) {
+              message = `You opened "${item.name}" and found: ${result.contents.map((c: any) => c.name).join(', ')}!`;
+            } else {
+              const restored = [item.heal > 0 ? `${item.heal} health` : '', item.mana > 0 ? `${item.mana} mana` : ''].filter(Boolean).join(' and ');
+              message = restored ? `You used "${item.name}" and restored ${restored}!` : `You used "${item.name}", but it had no effect.`;
+            }
+            await hoshinoDB.set(cleanID, {
+              ...userData,
+              statsData,
+              inventoryData: inventory.getAll(),
+            });
+            return await chat.reply(`${message}\nHealth: ${statsData.health}/100\nMana: ${statsData.mana}/50`);
+          },
+        },
+        {
+          subcommand: 'equip',
+          aliases: ['wear', 'arm'],
+          description: 'Equip a weapon, armor, or utility item.',
+          usage: 'inventory equip <item_key>',
+          async deploy({ chat, args, event, hoshinoDB, Inventory }) {
+            const cleanID = ctx.utils.cleanUserID(event.senderID);
+            const userData = await hoshinoDB.get(cleanID);
+            if (!userData || !userData.username) {
+              return await chat.reply('You need to register first! Use: profile register <username>');
+            }
+            if (!args[1]) {
+              return await chat.reply('Please provide an item key. Usage: inventory equip <item_key>');
+            }
+            const itemKey = args[1].toLowerCase();
+            const { statsData = { health: 100, mana: 50, atk: 10, def: 5, utility: 0 }, inventoryData = [] } = userData;
+            const inventory = new Inventory(inventoryData, 10);
+            if (!inventory.has(itemKey)) {
+              return await chat.reply(`You don't have an item with key "${itemKey}" in your inventory!`);
+            }
+            inventory.equipItem(itemKey, statsData);
+            await hoshinoDB.set(cleanID, {
+              ...userData,
+              statsData,
+              inventoryData: inventory.getAll(),
+            });
+            return await chat.reply(`Equipped "${itemKey}". ATK: ${statsData.atk}, DEF: ${statsData.def}, UTIL: ${statsData.utility}`);
+          },
+        },
+        {
+          subcommand: 'unequip',
+          aliases: ['remove', 'disarm'],
+          description: 'Unequip a weapon, armor, or utility item.',
+          usage: 'inventory unequip <item_key> <type> <value1> <value2> <name>',
+          async deploy({ chat, args, event, hoshinoDB, Inventory }) {
+            const cleanID = ctx.utils.cleanUserID(event.senderID);
+            const userData = await hoshinoDB.get(cleanID);
+            if (!userData || !userData.username) {
+              return await chat.reply('You need to register first! Use: profile register <username>');
+            }
+            if (args.length < 6) {
+              return await chat.reply('Please provide all required arguments. Usage: inventory unequip <item_key> <type> <value1> <value2> <name>');
+            }
+            const key = args[1].toLowerCase();
+            const type = args[2].toLowerCase();
+            const value1 = args[3];
+            const value2 = args[4];
+            const name = args.slice(5).join(' ');
+            const item = { key, type, name };
+            if (type === 'weapon' || type === 'armor') {
+              item.atk = parseFloat(value1) || 0;
+              item.def = parseFloat(value2) || 0;
+            } else if (type === 'utility') {
+              item.utilityEffect = parseFloat(value1) || 0;
+            } else {
+              return await chat.reply('Can only unequip weapon, armor, or utility items.');
+            }
+            const { statsData = { health: 100, mana: 50, atk: 10, def: 5, utility: 0 }, inventoryData = [] } = userData;
+            const inventory = new Inventory(inventoryData, 10);
+            inventory.unequipItem(item, statsData);
+            await hoshinoDB.set(cleanID, {
+              ...userData,
+              statsData,
+              inventoryData: inventory.getAll(),
+            });
+            return await chat.reply(`Unequipped "${key}". ATK: ${statsData.atk}, DEF: ${statsData.def}, UTIL: ${statsData.utility}`);
+          },
+        },
+        {
+          subcommand: 'toss',
+          aliases: ['discard', 'drop'],
+          description: 'Remove items from your inventory.',
+          usage: 'inventory toss <item_key> [amount]',
+          async deploy({ chat, args, event, hoshinoDB, Inventory }) {
+            const cleanID = ctx.utils.cleanUserID(event.senderID);
+            const userData = await hoshinoDB.get(cleanID);
+            if (!userData || !userData.username) {
+              return await chat.reply('You need to register first! Use: profile register <username>');
+            }
+            if (!args[1]) {
+              return await chat.reply('Please provide an item key. Usage: inventory toss <item_key> [amount]');
+            }
+            const itemKey = args[1].toLowerCase();
+            const amount = args[2] ? parseInt(args[2]) : 1;
+            if (isNaN(amount) || amount < 1) {
+              return await chat.reply('Amount must be a positive number.');
+            }
+            const { inventoryData = [] } = userData;
+            const inventory = new Inventory(inventoryData, 10);
+            if (!inventory.has(itemKey)) {
+              return await chat.reply(`You don't have an item with key "${itemKey}" in your inventory!`);
+            }
+            const item = inventory.getOne(itemKey);
+            if (item.cannotToss) {
+              return await chat.reply(`You cannot toss "${item.name}"!`);
+            }
+            if (amount > inventory.getAmount(itemKey)) {
+              return await chat.reply(`You only have ${inventory.getAmount(itemKey)} "${item.name}"(s) to toss!`);
+            }
+            inventory.toss(itemKey, amount);
+            await hoshinoDB.set(cleanID, {
+              ...userData,
+              inventoryData: inventory.getAll(),
+            });
+            return await chat.reply(`Tossed ${amount} "${item.name}"(s) from your inventory.`);
+          },
+        },
+        {
+          subcommand: 'status',
+          aliases: ['stats', 'info'],
+          description: 'Check your character stats.',
+          usage: 'inventory status',
+          async deploy({ chat, args, event, hoshinoDB, Inventory }) {
+            const cleanID = ctx.utils.cleanUserID(event.senderID);
+            const userData = await hoshinoDB.get(cleanID);
+            if (!userData || !userData.username) {
+              return await chat.reply('You need to register first! Use: profile register <username>');
+            }
+            const { statsData = { health: 100, mana: 50, atk: 10, def: 5, utility: 0 }, inventoryData = [] } = userData;
+            const inventory = new Inventory(inventoryData, 10);
+            const texts = [
+              '**Character Stats**',
+              `Health: ${statsData.health}/100`,
+              `Mana: ${statsData.mana}/50`,
+              `Attack: ${statsData.atk}`,
+              `Defense: ${statsData.def}`,
+              `Utility: ${statsData.utility}`,
+              `Inventory: ${inventory.size()}/10`,
+            ];
+            return await chat.reply(texts.join('\n'));
+          },
+        },
+      ],
+      '◆'
+    );
+    await home.runInContext(ctx);
   },
 };
 
-const style: HoshinoLia.Command['style'] = {
-  title: '〘 🎒 〙 Inventory Management',
-  footer: 'Made with 🤍 by **Francis Loyd Raval**',
-  type: 'lines1',
-};
-
-const font: HoshinoLia.Command['font'] = {
-  title: 'bold',
-  content: 'sans',
-  footer: 'sans',
-};
-
-export async function deploy(ctx: any) {
-  const home = new ctx.HoshinoHM([
-    {
-      subcommand: 'list',
-      description: 'List all items in your inventory.',
-      usage: 'inventory list',
-      icon: '📜',
-      aliases: ['show', 'items'],
-      async deploy({ chat, args, event, hoshinoDB, Inventory }: { chat: any; args: string[]; event: any; hoshinoDB: any; Inventory: any }) {
-        const userData = await hoshinoDB.get(event.senderID);
-        if (!userData || !userData.username) {
-          return chat.reply('📋 | You need to register first! Use: profile register <username>');
-        }
-        const inventory = new Inventory(userData.inventory || [], INVENTORY_LIMIT);
-        const items = inventory.getAll();
-        if (items.length === 0) {
-          return chat.reply('📜 | Your inventory is empty.');
-        }
-        const texts = ['📜 | **Your Inventory**'];
-        items.forEach((item: any, i: number) => {
-          texts.push(`${i + 1}. ${formatItem(item)}`);
-        });
-        texts.push(`🎒 | Total Items: ${items.length}/${INVENTORY_LIMIT}`);
-        return chat.reply(texts.join('\n'));
-      },
-    },
-    {
-      subcommand: 'use',
-      description: 'Use an item (e.g., "inventory use health_potion").',
-      usage: 'inventory use <key>',
-      icon: '🧪',
-      aliases: ['consume'],
-      async deploy({ chat, args, event, hoshinoDB, Inventory }: { chat: any; args: string[]; event: any; hoshinoDB: any; Inventory: any }) {
-        const userData = await hoshinoDB.get(event.senderID);
-        if (!userData || !userData.username) {
-          return chat.reply('📋 | You need to register first! Use: profile register <username>');
-        }
-        if (!args[1]) {
-          return chat.reply('📋 | Usage: inventory use <key>');
-        }
-        const inventory = new Inventory(userData.inventory || [], INVENTORY_LIMIT);
-        const result = inventory.useItem(args[1], userData);
-        await hoshinoDB.set(event.senderID, {
-          ...userData,
-          inventory: inventory.getAll(),
-          health: userData.health || 100,
-          mana: userData.mana || 50,
-        });
-        return chat.reply(
-          result.opened
-            ? `🧪 | Opened chest ${args[1]}, added: ${result.contents.map((c: any) => c.name).join(', ')}`
-            : `🧪 | Used ${args[1]}. Health: ${userData.health}, Mana: ${userData.mana}`
-        );
-      },
-    },
-    {
-      subcommand: 'equip',
-      description: 'Equip an item (e.g., "inventory equip sword").',
-      usage: 'inventory equip <key>',
-      icon: '⚔️',
-      aliases: ['wear'],
-      async deploy({ chat, args, event, hoshinoDB, Inventory }: { chat: any; args: string[]; event: any; hoshinoDB: any; Inventory: any }) {
-        const userData = await hoshinoDB.get(event.senderID);
-        if (!userData || !userData.username) {
-          return chat.reply('📋 | You need to register first! Use: profile register <username>');
-        }
-        if (!args[1]) {
-          return chat.reply('📋 | Usage: inventory equip <key>');
-        }
-        const inventory = new Inventory(userData.inventory || [], INVENTORY_LIMIT);
-        inventory.equipItem(args[1], userData);
-        await hoshinoDB.set(event.senderID, {
-          ...userData,
-          inventory: inventory.getAll(),
-          atk: userData.atk || 10,
-          def: userData.def || 5,
-          utility: userData.utility || 0,
-        });
-        return chat.reply(
-          `⚔️ | Equipped ${args[1]}. Atk: ${userData.atk}, Def: ${userData.def}, Utility: ${userData.utility}`
-        );
-      },
-    },
-    {
-      subcommand: 'unequip',
-      description: 'Unequip an item (e.g., "inventory unequip sword weapon 10 0 Iron Sword").',
-      usage: 'inventory unequip <key> <type> <value1> <value2> <name>',
-      icon: '🛠️',
-      aliases: ['remove'],
-      async deploy({ chat, args, event, hoshinoDB, Inventory }: { chat: any; args: string[]; event: any; hoshinoDB: any; Inventory: any }) {
-        const userData = await hoshinoDB.get(event.senderID);
-        if (!userData || !userData.username) {
-          return chat.reply('📋 | You need to register first! Use: profile register <username>');
-        }
-        if (args.length < 6) {
-          return chat.reply('📋 | Usage: inventory unequip <key> <type> <value1> <value2> <name>');
-        }
-        const key = args[1];
-        const type = args[2];
-        const value1 = args[3];
-        const value2 = args[4];
-        const name = args.slice(5).join(' ');
-        const item = { key, type, name };
-        if (type === 'weapon' || type === 'armor') {
-          item.atk = parseFloat(value1) || 0;
-          item.def = parseFloat(value2) || 0;
-        } else if (type === 'utility') {
-          item.utilityEffect = parseFloat(value1) || 0;
-        } else {
-          return chat.reply('📋 | Can only unequip weapon, armor, or utility items.');
-        }
-        const inventory = new Inventory(userData.inventory || [], INVENTORY_LIMIT);
-        inventory.unequipItem(item, userData);
-        await hoshinoDB.set(event.senderID, {
-          ...userData,
-          inventory: inventory.getAll(),
-          atk: userData.atk || 10,
-          def: userData.def || 5,
-          utility: userData.utility || 0,
-        });
-        return chat.reply(
-          `🛠️ | Unequipped ${key}. Atk: ${userData.atk}, Def: ${userData.def}, Utility: ${userData.utility}`
-        );
-      },
-    },
-    {
-      subcommand: 'toss',
-      description: 'Toss items from your inventory (e.g., "inventory toss health_potion 2").',
-      usage: 'inventory toss <key> [amount]',
-      icon: '🗑️',
-      aliases: ['discard', 'drop'],
-      async deploy({ chat, args, event, hoshinoDB, Inventory }: { chat: any; args: string[]; event: any; hoshinoDB: any; Inventory: any }) {
-        const userData = await hoshinoDB.get(event.senderID);
-        if (!userData || !userData.username) {
-          return chat.reply('📋 | You need to register first! Use: profile register <username>');
-        }
-        if (!args[1]) {
-          return chat.reply('📋 | Usage: inventory toss <key> [amount]');
-        }
-        const inventory = new Inventory(userData.inventory || [], INVENTORY_LIMIT);
-        inventory.toss(args[1], args[2] || '1');
-        await hoshinoDB.set(event.senderID, {
-          ...userData,
-          inventory: inventory.getAll(),
-        });
-        return chat.reply(`🗑️ | Tossed ${args[2] || '1'} of ${args[1]}.`);
-      },
-    },
-    {
-      subcommand: 'status',
-      description: 'Check your character stats.',
-      usage: 'inventory status',
-      icon: '📊',
-      aliases: ['stats', 'info'],
-      async deploy({ chat, args, event, hoshinoDB, Inventory }: { chat: any; args: string[]; event: any; hoshinoDB: any; Inventory: any }) {
-        const userData = await hoshinoDB.get(event.senderID);
-        if (!userData || !userData.username) {
-          return chat.reply('📋 | You need to register first! Use: profile register <username>');
-        }
-        const inventory = new Inventory(userData.inventory || [], INVENTORY_LIMIT);
-        const texts = [
-          '📊 | **Character Stats**',
-          `💖 | **Health**: ${userData.health || 100}`,
-          `🪄 | **Mana**: ${userData.mana || 50}`,
-          `⚔️ | **Attack**: ${userData.atk || 10}`,
-          `🛡️ | **Defense**: ${userData.def || 5}`,
-          `🔧 | **Utility**: ${userData.utility || 0}`,
-          `🎒 | **Inventory Size**: ${inventory.size()}/${INVENTORY_LIMIT}`,
-        ];
-        return chat.reply(texts.join('\n'));
-      },
-    },
-  ]);
-  return home.runInContext(ctx);
-}
-
-export default {
-  manifest,
-  style,
-  deploy,
-  font,
-} as HoshinoLia.Command;
+export default command;
