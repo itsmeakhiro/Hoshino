@@ -1,5 +1,3 @@
-type UseItemResult = true | { opened: boolean; contents: Array<{ name: string; [key: string]: any }> };
-
 const command: HoshinoLia.Command = {
   manifest: {
     name: 'inventory',
@@ -42,8 +40,8 @@ const command: HoshinoLia.Command = {
             if (inventory.size() === 0) {
               return await chat.reply('Your inventory is empty!');
             }
-            const items = inventory.getAll().map((item: any, index: number) => {
-              const effects: string[] = [];
+            const items = inventory.getAll().map((item, index) => {
+              const effects = [];
               if (item.heal > 0) effects.push(`+${item.heal} HP`);
               if (item.mana > 0) effects.push(`+${item.mana} MP`);
               if (item.atk > 0) effects.push(`+${item.atk} ATK`);
@@ -79,7 +77,7 @@ const command: HoshinoLia.Command = {
             const result = inventory.useItem(itemKey, statsData);
             let message = '';
             if (item.type === 'chest' && result !== true) {
-              message = `You opened "${item.name}" and found: ${result.contents.map((c: any) => c.name).join(', ')}!`;
+              message = `You opened "${item.name}" and found: ${result.contents.map(c => c.name).join(', ')}!`;
             } else {
               const restored = [item.heal > 0 ? `${item.heal} health` : '', item.mana > 0 ? `${item.mana} mana` : ''].filter(Boolean).join(' and ');
               message = restored ? `You used "${item.name}" and restored ${restored}!` : `You used "${item.name}", but it had no effect.`;
