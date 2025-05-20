@@ -8,8 +8,7 @@ function generateGameID() {
 const manifest: HoshinoLia.CommandManifest = {
   name: "profile",
   aliases: ["p", "pf"],
-  description:
-    "Check your profile info (balance, diamonds, gameid), register, or change your username.",
+  description: "Check your profile info (balance, diamonds, gameid, trophies), register, or change your username.",
   version: "1.0.0",
   category: "Economy",
   cooldown: 5,
@@ -43,9 +42,7 @@ export async function deploy(ctx) {
       aliases: ["reg", "signup"],
       async deploy({ chat, args, event, hoshinoDB, HoshinoUser, HoshinoEXP }) {
         if (args.length < 1 || !args[0]) {
-          return chat.reply(
-            "📋 | Please provide a username. Usage: profile register <username>"
-          );
+          return chat.reply("📋 | Please provide a username. Usage: profile register <username>");
         }
         const username = args[0].trim();
         if (username.length < 1 || username.length > 20) {
@@ -65,24 +62,21 @@ export async function deploy(ctx) {
           expData: exp.raw(),
           isAdmin: false,
           isModerator: false,
+          trophies: [],
         });
-        return chat.reply(
-          `💌 | Successfully registered as **${username}**! Your Game ID: **${gameid}**`
-        );
+        return chat.reply(`💌 | Successfully registered as **${username}**! Your Game ID: **${gameid}**`);
       },
     },
     {
       subcommand: "info",
-      description: "Check your balance, diamonds, and gameid.",
+      description: "Check your balance, diamonds, gameid, and trophies.",
       usage: "profile info",
       icon: "ℹ️",
       aliases: ["me", "i"],
       async deploy({ chat, args, event, hoshinoDB, HoshinoUser, HoshinoEXP }) {
         const userData = await hoshinoDB.get(event.senderID);
         if (!userData || !userData.username) {
-          return chat.reply(
-            "📋 | You need to register first! Use: profile register <username>"
-          );
+          return chat.reply("📋 | You need to register first! Use: profile register <username>");
         }
         const {
           balance = 0,
@@ -90,6 +84,7 @@ export async function deploy(ctx) {
           username,
           gameid = "N/A",
           expData = { exp: 0, mana: 100, health: 100 },
+          trophies = [],
         } = userData;
         const exp = new HoshinoEXP(expData);
         const texts = [
@@ -102,6 +97,7 @@ export async function deploy(ctx) {
           `📈 | **EXP**: ${exp.getEXP()} (Next: ${exp.getNextRemaningEXP()})`,
           `🪄 | **Mana**: ${exp.getMana()}/${exp.getMaxMana()}`,
           `❤️ | **Health**: ${exp.getHealth()}/${exp.getMaxHealth()}`,
+          `🏆 | **Trophies**: ${trophies.length}`,
         ];
         return chat.reply(texts.join("\n"));
       },
@@ -114,24 +110,18 @@ export async function deploy(ctx) {
       aliases: ["rename", "chname"],
       async deploy({ chat, args, event, hoshinoDB, HoshinoUser, HoshinoEXP }) {
         if (args.length < 2 || !args[1]) {
-          return chat.reply(
-            "📋 | Please provide a new username. Usage: profile changeusername <newusername>"
-          );
+          return chat.reply("📋 | Please provide a new username. Usage: profile changeusername <newusername>");
         }
         const newUsername = args[1].trim();
         if (newUsername.length < 1 || newUsername.length > 20) {
-          return chat.reply("📋 | New username must be 1-20 characters long.");
+          return chat.reply("📋 | Username must be 1-20 characters long.");
         }
         const userData = await hoshinoDB.get(event.senderID);
         if (!userData || !userData.username) {
-          return chat.reply(
-            "📋 | You need to register first! Use: profile register <username>"
-          );
+          return chat.reply("📋 | You need to register first! Use: profile register <username>");
         }
         if (userData.balance < 5000) {
-          return chat.reply(
-            `📋 | You need ${formatCash(5000, true)} to change your username!`
-          );
+          return chat.reply(`📋 | You need ${formatCash(5000, true)} to change your username!`);
         }
         await hoshinoDB.set(event.senderID, {
           ...userData,
@@ -141,17 +131,12 @@ export async function deploy(ctx) {
           gameid: userData.gameid || generateGameID(),
           isAdmin: false,
           isModerator: false,
+          trophies: userData.trophies || [],
         });
-        return chat.reply(
-          `💌 | Username changed to **${newUsername}**! ${formatCash(
-            5000,
-            true
-          )} has been deducted from your balance.`
-        );
+        return chat.reply(`💌 | Username changed to **${newUsername}**! ${formatCash(5000, true)} has been deducted from your balance.`);
       },
     },
-  ],
-);
+  ]);
   return home.runInContext(ctx);
 }
 
