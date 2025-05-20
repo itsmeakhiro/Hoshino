@@ -94,7 +94,7 @@ export async function deploy(ctx) {
         const { cost, quality, initialAccuracy } = BOW_TYPES[bowType];
         if (userData.balance < cost) {
           return chat.reply(
-            `📋 | You need ${formatCash(cost, true)} to buy a ${bowType} bow!`
+            `📋 | You need ${formatCash(cost, "💵", true)} to buy a ${bowType} bow!`
           );
         }
         await hoshinoDB.set(event.senderID, {
@@ -110,7 +110,7 @@ export async function deploy(ctx) {
         });
         const winChance = BASE_WIN_CHANCE + BOW_TYPES[bowType].accuracy + initialAccuracy;
         return chat.reply(
-          `🏹 | You bought a ${bowType} bow (${quality}) for ${formatCash(cost, true)}! ` +
+          `🏹 | You bought a ${bowType} bow (${quality}) for ${formatCash(cost, "💵", true)}! ` +
           `Starting accuracy: ${(initialAccuracy * 100).toFixed(0)}%. Win chance: ${(winChance * 100).toFixed(0)}%. ` +
           `Use 'appleshot train' to improve your aim or 'appleshot shoot <bet>' to play.`
         );
@@ -139,7 +139,7 @@ export async function deploy(ctx) {
         const trainingCost = BASE_TRAINING_COST * Math.pow(2, appleshot.level - 1);
         if (userData.balance < trainingCost) {
           return chat.reply(
-            `📋 | You need ${formatCash(trainingCost, true)} to train to level ${nextLevel}!`
+            `📋 | You need ${formatCash(trainingCost, "💵", true)} to train to level ${nextLevel}!`
           );
         }
         const newAccuracy = Math.min(appleshot.accuracy + ACCURACY_BOOST, MAX_ACCURACY);
@@ -154,7 +154,7 @@ export async function deploy(ctx) {
         });
         const winChance = Math.min(BASE_WIN_CHANCE + BOW_TYPES[appleshot.bowType].accuracy + newAccuracy, 0.95);
         return chat.reply(
-          `🎯 | You trained to aim level ${nextLevel} for ${formatCash(trainingCost, true)}! ` +
+          `🎯 | You trained to aim level ${nextLevel} for ${formatCash(trainingCost, "💵", true)}! ` +
           `Your accuracy is now ${(newAccuracy * 100).toFixed(0)}%, and your win chance is ${(winChance * 100).toFixed(0)}%.`
         );
       },
@@ -180,13 +180,13 @@ export async function deploy(ctx) {
         const { appleshot } = userData;
         if (!args[1] || isNaN(Number(args[1])) || Number(args[1]) < MIN_BET) {
           return chat.reply(
-            `📋 | Please specify a bet of at least ${formatCash(MIN_BET, true)}. Usage: appleshot shoot <bet>`
+            `📋 | Please specify a bet of at least ${formatCash(MIN_BET, "💵", true)}. Usage: appleshot shoot <bet>`
           );
         }
         const bet = Math.floor(Number(args[1]));
         if (userData.balance < bet) {
           return chat.reply(
-            `📋 | You need ${formatCash(bet, true)} to place this bet!`
+            `📋 | You need ${formatCash(bet, "💵", true)} to place this bet!`
           );
         }
         const winChance = Math.min(BASE_WIN_CHANCE + BOW_TYPES[appleshot.bowType].accuracy + appleshot.accuracy, 0.95);
@@ -219,11 +219,11 @@ export async function deploy(ctx) {
         if (isWin) {
           const message = WIN_MESSAGES[Math.floor(Math.random() * WIN_MESSAGES.length)];
           return chat.reply(
-            `${message} You won ${formatCash(winnings, true)} (+${formatCash(winnings - bet, true)}) ` +
+            `${message} You won ${formatCash(winnings, "💵", true)} (+${formatCash(winnings - bet, "💵", true)}) ` +
             `with a ${(winChance * 100).toFixed(0)}% win chance!`
           );
         } else {
-          const formattedBet = formatCash(bet, true);
+          const formattedBet = formatCash(bet, "💵", true);
           const message = LOSS_MESSAGES[Math.floor(Math.random() * LOSS_MESSAGES.length)]
             .replace("{username}", randomUser)
             .replace("{bet}", formattedBet);
@@ -258,7 +258,7 @@ export async function deploy(ctx) {
           `- Level: ${appleshot.level}\n` +
           `- Accuracy: ${(appleshot.accuracy * 100).toFixed(0)}%\n` +
           `- Win Chance: ${(winChance * 100).toFixed(0)}%\n` +
-          `- Balance: ${formatCash(userData.balance, true)}`
+          `- Balance: ${formatCash(userData.balance, "💵", true)}`
         );
       },
     },
