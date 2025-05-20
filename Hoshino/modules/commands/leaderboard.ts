@@ -43,9 +43,9 @@ export async function deploy(ctx) {
         const userArray = Object.entries(allUsers)
           .map(([uid, data]) => ({
             uid,
-            username: data.username || "Unknown",
-            balance: data.balance || 0,
-            trophies: data.trophies || [],
+            username: (data as { username?: string }).username || "Unknown",
+            balance: (data as { balance?: number }).balance || 0,
+            trophies: (data as { trophies?: string[] }).trophies || [],
           }))
           .filter(user => user.username !== "Unknown" && user.balance > 0)
           .sort((a, b) => b.balance - a.balance)
