@@ -16,7 +16,7 @@ class HoshinoHM {
    * @param {Object} [style] - Styling options for the command list.
    * @param {Object} [font] - Font styles for title, content, and footer.
    */
-  constructor(commands, icon = "➥", style = {}, font = {}) {
+  constructor(commands, icon = "✦", style = {}, font = {}) {
     if (!Array.isArray(commands)) {
       throw new Error("Commands must be an array.");
     }
@@ -43,25 +43,13 @@ class HoshinoHM {
     const subcommand = args[0];
 
     if (!subcommand || !this.commands.has(subcommand)) {
-      const commands = [...new Set(this.commands.values())];
-      const commandsPerPage = 5;
-      const totalPages = Math.ceil(commands.length / commandsPerPage);
-      let page = parseInt(args[1]) || 1;
-      page = Math.max(1, Math.min(page, totalPages));
-
-      const start = (page - 1) * commandsPerPage;
-      const end = start + commandsPerPage;
-      const paginatedCommands = commands.slice(start, end);
-
-      const list = paginatedCommands
+      const list = [...new Set(this.commands.values())]
         .map((cmd) => {
           const aliases = cmd.aliases && cmd.aliases.length ? ` (aliases: ${cmd.aliases.join(", ")})` : "";
           const description = `${this.icon} ${cmd.icon || ''} ${cmd.subcommand}${aliases} → ${cmd.description}`;
           return cmd.usage ? `${description}\n   **Usage:** ${cmd.usage}` : description;
         })
         .join("\n\n");
-
-      const footer = `${this.style.footer ? `${this.style.footer}\n` : ''}Page ${page} of ${totalPages}`;
 
       const stylerFn = ctx.styler || styler;
 
@@ -75,7 +63,7 @@ class HoshinoHM {
           type: this.style.type || 'default',
           title: this.style.title || '',
           content: list,
-          footer: footer,
+          footer: this.style.footer || '',
           fontStyles
         });
 
@@ -83,14 +71,14 @@ class HoshinoHM {
           this.style.type || 'default',
           this.style.title || '',
           list,
-          footer,
+          this.style.footer || '',
           fontStyles
         );
         console.log('Formatted output:', formattedList);
         return await chat.reply(formattedList);
       } catch (error) {
         console.error('Styler error:', error);
-        return await chat.reply(`Error formatting command list:\n${list}\n${footer}`);
+        return await chat.reply(`Error formatting command list:\n${list}`);
       }
     }
 
