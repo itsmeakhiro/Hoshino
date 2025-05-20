@@ -40,17 +40,75 @@ const font: HoshinoLia.Command["font"] = {
 };
 
 const ROD_TYPES = {
-  basic: { cost: 10000, fishPool: ["Sardine", "Mackerel"], quality: "Weak" },
-  advanced: { cost: 25000, fishPool: ["Cod", "Salmon"], quality: "Mid-tier" },
-  master: { cost: 50000, fishPool: ["Cod", "Salmon", "Tuna"], quality: "High-quality" },
+  basic: {
+    cost: 10000,
+    fishPool: [
+      "Sardine",
+      "Mackerel",
+      "Anchovy",
+      "Herring",
+      "Sprat",
+      "Smelt",
+      "Capelin",
+      "Shad",
+    ],
+    quality: "Weak",
+  },
+  advanced: {
+    cost: 25000,
+    fishPool: [
+      "Cod",
+      "Salmon",
+      "Snapper",
+      "Haddock",
+      "Pollock",
+      "Whiting",
+      "Perch",
+      "Bass",
+    ],
+    quality: "Mid-tier",
+  },
+  master: {
+    cost: 50000,
+    fishPool: [
+      "Cod",
+      "Salmon",
+      "Snapper",
+      "Haddock",
+      "Pollock",
+      "Whiting",
+      "Perch",
+      "Bass",
+      "Tuna",
+      "Marlin",
+      "Swordfish",
+      "MahiMahi",
+    ],
+    quality: "High-quality",
+  },
 };
 
 const FISH_TYPES = [
-  { name: "Sardine", value: 5, quality: "Weak" },
-  { name: "Mackerel", value: 8, quality: "Weak" },
-  { name: "Cod", value: 12, quality: "Mid-tier" },
-  { name: "Salmon", value: 15, quality: "Mid-tier" },
-  { name: "Tuna", value: 20, quality: "High-quality" },
+  { name: "Sardine", value: 50, quality: "Weak" },
+  { name: "Mackerel", value: 60, quality: "Weak" },
+  { name: "Anchovy", value: 55, quality: "Weak" },
+  { name: "Herring", value: 65, quality: "Weak" },
+  { name: "Sprat", value: 70, quality: "Weak" },
+  { name: "Smelt", value: 75, quality: "Weak" },
+  { name: "Capelin", value: 80, quality: "Weak" },
+  { name: "Shad", value: 85, quality: "Weak" },
+  { name: "Cod", value: 120, quality: "Mid-tier" },
+  { name: "Salmon", value: 130, quality: "Mid-tier" },
+  { name: "Snapper", value: 140, quality: "Mid-tier" },
+  { name: "Haddock", value: 150, quality: "Mid-tier" },
+  { name: "Pollock", value: 160, quality: "Mid-tier" },
+  { name: "Whiting", value: 170, quality: "Mid-tier" },
+  { name: "Perch", value: 175, quality: "Mid-tier" },
+  { name: "Bass", value: 180, quality: "Mid-tier" },
+  { name: "Tuna", value: 200, quality: "High-quality" },
+  { name: "Marlin", value: 220, quality: "High-quality" },
+  { name: "Swordfish", value: 250, quality: "High-quality" },
+  { name: "MahiMahi", value: 280, quality: "High-quality" },
 ];
 
 const FISHING_INTERVAL_MS = 5 * 60 * 1000;
@@ -73,15 +131,15 @@ export async function deploy(ctx) {
         if (userData.fishing) {
           return chat.reply("🎣 | You already own fishing equipment!");
         }
-        if (args.length < 1 || !args[0]) {
+        if (args.length < 2 || !args[1]) {
           return chat.reply(
             "📋 | Please specify a rod type. Usage: fishing buy <basic | advanced | master>\n" +
-            `- Basic ($10,000): Catches weak fish (Sardine, Mackerel)\n` +
-            `- Advanced ($25,000): Catches mid-tier fish (Cod, Salmon)\n` +
-            `- Master ($50,000): Catches mid-tier and high-quality fish (Cod, Salmon, Tuna)`
+            `- Basic ($10,000): Catches weak fish (Sardine, Mackerel, Anchovy, Herring, Sprat, Smelt, Capelin, Shad)\n` +
+            `- Advanced ($25,000): Catches mid-tier fish (Cod, Salmon, Snapper, Haddock, Pollock, Whiting, Perch, Bass)\n` +
+            `- Master ($50,000): Catches mid-tier and high-quality fish (Cod, Salmon, Snapper, Haddock, Pollock, Whiting, Perch, Bass, Tuna, Marlin, Swordfish, MahiMahi)`
           );
         }
-        const rodType = args[0].toLowerCase();
+        const rodType = args[1].toLowerCase();
         if (!ROD_TYPES[rodType]) {
           return chat.reply(
             "📋 | Invalid rod type! Choose: basic, advanced, or master"
