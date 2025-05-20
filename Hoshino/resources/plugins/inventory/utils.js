@@ -158,11 +158,21 @@ class Inventory {
   }
 
   addOne(item) {
-    return this.inv.push(item);
+    if (this.inv.length >= this.limit) {
+      throw new Error("Inventory limit reached.");
+    }
+    this.inv.push(this.sanitize([item])[0]);
+    return this.inv.length;
   }
 
   add(item) {
-    return this.inv.push(...item);
+    const items = Array.isArray(item) ? item : [item];
+    const sanitized = this.sanitize(items);
+    if (this.inv.length + sanitized.length > this.limit) {
+      throw new Error("Adding items would exceed inventory limit.");
+    }
+    this.inv.push(...sanitized);
+    return this.inv.length;
   }
 
   toss(key, amount) {
@@ -275,6 +285,33 @@ class Inventory {
       user.setUtility(currentUtility + item.utilityEffect);
     }
     this.deleteOne(key);
+    return true;
+  }
+
+  unequipItem(item, user) {
+    if (!item || !item.key || !item.type) {
+      throw new Error("Invalid item: Must have key and type properties.");
+    }
+    if (item.type !== "weapon" && item.type !== "armor" && item.type !== "utility") {
+      throw new Error(`Item with key ${item.key} is not a weapon, armor, or utility item and cannot be unequipped.`);
+    }
+    if (!user || typeof user.setAtk !== "function" || typeof user.setDef !== "function" || typeof user.setUtility !== "function") {
+      throw new Error("Invalid user object: Must have setAtk, setDef, and setUtility methods.");
+    }
+    if (this.inv.length >= this.limit) {
+      throw new Error("Cannot unequip item: Inventory limit reached.");
+    }
+    if (item.type === "weapon") {
+      const currentAtk = user.getAtk ? user.getAtk() : 0;
+      user.setAtk(currentAtk - item.atk);
+    } else if (item.type === "armor") {
+      const currentDef = user.getDef ? user.getDef() : 0;
+      user.setDef(currentDef - item.def);
+    } else if (item.type === "utility") {
+      const currentUtility = user.getUtility ? user.getUtility() : 0;
+      user.setUtility(currentUtility - item.utilityEffect);
+    }
+    this.addOne(item);
     return true;
   }
 }
