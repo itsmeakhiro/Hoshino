@@ -33,8 +33,7 @@ const command: HoshinoLia.Command = {
           description: 'View all items in your inventory.',
           usage: 'inventory list',
           async deploy({ chat, args, event, hoshinoDB, Inventory }) {
-            const cleanID = ctx.utils.cleanUserID(event.senderID);
-            const userData = await hoshinoDB.get(cleanID);
+            const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
               return await chat.reply('You need to register first! Use: profile register <username>');
             }
@@ -63,8 +62,7 @@ const command: HoshinoLia.Command = {
           description: 'Use a food, potion, or chest item.',
           usage: 'inventory use <item_key>',
           async deploy({ chat, args, event, hoshinoDB, Inventory }) {
-            const cleanID = ctx.utils.cleanUserID(event.senderID);
-            const userData = await hoshinoDB.get(cleanID);
+            const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
               return await chat.reply('You need to register first! Use: profile register <username>');
             }
@@ -86,7 +84,7 @@ const command: HoshinoLia.Command = {
               const restored = [item.heal > 0 ? `${item.heal} health` : '', item.mana > 0 ? `${item.mana} mana` : ''].filter(Boolean).join(' and ');
               message = restored ? `You used "${item.name}" and restored ${restored}!` : `You used "${item.name}", but it had no effect.`;
             }
-            await hoshinoDB.set(cleanID, {
+            await hoshinoDB.set(event.senderID, {
               ...userData,
               statsData,
               inventoryData: inventory.getAll(),
@@ -100,8 +98,7 @@ const command: HoshinoLia.Command = {
           description: 'Equip a weapon, armor, or utility item.',
           usage: 'inventory equip <item_key>',
           async deploy({ chat, args, event, hoshinoDB, Inventory }) {
-            const cleanID = ctx.utils.cleanUserID(event.senderID);
-            const userData = await hoshinoDB.get(cleanID);
+            const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
               return await chat.reply('You need to register first! Use: profile register <username>');
             }
@@ -115,7 +112,7 @@ const command: HoshinoLia.Command = {
               return await chat.reply(`You don't have an item with key "${itemKey}" in your inventory!`);
             }
             inventory.equipItem(itemKey, statsData);
-            await hoshinoDB.set(cleanID, {
+            await hoshinoDB.set(event.senderID, {
               ...userData,
               statsData,
               inventoryData: inventory.getAll(),
@@ -129,8 +126,7 @@ const command: HoshinoLia.Command = {
           description: 'Unequip a weapon, armor, or utility item.',
           usage: 'inventory unequip <item_key> <type> <value1> <value2> <name>',
           async deploy({ chat, args, event, hoshinoDB, Inventory }) {
-            const cleanID = ctx.utils.cleanUserID(event.senderID);
-            const userData = await hoshinoDB.get(cleanID);
+            const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
               return await chat.reply('You need to register first! Use: profile register <username>');
             }
@@ -154,7 +150,7 @@ const command: HoshinoLia.Command = {
             const { statsData = { health: 100, mana: 50, atk: 10, def: 5, utility: 0 }, inventoryData = [] } = userData;
             const inventory = new Inventory(inventoryData, 10);
             inventory.unequipItem(item, statsData);
-            await hoshinoDB.set(cleanID, {
+            await hoshinoDB.set(event.senderID, {
               ...userData,
               statsData,
               inventoryData: inventory.getAll(),
@@ -168,8 +164,7 @@ const command: HoshinoLia.Command = {
           description: 'Remove items from your inventory.',
           usage: 'inventory toss <item_key> [amount]',
           async deploy({ chat, args, event, hoshinoDB, Inventory }) {
-            const cleanID = ctx.utils.cleanUserID(event.senderID);
-            const userData = await hoshinoDB.get(cleanID);
+            const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
               return await chat.reply('You need to register first! Use: profile register <username>');
             }
@@ -194,7 +189,7 @@ const command: HoshinoLia.Command = {
               return await chat.reply(`You only have ${inventory.getAmount(itemKey)} "${item.name}"(s) to toss!`);
             }
             inventory.toss(itemKey, amount);
-            await hoshinoDB.set(cleanID, {
+            await hoshinoDB.set(event.senderID, {
               ...userData,
               inventoryData: inventory.getAll(),
             });
@@ -207,8 +202,7 @@ const command: HoshinoLia.Command = {
           description: 'Check your character stats.',
           usage: 'inventory status',
           async deploy({ chat, args, event, hoshinoDB, Inventory }) {
-            const cleanID = ctx.utils.cleanUserID(event.senderID);
-            const userData = await hoshinoDB.get(cleanID);
+            const userData = await hoshinoDB.get(event.senderID);
             if (!userData || !userData.username) {
               return await chat.reply('You need to register first! Use: profile register <username>');
             }
