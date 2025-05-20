@@ -189,16 +189,21 @@ export async function deploy(ctx) {
         if (userData.fishing.isFishing) {
           return chat.reply("🎣 | You are already fishing!");
         }
+        const fishPool = ROD_TYPES[userData.fishing.rodType].fishPool;
+        const fishName = fishPool[Math.floor(Math.random() * fishPool.length)];
+        const fish = FISH_TYPES.find(f => f.name === fishName);
+        const catches = fish ? [{ name: fish.name, value: fish.value }] : [];
         await hoshinoDB.set(event.senderID, {
           ...userData,
           fishing: {
             ...userData.fishing,
             isFishing: true,
             lastFished: Date.now(),
+            catches,
           },
         });
         return chat.reply(
-          "🐟 | You started fishing! Fish will be caught over time. Check with 'fishing status'."
+          `🐟 | You started fishing and caught a ${fish ? fish.name : "fish"}! Check with 'fishing status'.`
         );
       },
     },
