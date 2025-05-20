@@ -1,9 +1,7 @@
 class Inventory {
   constructor(inventory = [], limit = Infinity) {
     inventory ??= [];
-
     this.limit = limit;
-
     this.inv = this.sanitize(JSON.parse(JSON.stringify(inventory)));
   }
 
@@ -22,7 +20,8 @@ class Inventory {
         sellPrice = 0,
       } = item;
       if (!key) {
-        return;
+        console.warn(`Item at index ${index} has no key and will be ignored.`);
+        return null;
       }
       let result = {
         ...item,
@@ -51,6 +50,10 @@ class Inventory {
         result.contents ??= [];
         result.contents = Array.isArray(result.contents) ? result.contents : [];
       }
+      if (type === "utility") {
+        result.utilityEffect ??= 0;
+        result.utilityEffect = parseFloat(result.utilityEffect);
+      }
       return result;
     });
     return result.filter(Boolean);
@@ -77,11 +80,9 @@ class Inventory {
 
   deleteRef(item) {
     let index = this.inv.indexOf(item);
-
     if (index === -1) {
       index = parseInt(item) - 1;
     }
-
     if (index !== -1 && !isNaN(index)) {
       this.inv.splice(index, 1);
     }
@@ -168,7 +169,6 @@ class Inventory {
     if (amount === "all") {
       amount = this.getAmount(key);
     }
-
     for (let i = 0; i < amount; i++) {
       this.deleteOne(key);
     }
@@ -221,7 +221,6 @@ class Inventory {
     if (!item) {
       throw new Error(`Item with key ${key} does not exist in the inventory.`);
     }
-
     if (item.type === "chest") {
       if (!item.contents || !Array.isArray(item.contents)) {
         throw new Error(`Chest with key ${key} has no valid contents.`);
@@ -237,19 +236,16 @@ class Inventory {
           "Invalid user object: Must have setHealth and setMana methods."
         );
       }
-
       if (item.heal > 0) {
         const currentHealth = user.getHealth();
         const newHealth = currentHealth + item.heal;
         user.setHealth(newHealth);
       }
-
       if (item.mana > 0) {
         const currentMana = user.getMana();
         const newMana = currentMana + item.mana;
         user.setMana(newMana);
       }
-
       this.deleteOne(key);
       return true;
     } else {
@@ -262,25 +258,22 @@ class Inventory {
     if (!item) {
       throw new Error(`Item with key ${key} does not exist in the inventory.`);
     }
-
-    if (item.type !== "weapon" && item.type !== "armor") {
-      throw new Error(`Item with key ${key} is not a weapon or armor and cannot be equipped.`);
+    if (item.type !== "weapon" && item.type !== "armor" && item.type !== "utility") {
+      throw new Error(`Item with key ${key} is not a weapon, armor, or utility item and cannot be equipped.`);
     }
-
-    if (!user || !user.setAtk || !user.setDef) {
-      throw new Error("Invalid user object: Must have setAtk and setDef methods.");
+    if (!user || typeof user.setAtk !== "function" || typeof user.setDef !== "function" || typeof user.setUtility !== "function") {
+      throw new Error("Invalid user object: Must have setAtk, setDef, and setUtility methods.");
     }
-
     if (item.type === "weapon") {
       const currentAtk = user.getAtk ? user.getAtk() : 0;
       user.setAtk(currentAtk + item.atk);
-    }
-
-    if (item.type === "armor") {
+    } else if (item.type === "armor") {
       const currentDef = user.getDef ? user.getDef() : 0;
       user.setDef(currentDef + item.def);
+    } else if (item.type === "utility") {
+      const currentUtility = user.getUtility ? user.getUtility() : 0;
+      user.setUtility(currentUtility + item.utilityEffect);
     }
-
     this.deleteOne(key);
     return true;
   }
