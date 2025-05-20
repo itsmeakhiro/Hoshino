@@ -5,7 +5,7 @@ const command: HoshinoLia.Command = {
     name: 'inventory',
     aliases: ['inv', 'items'],
     version: '1.0.0',
-    developer: 'xAI Team',
+    developer: 'Francis Loyd Raval',
     description: 'Manage your inventory: check items, use items, equip/unequip gear, or toss items.',
     category: 'Inventory',
     usage: 'inventory list | inventory use <item_key> | inventory equip <item_key> | inventory unequip <item_key> <type> <value1> <value2> <name> | inventory toss <item_key> [amount] | inventory status',
@@ -17,7 +17,7 @@ const command: HoshinoLia.Command = {
   style: {
     type: 'lines1',
     title: '〘 🎒 〙 INVENTORY',
-    footer: '**Developed by**: xAI Team',
+    footer: 'Made with 🤍 by **Francis Loyd Raval**',
   },
   font: {
     title: 'bold',
