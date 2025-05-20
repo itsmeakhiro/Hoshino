@@ -1,3 +1,17 @@
+export function formatCash(
+  number: number = 0,
+  emoji: string | boolean = "💵",
+  bold = false
+) {
+  if (typeof emoji === "boolean") {
+    bold = emoji;
+    emoji = "💵";
+  }
+  return `${bold ? "**" : ""}$${Number(number).toLocaleString()}${
+    emoji || "💵"
+  }${bold ? "**" : ""}`;
+}
+
 const manifest: HoshinoLia.CommandManifest = {
   name: "plant",
   aliases: ["garden", "farm"],
@@ -56,7 +70,7 @@ async function handlePropertyTax(userData, hoshinoDB, event, chat, deduct = fals
     return {
       taxOverdue: false,
       taxAmount,
-      message: `🧾 | Property tax of ${formatCash(taxAmount, true, false, event.senderID, hoshinoDB)} deducted for ${daysDue} day(s).`,
+      message: `🧾 | Property tax of ${formatCash(taxAmount, true)} deducted for ${daysDue} day(s).`,
     };
   } else if (userData.balance < taxAmount) {
     if (!garden.taxOverdue) {
@@ -68,34 +82,10 @@ async function handlePropertyTax(userData, hoshinoDB, event, chat, deduct = fals
     return {
       taxOverdue: true,
       taxAmount,
-      message: `🧾 | Property tax of ${formatCash(taxAmount, true, false, event.senderID, hoshinoDB)} is overdue! Pay with 'plant paytax'.`,
+      message: `🧾 | Property tax of ${formatCash(taxAmount, true)} is overdue! Pay with 'plant paytax'.`,
     };
   }
   return { taxOverdue: garden.taxOverdue, taxAmount };
-}
-
-export async function formatCash(
-  number: number = 0,
-  emoji: string | boolean = "💵",
-  bold = false,
-  isEarnings = false,
-  senderID?: string,
-  hoshinoDB?: any
-) {
-  if (typeof emoji === "boolean") {
-    bold = emoji;
-    emoji = "💵";
-  }
-  let displayNumber = number;
-  if (isEarnings && senderID && hoshinoDB) {
-    const top1Uid = await hoshinoDB.get("current_top_1");
-    if (top1Uid === senderID) {
-      displayNumber = number * 3;
-    }
-  }
-  return `${bold ? "**" : ""}$${Number(displayNumber).toLocaleString()}${
-    emoji || "💵"
-  }${bold ? "**" : ""}`;
 }
 
 export async function deploy(ctx) {
@@ -118,7 +108,7 @@ export async function deploy(ctx) {
         }
         if (userData.balance < LAND_COST) {
           return chat.reply(
-            `📋 | You need ${formatCash(LAND_COST, true, false, event.senderID, hoshinoDB)} to buy a garden!`
+            `📋 | You need ${formatCash(LAND_COST, true)} to buy a garden!`
           );
         }
         await hoshinoDB.set(event.senderID, {
@@ -134,7 +124,7 @@ export async function deploy(ctx) {
           },
         });
         return chat.reply(
-          `🌱 | You bought a garden plot for ${formatCash(LAND_COST, true, false, event.senderID, hoshinoDB)}! Use 'plant start' to begin planting. Property tax: ${formatCash(PROPERTY_TAX_PER_DAY, true, false, event.senderID, hoshinoDB)}/day.`
+          `🌱 | You bought a garden plot for ${formatCash(LAND_COST, true)}! Use 'plant start' to begin planting. Property tax: ${formatCash(PROPERTY_TAX_PER_DAY, true)}/day.`
         );
       },
     },
@@ -159,7 +149,7 @@ export async function deploy(ctx) {
         if (userData.garden.taxOverdue) {
           const { taxAmount } = await handlePropertyTax(userData, hoshinoDB, event, chat);
           return chat.reply(
-            `🧾 | Cannot start planting: Property tax of ${formatCash(taxAmount, true, false, event.senderID, hoshinoDB)} is overdue! Pay with 'plant paytax'.`
+            `🧾 | Cannot start planting: Property tax of ${formatCash(taxAmount, true)} is overdue! Pay with 'plant paytax'.`
           );
         }
         if (userData.garden.isPlanting) {
@@ -206,15 +196,15 @@ export async function deploy(ctx) {
         const { taxOverdue, taxAmount, message } = await handlePropertyTax(userData, hoshinoDB, event, chat, true);
         const texts = [
           `🌱 | **Garden Level**: ${garden.level}`,
-          `🪙 | **Earnings Rate**: ${formatCash(earningsRate, true, true, event.senderID, hoshinoDB)} per minute`,
-          `💰 | **Accumulated Earnings**: ${formatCash(accumulatedEarnings, true, true, event.senderID, hoshinoDB)}`,
+          `🪙 | **Earnings Rate**: ${formatCash(earningsRate, true)} per minute`,
+          `💰 | **Accumulated Earnings**: ${formatCash(accumulatedEarnings, true)}`,
           `🌿 | **Planting Status**: ${garden.isPlanting ? "Active" : "Idle"}`,
-          `🧾 | **Tax Status**: ${taxOverdue ? `Overdue (${formatCash(taxAmount, true, false, event.senderID, hoshinoDB)})` : "Paid"}`,
+          `🧾 | **Tax Status**: ${taxOverdue ? `Overdue (${formatCash(taxAmount, true)})` : "Paid"}`,
         ];
         if (garden.isPlanting) {
           texts.push(`⏰ | **Planting Since**: ${new Date(garden.lastPlanted).toLocaleString()}`);
         }
-        texts.push(`🧾 | **Property Tax**: ${formatCash(PROPERTY_TAX_PER_DAY * garden.level, true, false, event.senderID, hoshinoDB)} per day`);
+        texts.push(`🧾 | **Property Tax**: ${formatCash(PROPERTY_TAX_PER_DAY * garden.level, true)} per day`);
         if (message) texts.push(message);
         return chat.reply(texts.join("\n"));
       },
@@ -240,7 +230,7 @@ export async function deploy(ctx) {
         if (userData.garden.taxOverdue) {
           const { taxAmount } = await handlePropertyTax(userData, hoshinoDB, event, chat);
           return chat.reply(
-            `🧾 | Cannot collect earnings: Property tax of ${formatCash(taxAmount, true, false, event.senderID, hoshinoDB)} is overdue! Pay with 'plant paytax'.`
+            `🧾 | Cannot collect earnings: Property tax of ${formatCash(taxAmount, true)} is overdue! Pay with 'plant paytax'.`
           );
         }
         let { garden } = userData;
@@ -262,7 +252,7 @@ export async function deploy(ctx) {
           },
         });
         return chat.reply(
-          `💸 | You collected ${formatCash(accumulatedEarnings, true, true, event.senderID, hoshinoDB)} from your garden!`
+          `💸 | You collected ${formatCash(accumulatedEarnings, true)} from your garden!`
         );
       },
     },
@@ -287,14 +277,14 @@ export async function deploy(ctx) {
         if (userData.garden.taxOverdue) {
           const { taxAmount } = await handlePropertyTax(userData, hoshinoDB, event, chat);
           return chat.reply(
-            `🧾 | Cannot upgrade: Property tax of ${formatCash(taxAmount, true, false, event.senderID, hoshinoDB)} is overdue! Pay with 'plant paytax'.`
+            `🧾 | Cannot upgrade: Property tax of ${formatCash(taxAmount, true)} is overdue! Pay with 'plant paytax'.`
           );
         }
         const { garden } = userData;
         const upgradeCost = UPGRADE_COST_BASE * garden.level;
         if (userData.balance < upgradeCost) {
           return chat.reply(
-            `📋 | You need ${formatCash(upgradeCost, true, false, event.senderID, hoshinoDB)} to upgrade your garden!`
+            `📋 | You need ${formatCash(upgradeCost, true)} to upgrade your garden!`
           );
         }
         await hoshinoDB.set(event.senderID, {
@@ -308,11 +298,8 @@ export async function deploy(ctx) {
         return chat.reply(
           `⬆️ | Your garden is now Level ${garden.level + 1}! Earnings doubled to ${formatCash(
             EARNINGS_PER_MINUTE * (garden.level + 1),
-            true,
-            true,
-            event.senderID,
-            hoshinoDB
-          )} per minute. Property tax increased to ${formatCash(PROPERTY_TAX_PER_DAY * (garden.level + 1), true, false, event.senderID, hoshinoDB)}/day.`
+            true
+          )} per minute. Property tax increased to ${formatCash(PROPERTY_TAX_PER_DAY * (garden.level + 1), true)}/day.`
         );
       },
     },
@@ -340,7 +327,7 @@ export async function deploy(ctx) {
         }
         if (userData.balance < taxAmount) {
           return chat.reply(
-            `📋 | You need ${formatCash(taxAmount, true, false, event.senderID, hoshinoDB)} to pay your overdue taxes!`
+            `📋 | You need ${formatCash(taxAmount, true)} to pay your overdue taxes!`
           );
         }
         return chat.reply(message);
