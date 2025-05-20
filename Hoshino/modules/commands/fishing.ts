@@ -136,7 +136,7 @@ export async function deploy(ctx) {
         if (userData.fishing) {
           return chat.reply("🎣 | You already own fishing equipment!");
         }
-        if (args.length < 2 || !args[1]) {
+        if (args.length < 2 || !args[1] || typeof args[1] !== "string") {
           return chat.reply(
             "📋 | Please specify a rod type. Usage: fishing buy <basic | advanced | master>\n" +
             `- Basic ($10,000): Catches weak fish (Sardine, Mackerel, Anchovy, Herring, Sprat, Smelt, Capelin, Shad)\n` +
@@ -231,13 +231,13 @@ export async function deploy(ctx) {
             "📋 | You need to buy fishing equipment first! Use: fishing buy <basic | advanced | master>"
           );
         }
-        const { fishing } = userData;
+        const fishing = userData.fishing;
         if (fishing.helpers.length >= MAX_HELPERS) {
           return chat.reply(
-            `📋 | You’ve reached the maximum of ${MAX_HELPERS} helpers!`
+            `📋 | You've reached the maximum of ${MAX_HELPERS} helpers! Check with 'fishing status'.`
           );
         }
-        if (args.length < 2 || !args[1]) {
+        if (args.length < 2 || !args[1] || typeof args[1] !== "string") {
           return chat.reply(
             "📋 | Please specify a rod type for the helper. Usage: fishing recruit <basic | advanced | master>\n" +
             `- Basic ($10,000): +0.5 fish/5 min\n` +
@@ -251,10 +251,10 @@ export async function deploy(ctx) {
             "📋 | Invalid rod type! Choose: basic, advanced, or master"
           );
         }
-        const { cost, quality } = ROD_TYPES[rodType];
+        const { cost, quality, helperBoost } = ROD_TYPES[rodType];
         if (userData.balance < cost) {
           return chat.reply(
-            `📋 | You need ${formatCash(cost, true)} to buy a ${rodType} rod for the helper!`
+            `📋 | You need ${formatCash(cost, true)} to buy a ${rodType} rod for the helper! Earn more with 'fishing collect'.`
           );
         }
         await hoshinoDB.set(event.senderID, {
@@ -267,7 +267,7 @@ export async function deploy(ctx) {
         });
         return chat.reply(
           `🤝 | You recruited a helper with a ${rodType} rod (${quality}) for ${formatCash(cost, true)}! ` +
-          `They boost your catch rate by ${ROD_TYPES[rodType].helperBoost} fish/5 min.`
+          `Catch rate boosted by ${helperBoost} fish/5 min. Check with 'fishing status'.`
         );
       },
     },
@@ -289,12 +289,12 @@ export async function deploy(ctx) {
             "📋 | You need to buy fishing equipment first! Use: fishing buy <basic | advanced | master>"
           );
         }
-        const { fishing } = userData;
+        const fishing = userData.fishing;
         const nextLevel = fishing.level + 1;
         const upgradeCost = BASE_UPGRADE_COST * Math.pow(2, fishing.level - 1);
         if (userData.balance < upgradeCost) {
           return chat.reply(
-            `📋 | You need ${formatCash(upgradeCost, true)} to upgrade to level ${nextLevel}!`
+            `📋 | You need ${formatCash(upgradeCost, true)} to upgrade to level ${nextLevel}! Earn more with 'fishing collect'.`
           );
         }
         await hoshinoDB.set(event.senderID, {
@@ -328,13 +328,13 @@ export async function deploy(ctx) {
             "📋 | You need to buy fishing equipment first! Use: fishing buy <basic | advanced | master>"
           );
         }
-        const { fishing } = userData;
+        const fishing = userData.fishing;
         let catches = fishing.catches || [];
         let totalValue = catches.reduce((sum, fish) => sum + (fish ? fish.value : 0), 0);
         if (fishing.isFishing) {
           const timePassed = (Date.now() - fishing.lastFished) / FISHING_INTERVAL_MS;
           const helperBoost = fishing.helpers.reduce(
-            (sum, helper) => sum + ROD_TYPES[helper.rodType].helperBoost,
+            (sum, helper) => sum + (ROD_TYPES[helper.rodType]?.helperBoost || 0),
             0
           );
           const fishCaught = Math.floor(timePassed * fishing.level * (1 + helperBoost));
@@ -353,12 +353,12 @@ export async function deploy(ctx) {
             acc[fish.name] = (acc[fish.name] || 0) + 1;
           }
           return acc;
-        }, {});
+        }, {} as Record<string, number>);
         const helperText = fishing.helpers.length
           ? fishing.helpers
               .map(
                 (h, i) =>
-                  `  - Helper ${i + 1}: ${h.rodType.charAt(0).toUpperCase() + h.rodType.slice(1)} rod (+${ROD_TYPES[h.rodType].helperBoost} fish/5 min)`
+                  `  - Helper ${i + 1}: ${h.rodType.charAt(0).toUpperCase() + h.rodType.slice(1)} rod (+${ROD_TYPES[h.rodType]?.helperBoost || 0} fish/5 min)`
               )
               .join("\n")
           : "None";
@@ -401,12 +401,12 @@ export async function deploy(ctx) {
             "📋 | You need to buy fishing equipment first! Use: fishing buy <basic | advanced | master>"
           );
         }
-        let { fishing } = userData;
+        const fishing = userData.fishing;
         let catches = fishing.catches || [];
         if (fishing.isFishing) {
           const timePassed = (Date.now() - fishing.lastFished) / FISHING_INTERVAL_MS;
           const helperBoost = fishing.helpers.reduce(
-            (sum, helper) => sum + ROD_TYPES[helper.rodType].helperBoost,
+            (sum, helper) => sum + (ROD_TYPES[helper.rodType]?.helperBoost || 0),
             0
           );
           const fishCaught = Math.floor(timePassed * fishing.level * (1 + helperBoost));
