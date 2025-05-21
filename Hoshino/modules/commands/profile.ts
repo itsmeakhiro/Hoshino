@@ -41,10 +41,10 @@ export async function deploy(ctx) {
       icon: "®️",
       aliases: ["reg", "signup"],
       async deploy({ chat, args, event, hoshinoDB, HoshinoUser, HoshinoEXP }) {
-        if (args.length < 1 || !args[0]) {
-          return chat.reply("📋 | Please provide a username. Usage: profile register <username>");
+        if (args.length < 2 || !args[1]) {
+          return chat.reply("📋 | Please provide a username. Usage: profile register <something> <username>");
         }
-        const username = args[0].trim();
+        const username = args[1].trim();
         if (username.length < 1 || username.length > 20) {
           return chat.reply("📋 | Username must be 1-20 characters long.");
         }
