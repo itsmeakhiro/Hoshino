@@ -24,7 +24,7 @@ const font: HoshinoLia.Command["font"] = {
   footer: "sans",
 };
 
-export async function deploy(ctx: any) {
+export async function deploy(ctx) {
   const home = new ctx.HoshinoHM([
     {
       subcommand: "list",
@@ -90,15 +90,10 @@ export async function deploy(ctx: any) {
       usage: "inventory use <item_key>",
       async deploy({ chat, args, event, hoshinoDB, HoshinoEXP, Inventory }: { chat: any; args: string[]; event: any; hoshinoDB: any; HoshinoEXP: any; Inventory: any }) {
         const itemKeyArgs = args[0]?.toLowerCase() === "use" ? args.slice(1) : args;
-        if (itemKeyArgs.length < 1) {
-          return await chat.reply(
-            "Please provide an item key. Usage: inventory use <item_key>"
-          );
-        }
         const itemKey = itemKeyArgs.join(" ").trim().toLowerCase();
         if (!itemKey) {
           return await chat.reply(
-            "Invalid item key. Usage: inventory use <item_key>"
+            "Please provide an item key. Usage: inventory use <item_key>"
           );
         }
         const cleanID = event.senderID;
