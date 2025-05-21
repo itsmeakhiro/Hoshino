@@ -38,14 +38,7 @@ const font: HoshinoLia.Command["font"] = {
   footer: "sans",
 };
 
-// Define interface for itemData to fix TS2339 errors
-interface ItemData {
-  key: string;
-  name: string;
-  [key: string]: any; // Allow additional properties
-}
-
-export async function deploy(ctx: any) { // Adjust ctx type as needed based on HoshinoLia
+export async function deploy(ctx: any) {
   const home = new ctx.HoshinoHM([
     {
       subcommand: "list",
@@ -177,13 +170,12 @@ export async function deploy(ctx: any) { // Adjust ctx type as needed based on H
       description: "Equip a weapon, armor, or utility item.",
       usage: "inventory equip <item_key>",
       async deploy({ chat, args, event, hoshinoDB, HoshinoEXP, Inventory }: { chat: any; args: string[]; event: any; hoshinoDB: any; HoshinoEXP: any; Inventory: any }) {
-        const itemKeyArgs = args[0]?.toLowerCase() === "equip" ? args.slice(1) : args;
-        if (itemKeyArgs.length < 1) {
+        if (args.length < 1) {
           return await chat.reply(
             "Please provide an item key. Usage: inventory equip <item_key>"
           );
         }
-        const itemKey = itemKeyArgs.join(" ").trim().toLowerCase();
+        const itemKey = args.join(" ").trim().toLowerCase();
         if (!itemKey) {
           return await chat.reply(
             "Invalid item key. Usage: inventory equip <item_key>"
@@ -277,7 +269,7 @@ export async function deploy(ctx: any) { // Adjust ctx type as needed based on H
         const { expData = { exp: 0, mana: 100, health: 100, atk: 0, def: 0 }, inventoryData = [] } = userData;
         const exp = new HoshinoEXP(expData);
         const inventory = new Inventory(inventoryData);
-        let itemData: ItemData = {};
+        let itemData: any = {};
         if (returnToInventory) {
           if (args.length < 4) {
             return await chat.reply(
@@ -379,8 +371,8 @@ export async function deploy(ctx: any) { // Adjust ctx type as needed based on H
         }
         inventory.toss(itemKey, amount);
         await hoshinoDB.set(cleanID, {
-            ...userData,
-            inventoryData: inventory.raw(),
+          ...userData,
+          inventoryData: inventory.raw(),
         });
         await chat.reply(
           `Successfully tossed ${amount} "${item.name}"(s) from your inventory.`
