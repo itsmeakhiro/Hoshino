@@ -6,15 +6,16 @@ const manifest: HoshinoLia.CommandManifest = {
   version: "4.2.0",
   category: "Finance",
   cooldown: 5,
-  config: { 
-    admin: false, 
-    moderator: false 
+  developer: "Liane Cagara",
+  config: {
+    admin: false,
+    moderator: false,
   },
 };
 
 const style: HoshinoLia.Command["style"] = {
   title: `〘 🪙 〙MTLS LITE`,
-  footer: `Made with 🤍 by ${manifest.author}`,
+  footer: "Made with 🤍 by **Liane Cagara**",
   type: "lines1",
 };
 
@@ -24,43 +25,26 @@ const font: HoshinoLia.Command["font"] = {
   footer: "sans",
 };
 
-export function formatCash(number: number = 0, emoji: string | boolean = "💵", bold = false): string {
+export function formatCash(
+  number: number,
+  emoji?: string,
+  bold?: boolean
+): string;
+
+export function formatCash(number: number, bold?: boolean): string;
+
+export function formatCash(
+  number: number = 0,
+  emoji: string | boolean = "💵",
+  bold = false
+) {
   if (typeof emoji === "boolean") {
     bold = emoji;
     emoji = "💵";
   }
-  return `${bold ? "**" : ""}$${number.toLocaleString()}${emoji}${bold ? "**" : ""}`;
-}
-
-export function formatTime(ms: number) {
-  if (ms < 0) return "Invalid duration";
-  const secs = Math.floor(ms / 1000) % 60;
-  const mins = Math.floor(ms / (1000 * 60)) % 60;
-  const hrs = Math.floor(ms / (1000 * 60 * 60));
-  return hrs > 0 ? `${hrs}h ${mins}m ${secs}s` : `${mins}m ${secs}s`;
-}
-
-function isInvalidAm(amount: number, balance: number) {
-  return isNaN(amount) || amount < 1 || amount > balance;
-}
-
-async function findRecipient(hoshinoDB: any, targTest: string) {
-  if (!targTest || targTest === "undefined" || targTest === "Unregistered") {
-    return null;
-  }
-  let recipient;
-  if (await hoshinoDB.mongo.containsKey(targTest)) {
-    recipient = await hoshinoDB.getCache(targTest);
-    if (recipient) recipient.userID = targTest;
-  } else {
-    const all = await hoshinoDB.getAll();
-    const f = Object.entries(all).find((i) => i[1]?.username === targTest);
-    if (f) {
-      recipient = f[1];
-      recipient.userID = f[0];
-    }
-  }
-  return recipient?.username === targTest || recipient?.userID === targTest ? recipient : null;
+  return `${bold ? "**" : ""}$${Number(number).toLocaleString()}${
+    emoji || "💵"
+  }${bold ? "**" : ""}`;
 }
 
 export async function deploy(ctx: HoshinoLia.EntryObj) {
@@ -79,7 +63,7 @@ export async function deploy(ctx: HoshinoLia.EntryObj) {
         }
         if (isInvalidAm(amount, userData.balance)) {
           return chat.reply(
-            `📋 | The amount must be a valid number, not lower than 1, and not higher than your balance (${formatCash(userData.balance, true)})`
+            `📋 | The amount must be a valid number, not lower than 1, and not higher than your balance (${formatCash(userData.balance, true)}).`
           );
         }
         const newLend = amount;
@@ -113,40 +97,67 @@ export async function deploy(ctx: HoshinoLia.EntryObj) {
       usage: "retrieve [force]",
       async deploy({ hoshinoDB, event, chat, args }) {
         const userData = await hoshinoDB.get(event.senderID);
-        const lendAmount = userData.lendAmount ?? 0;
+        const otherMoney = userData * 10;
         const isForce = args[0]?.toLowerCase() === "force";
-        if (!userData.lendTimestamp || lendAmount <= 0) {
-          return chat.reply("❕ | No active lend to retrieve.");
+        const lendAmount = Number(userData.lendAmount ?? 0);
+        if (!userData.lendTimestamp) {
+          return chat.reply("❕ | No **active** lend to retrieve.");
         }
         const now = Date.now();
-        const durationInSeconds = Math.max((now - userData.lendTimestamp) / 1000, 0);
-        const annualInterestRate = 0.001;
-        const secondsInYear = 365 * 24 * 60 * 60;
-        const interestNoInflation = lendAmount * (annualInterestRate / secondsInYear) * durationInSeconds;
+        const durationInSeconds = Math.max(
+          (now - userData.lendTimestamp) / 1000 - 60 * 60 * 1000,
+          0
+        );
         const inflationRate = 0;
-        const interest = Math.floor(Math.max(0, interestNoInflation * (1 - inflationRate / 1000)));
-        const cap = Math.floor(userData.balance * 0.5);
+        const interestNoInflation =
+          lendAmount * (0.001 / 365) * durationInSeconds;
+        const interest = Math.floor(
+          Math.max(
+            0,
+            interestNoInflation - interestNoInflation * (inflationRate / 1000)
+          )
+        );
+        const cap = Math.floor(otherMoney * 0.5);
         const interestCapped = Math.min(interest, cap);
         const totalAmount = Math.floor(lendAmount + interestCapped);
-        const newBalance = userData.balance + totalAmount;
+        const newBal = Number(userData.balance + totalAmount);
+        if (isNaN(lendAmount) || isNaN(newBal) || isNaN(totalAmount)) {
+          console.log({
+            lendAmount,
+            newBal,
+            totalAmount,
+            interestCapped,
+            inflationRate,
+            interestNoInflation,
+            otherMoney,
+            cap,
+            interest,
+            bal: userData.balance,
+          });
+          return chat.reply("err.");
+        }
         if (interestCapped < 1 && !isForce) {
           return chat.reply(
-            `📋 | Cannot retrieve: interest (${formatCash(interestCapped, true)}) is too low. Use 'force' to override.`
+            `📋 | You **cannot retrieve** this lent amount because the **capped interest** is too **LOW** (${formatCash(
+              interestCapped,
+              true
+            )}). You would **not earn** anything. Please wait or add a **force** argument.`
           );
         }
-        try {
-          await hoshinoDB.set(event.senderID, {
-            balance: newBalance,
-            lendTimestamp: null,
-            lendAmount: 0,
-          });
-          return chat.reply(
-            `🎉 | Retrieved ${formatCash(totalAmount, true)} (Gain: ${formatCash(interestCapped, true)})\n\nNew balance: ${formatCash(newBalance, true)}`
-          );
-        } catch (error) {
-          console.error("Retrieve failed:", error);
-          return chat.reply("❌ | Failed to retrieve lend. Please try again later.");
-        }
+        await hoshinoDB.set(event.senderID, {
+          balance: newBal,
+          lendTimestamp: null,
+          lendAmount: 0,
+        });
+        return chat.reply(
+          `🎉 | Successfully retrieved ${formatCash(
+            totalAmount,
+            true
+          )}$. (***GAIN*** = ${formatCash(
+            interestCapped,
+            true
+          )})\n\nYour new balance is: ${formatCash(newBal, true)}`
+        );
       },
     },
     {
@@ -159,64 +170,130 @@ export async function deploy(ctx: HoshinoLia.EntryObj) {
         const userData = await hoshinoDB.get(event.senderID);
         const targTest = args[1];
         const inventory = new Inventory(userData.inventory);
-        if (!targTest) {
-          return chat.reply("📋 | Please provide a user name or ID as the first argument.");
+        let recipient;
+        if (
+          (await hoshinoDB.mongo.containsKey(targTest)) &&
+          targTest !== "undefined"
+        ) {
+          recipient = await hoshinoDB.getCache(targTest);
+          if (recipient) {
+            recipient.userID = targTest;
+          }
         }
-        const recipient = await findRecipient(hoshinoDB, targTest);
-        if (!recipient) {
+        if (!recipient && targTest !== "Unregistered") {
+          const all = await hoshinoDB.getAll();
+          const f = Object.entries(all).find(
+            (i) => i[1]?.username === targTest
+          );
+          if (f) {
+            recipient = f[1];
+            recipient.userID = f[0];
+          }
+        }
+        if (
+          !recipient ||
+          (recipient?.username !== targTest && recipient?.userID !== targTest)
+        ) {
           return chat.reply(
-            `❕ | Recipient not found. Ensure you are providing the correct user's name or ID.`
+            `❕ | Recipient **not found**. Ensure you are providing the correct user's **name** or user's **ID** as a first argument.`
           );
         }
         if (recipient.userID === event.senderID) {
-          return chat.reply(`❕ | You cannot send money to yourself!`);
+          return chat.reply(`❕ | You cannot send money **to yourself**!`);
         }
-        const amount = args[2] ? parseInt(args[2]) : NaN;
-        if (isNaN(amount)) {
-          return chat.reply("📋 | Please provide a valid amount as the second argument.");
-        }
+        const amount = parseInt(args[2]);
         if (isInvalidAm(amount, userData.balance)) {
           return chat.reply(
-            `📋 | The amount must be a valid number, not lower than 1, and not higher than your balance (${formatCash(userData.balance, true)})`
+            `📋 | The amount (second argument) must be a **valid numerical**, not lower than **1**, and **not higher** than your **balance.** (${formatCash(
+              userData.balance,
+              true
+            )})`
           );
         }
-        const newBal = userData.balance - amount;
-        const reciBal = recipient.balance + amount;
-        try {
-          await hoshinoDB.set(event.senderID, { balance: newBal });
-          await hoshinoDB.set(recipient.userID, { balance: reciBal });
-          return chat.reply(
-            `💥 | Successfully sent ${formatCash(amount, true)} to ${recipient.username ?? "Unregistered"}\n\nRemaining Shadow Coins: ${formatCash(inventory.getAmount("shadowCoin"), "🌑", true)}`
-          );
-        } catch (error) {
-          console.error("Transfer failed:", error);
-          return chat.reply("❌ | Failed to send money. Please try again later.");
+        const newBal = Number(userData.balance - amount);
+        const reciBal = Number(recipient.balance + amount);
+        if (
+          reciBal < recipient.balance ||
+          isNaN(reciBal) || isNaN(newBal) || isNaN(amount)
+        ) {
+          console.log({
+            reciBal,
+            recipientBal: recipient.balance,
+            bal: userData.balance,
+            newBal,
+            amount,
+          });
+          return chat.reply("err..");
         }
+        await hoshinoDB.set(event.senderID, {
+          balance: newBal,
+        });
+        await hoshinoDB.set(recipient.userID, {
+          balance: reciBal,
+        });
+        return chat.reply(
+          `💥 | Successfully used **0** 🌑 to send ${formatCash(
+            amount,
+            true
+          )}$ to **${
+            recipient.username ?? "Unregistered"
+          }**\n\nRemaining **Shadow Coins**: ${formatCash(
+            inventory.getAmount("shadowCoin"),
+            "🌑",
+            true
+          )}`
+        );
       },
     },
     {
       subcommand: "inspect",
       description: "View financial details of a user by name or ID",
-      usage: "inspect <name|uid>",
+      usage: "inspect <name|uid> <amount>",
       icon: "🔍",
       aliases: ["ins"],
       async deploy({ hoshinoDB, chat, args }) {
         const targTest = args[1];
-        if (!targTest) {
-          return chat.reply("📋 | Please provide a user name or ID as the first argument.");
+        let recipient;
+        if (
+          (await hoshinoDB.mongo.containsKey(targTest)) &&
+          targTest !== "undefined"
+        ) {
+          recipient = await hoshinoDB.getCache(targTest);
+          if (recipient) {
+            recipient.userID = targTest;
+          }
         }
-        const recipient = await findRecipient(hoshinoDB, targTest);
-        if (!recipient) {
+        if (!recipient && targTest !== "Unregistered") {
+          const all = await hoshinoDB.getAll();
+          const f = Object.entries(all).find(
+            (i) => i[1]?.username === targTest
+          );
+          if (f) {
+            recipient = f[1];
+            recipient.userID = f[0];
+          }
+        }
+        if (
+          !recipient ||
+          (recipient?.username !== targTest && recipient?.userID !== targTest)
+        ) {
           return chat.reply(
-            `❕ | Target not found. Ensure you are providing the correct user's name or ID.`
+            `❕ | Target **not found**. Ensure you are providing the correct user's **name** or user's **ID** as a first argument.`
           );
         }
         const texts = [
-          `👤 | **Name**: ${recipient.username ?? "Unregistered"}`,
+          `👤 | **Name**: ${recipient.username}`,
           `🪙 | **Balance**: ${formatCash(recipient.balance, true)}`,
           `🎲 | **User ID**: ${recipient.userID}`,
-          `📤 | **Lent Amount**: ${formatCash(recipient.lendAmount ?? 0, true)}`,
-          `⏳ | **Lent Since**: ${recipient.lendTimestamp ? formatTime(Date.now() - recipient.lendTimestamp) : "No active lend."}`,
+          `📤 | **Lent Amount**: ${formatCash(
+            recipient.lendAmount ?? 0,
+            true
+          )}`,
+          `⏳ | **Lent Since**: ${
+            recipient.lendTimestamp
+              ? `${formatTime(Date.now() - recipient.lendTimestamp)}`
+              : "No active lend."
+          }`,
         ];
         return chat.reply(texts.join("\n"));
       },
@@ -231,3 +308,14 @@ export default {
   deploy,
   font,
 } as HoshinoLia.Command;
+
+function isInvalidAm(amount: number, balance: number) {
+  return isNaN(amount) || amount < 1 || amount > balance;
+}
+
+function formatTime(ms: number) {
+  const secs = Math.floor(ms / 1000) % 60;
+  const mins = Math.floor(ms / (1000 * 60)) % 60;
+  const hrs = Math.floor(ms / (1000 * 60 * 60));
+  return hrs > 0 ? `${hrs}h ${mins}m ${secs}s` : `${mins}m ${secs}s`;
+}
