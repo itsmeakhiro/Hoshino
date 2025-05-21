@@ -201,9 +201,9 @@ export async function deploy(ctx) {
             "📋 | **You** need to **register** first! Use: profile register <username>"
           );
         }
-        if (!userData.appleshot) {
+        if (!userData.appleshot || !userData.appleshot.bowType || typeof userData.appleshot.accuracy !== 'number') {
           return chat.reply(
-            `📋 | **${userData.username}**, you need to **buy** a bow first! Use: appleshot buy <huntersmark | crescentmoon | stormchaser | phoenixfeather | dragonsbreath | starforge>`
+            `📋 | **${userData.username}**, you need to **buy** a bow first or your data is corrupted! Use: appleshot buy <huntersmark | crescentmoon | stormchaser | phoenixfeather | dragonsbreath | starforge>`
           );
         }
         const { appleshot } = userData;
@@ -216,6 +216,11 @@ export async function deploy(ctx) {
         if (userData.balance < bet) {
           return chat.reply(
             `📋 | **${userData.username}**, you **need** ${formatCash(bet, "💵", true)} to **place** this bet!`
+          );
+        }
+        if (!BOW_TYPES[appleshot.bowType]) {
+          return chat.reply(
+            `📋 | **${userData.username}**, your bow type is **invalid**! Please **buy** a new bow.`
           );
         }
         const winChance = Math.min(BASE_WIN_CHANCE + BOW_TYPES[appleshot.bowType].accuracy + appleshot.accuracy, 0.8);
