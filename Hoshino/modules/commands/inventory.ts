@@ -1,17 +1,3 @@
-function formatCash(
-  number: number = 0,
-  emoji: string | boolean = "💵",
-  bold = false
-) {
-  if (typeof emoji === "boolean") {
-    bold = emoji;
-    emoji = "💵";
-  }
-  return `${bold ? "**" : ""}$${Number(number).toLocaleString()}${
-    emoji || "💵"
-  }${bold ? "**" : ""}`;
-}
-
 const manifest: HoshinoLia.CommandManifest = {
   name: "inventory",
   aliases: ["inv", "items"],
