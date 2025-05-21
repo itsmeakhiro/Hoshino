@@ -19,7 +19,7 @@ const manifest: HoshinoLia.CommandManifest = {
   developer: "Francis And Liane",
   description: "Manage your inventory: check items, use food/potions/chests, equip/unequip items, or toss items.",
   category: "Simulator",
-  usage: "inventory list | inventory use <item_key> | inventory equip <item_key> | inventory unequip <type> | inventory toss <item_key> [amount]",
+  usage: "inventory list | inventory use <item_key> | inventory equip <item_key> | inventory unequip <type> <stats> [return] [item_data]",
   config: {
     admin: false,
     moderator: false,
@@ -38,14 +38,21 @@ const font: HoshinoLia.Command["font"] = {
   footer: "sans",
 };
 
-export async function deploy(ctx) {
+// Define interface for itemData to fix TS2339 errors
+interface ItemData {
+  key: string;
+  name: string;
+  [key: string]: any; // Allow additional properties
+}
+
+export async function deploy(ctx: any) { // Adjust ctx type as needed based on HoshinoLia
   const home = new ctx.HoshinoHM([
     {
       subcommand: "list",
       aliases: ["check", "view"],
       description: "View all items in your inventory.",
       usage: "inventory list",
-      async deploy({ chat, event, hoshinoDB, Inventory }) {
+      async deploy({ chat, event, hoshinoDB, Inventory }: { chat: any; event: any; hoshinoDB: any; Inventory: any }) {
         const cleanID = event.senderID;
         const userData = await hoshinoDB.get(cleanID);
         if (!userData || !userData.username) {
@@ -102,7 +109,7 @@ export async function deploy(ctx) {
       aliases: ["heal", "consume"],
       description: "Use a food, potion, or chest item.",
       usage: "inventory use <item_key>",
-      async deploy({ chat, args, event, hoshinoDB, HoshinoEXP, Inventory }) {
+      async deploy({ chat, args, event, hoshinoDB, HoshinoEXP, Inventory }: { chat: any; args: string[]; event: any; hoshinoDB: any; HoshinoEXP: any; Inventory: any }) {
         const itemKeyArgs = args[0]?.toLowerCase() === "use" ? args.slice(1) : args;
         if (itemKeyArgs.length < 1) {
           return await chat.reply(
@@ -140,7 +147,7 @@ export async function deploy(ctx) {
           const result = inventory.useItem(itemKey, exp);
           let message = "";
           if (item.type === "chest" && result !== true) {
-            const contentNames = result.contents.map((c) => c.name).join(", ");
+            const contentNames = result.contents.map((c: any) => c.name).join(", ");
             message = `You opened "${item.name}" and found: ${contentNames}!`;
           } else {
             const healthRestored = item.heal > 0 ? `${item.heal} health` : "";
@@ -169,7 +176,7 @@ export async function deploy(ctx) {
       aliases: ["wear", "use-equip"],
       description: "Equip a weapon, armor, or utility item.",
       usage: "inventory equip <item_key>",
-      async deploy({ chat, args, event, hoshinoDB, HoshinoEXP, Inventory }) {
+      async deploy({ chat, args, event, hoshinoDB, HoshinoEXP, Inventory }: { chat: any; args: string[]; event: any; hoshinoDB: any; HoshinoEXP: any; Inventory: any }) {
         const itemKeyArgs = args[0]?.toLowerCase() === "equip" ? args.slice(1) : args;
         if (itemKeyArgs.length < 1) {
           return await chat.reply(
@@ -243,18 +250,18 @@ export async function deploy(ctx) {
       subcommand: "unequip",
       aliases: ["remove-equip", "dequip"],
       description: "Unequip a weapon, armor, or utility item.",
-      usage: "inventory unequip <type> <stats> [return]",
-      async deploy({ chat, args, event, hoshinoDB, HoshinoEXP, Inventory }) {
+      usage: "inventory unequip <type> <stats> [return] [item_data]",
+      async deploy({ chat, args, event, hoshinoDB, HoshinoEXP, Inventory }: { chat: any; args: string[]; event: any; hoshinoDB: any; HoshinoEXP: any; Inventory: any }) {
         if (args.length < 2) {
           return await chat.reply(
-            "Please provide item type and stats. Usage: inventory unequip <type> <stats> [return]"
+            "Please provide item type and stats. Usage: inventory unequip <type> <stats> [return] [item_data]"
           );
         }
         const type = args[0].toLowerCase();
-        let statsArg = args[1];
+        let statsArg: any;
         const returnToInventory = args[2]?.toLowerCase() === "return";
         try {
-          statsArg = JSON.parse(statsArg);
+          statsArg = JSON.parse(args[1]);
         } catch {
           return await chat.reply(
             "Invalid stats format. Provide stats as JSON, e.g., '{\"atk\": 5}' or '{\"stats\": {\"mining\": 5}}'."
@@ -270,7 +277,7 @@ export async function deploy(ctx) {
         const { expData = { exp: 0, mana: 100, health: 100, atk: 0, def: 0 }, inventoryData = [] } = userData;
         const exp = new HoshinoEXP(expData);
         const inventory = new Inventory(inventoryData);
-        let itemData = {};
+        let itemData: ItemData = {};
         if (returnToInventory) {
           if (args.length < 4) {
             return await chat.reply(
@@ -327,7 +334,7 @@ export async function deploy(ctx) {
       aliases: ["discard", "remove"],
       description: "Remove items from your inventory.",
       usage: "inventory toss <item_key> [amount]",
-      async deploy({ chat, args, event, hoshinoDB, Inventory }) {
+      async deploy({ chat, args, event, hoshinoDB, Inventory }: { chat: any; args: string[]; event: any; hoshinoDB: any; Inventory: any }) {
         if (args.length < 1) {
           return await chat.reply(
             "Please provide an item key. Usage: inventory toss <item_key> [amount]"
@@ -372,8 +379,8 @@ export async function deploy(ctx) {
         }
         inventory.toss(itemKey, amount);
         await hoshinoDB.set(cleanID, {
-          ...userData,
-          inventoryData: inventory.raw(),
+            ...userData,
+            inventoryData: inventory.raw(),
         });
         await chat.reply(
           `Successfully tossed ${amount} "${item.name}"(s) from your inventory.`
