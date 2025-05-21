@@ -25,7 +25,7 @@ const command: HoshinoLia.Command = {
   },
   async deploy(ctx) {
     const { chat, event, hoshinoDB, args } = ctx;
-    const userID = cleanUserID(event.senderID);
+    const userID = event.senderID;
     const subcommand = (args[0] || "").toLowerCase();
 
     if (subcommand === "cooldown") {
