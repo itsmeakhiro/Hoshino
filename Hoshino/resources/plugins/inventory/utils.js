@@ -20,8 +20,7 @@ class Inventory {
         sellPrice = 0,
       } = item;
       if (!key) {
-        console.warn(`Item at index ${index} has no key and will be ignored.`);
-        return null;
+        return;
       }
       let result = {
         ...item,
@@ -51,8 +50,11 @@ class Inventory {
         result.contents = Array.isArray(result.contents) ? result.contents : [];
       }
       if (type === "utility") {
-        result.utilityEffect ??= 0;
-        result.utilityEffect = parseFloat(result.utilityEffect);
+        result.stats ??= {};
+        result.stats = typeof result.stats === "object" && !Array.isArray(result.stats) ? result.stats : {};
+        for (const [key, value] of Object.entries(result.stats)) {
+          result.stats[key] = parseFloat(value) || 0;
+        }
       }
       return result;
     });
@@ -158,21 +160,11 @@ class Inventory {
   }
 
   addOne(item) {
-    if (this.inv.length >= this.limit) {
-      throw new Error("Inventory limit reached.");
-    }
-    this.inv.push(this.sanitize([item])[0]);
-    return this.inv.length;
+    return this.inv.push(item);
   }
 
   add(item) {
-    const items = Array.isArray(item) ? item : [item];
-    const sanitized = this.sanitize(items);
-    if (this.inv.length + sanitized.length > this.limit) {
-      throw new Error("Adding items would exceed inventory limit.");
-    }
-    this.inv.push(...sanitized);
-    return this.inv.length;
+    return this.inv.push(...item);
   }
 
   toss(key, amount) {
@@ -268,51 +260,111 @@ class Inventory {
     if (!item) {
       throw new Error(`Item with key ${key} does not exist in the inventory.`);
     }
-    if (item.type !== "weapon" && item.type !== "armor" && item.type !== "utility") {
-      throw new Error(`Item with key ${key} is not a weapon, armor, or utility item and cannot be equipped.`);
+    if (item.type !== "weapon" && item.type !== "armor") {
+      throw new Error(`Item with key ${key} cannot be equipped. Only weapons or armor can be equipped.`);
     }
-    if (!user || typeof user.setAtk !== "function" || typeof user.setDef !== "function" || typeof user.setUtility !== "function") {
-      throw new Error("Invalid user object: Must have setAtk, setDef, and setUtility methods.");
+    if (!user || !user.setAtk || !user.setDef) {
+      throw new Error(
+        "Invalid user object: Must have setAtk and setDef methods."
+      );
     }
-    if (item.type === "weapon") {
+    if (item.type === "weapon" && item.atk > 0) {
       const currentAtk = user.getAtk ? user.getAtk() : 0;
-      user.setAtk(currentAtk + item.atk);
-    } else if (item.type === "armor") {
+      const newAtk = currentAtk + item.atk;
+      user.setAtk(newAtk);
+    }
+    if (item.type === "armor" && item.def > 0) {
       const currentDef = user.getDef ? user.getDef() : 0;
-      user.setDef(currentDef + item.def);
-    } else if (item.type === "utility") {
-      const currentUtility = user.getUtility ? user.getUtility() : 0;
-      user.setUtility(currentUtility + item.utilityEffect);
+      const newDef = currentDef + item.def;
+      user.setDef(newDef);
     }
     this.deleteOne(key);
-    return true;
+    return { equipped: true, item: item.name, atk: item.atk || 0, def: item.def || 0 };
   }
 
-  unequipItem(item, user) {
-    if (!item || !item.key || !item.type) {
-      throw new Error("Invalid item: Must have key and type properties.");
+  equipUtility(key, user) {
+    const item = this.getOne(key);
+    if (!item) {
+      throw new Error(`Item with key ${key} does not exist in the inventory.`);
     }
-    if (item.type !== "weapon" && item.type !== "armor" && item.type !== "utility") {
-      throw new Error(`Item with key ${item.key} is not a weapon, armor, or utility item and cannot be unequipped.`);
+    if (item.type !== "utility") {
+      throw new Error(`Item with key ${key} cannot be equipped. Only utility items can be equipped.`);
     }
-    if (!user || typeof user.setAtk !== "function" || typeof user.setDef !== "function" || typeof user.setUtility !== "function") {
-      throw new Error("Invalid user object: Must have setAtk, setDef, and setUtility methods.");
+    if (!user) {
+      throw new Error("Invalid user object: Must be provided.");
     }
-    if (this.inv.length >= this.limit) {
-      throw new Error("Cannot unequip item: Inventory limit reached.");
+    const appliedStats = {};
+    for (const [stat, value] of Object.entries(item.stats)) {
+      if (value > 0) {
+        const setter = `set${stat.charAt(0).toUpperCase() + stat.slice(1)}`;
+        if (typeof user[setter] !== "function") {
+          throw new Error(`Invalid user object: Must have ${setter} method for stat ${stat}.`);
+        }
+        const getter = `get${stat.charAt(0).toUpperCase() + stat.slice(1)}`;
+        const currentValue = user[getter] ? user[getter]() : 0;
+        user[setter](currentValue + value);
+        appliedStats[stat] = value;
+      }
     }
-    if (item.type === "weapon") {
-      const currentAtk = user.getAtk ? user.getAtk() : 0;
-      user.setAtk(currentAtk - item.atk);
-    } else if (item.type === "armor") {
-      const currentDef = user.getDef ? user.getDef() : 0;
-      user.setDef(currentDef - item.def);
-    } else if (item.type === "utility") {
-      const currentUtility = user.getUtility ? user.getUtility() : 0;
-      user.setUtility(currentUtility - item.utilityEffect);
+    this.deleteOne(key);
+    return { equipped: true, item: item.name, stats: appliedStats };
+  }
+
+  unequipItem(type, stats, user, returnToInventory = false, itemData = {}) {
+    if (!["weapon", "armor", "utility"].includes(type)) {
+      throw new Error(`Invalid item type: ${type}. Must be weapon, armor, or utility.`);
     }
-    this.addOne(item);
-    return true;
+    if (!user) {
+      throw new Error("Invalid user object: Must be provided.");
+    }
+    const appliedStats = {};
+    if (type === "weapon") {
+      if (!user.setAtk) {
+        throw new Error("Invalid user object: Must have setAtk method.");
+      }
+      if (stats.atk && stats.atk > 0) {
+        const currentAtk = user.getAtk ? user.getAtk() : 0;
+        const newAtk = Math.max(0, currentAtk - stats.atk);
+        user.setAtk(newAtk);
+        appliedStats.atk = stats.atk;
+      }
+    } else if (type === "armor") {
+      if (!user.setDef) {
+        throw new Error("Invalid user object: Must have setDef method.");
+      }
+      if (stats.def && stats.def > 0) {
+        const currentDef = user.getDef ? user.getDef() : 0;
+        const newDef = Math.max(0, currentDef - stats.def);
+        user.setDef(newDef);
+        appliedStats.def = stats.def;
+      }
+    } else if (type === "utility") {
+      if (!stats.stats || typeof stats.stats !== "object" || Array.isArray(stats.stats)) {
+        throw new Error("Invalid stats: Utility items must provide a stats object.");
+      }
+      for (const [stat, value] of Object.entries(stats.stats)) {
+        if (value > 0) {
+          const setter = `set${stat.charAt(0).toUpperCase() + stat.slice(1)}`;
+          const getter = `get${stat.charAt(0).toUpperCase() + stat.slice(1)}`;
+          if (typeof user[setter] !== "function") {
+            throw new Error(`Invalid user object: Must have ${setter} method for stat ${stat}.`);
+          }
+          const currentValue = user[getter] ? user[getter]() : 0;
+          user[setter](Math.max(0, currentValue - value));
+          appliedStats[stat] = value;
+        }
+      }
+    }
+    let returnedItem = null;
+    if (returnToInventory) {
+      if (!itemData.key || !itemData.name) {
+        throw new Error("Invalid itemData: Must provide key and name for returning to inventory.");
+      }
+      const newItem = { ...itemData, type, stats: type === "utility" ? stats.stats : { atk: stats.atk || 0, def: stats.def || 0 } };
+      this.addOne(newItem);
+      returnedItem = newItem;
+    }
+    return { unequipped: true, type, stats: appliedStats, returnedItem };
   }
 }
 
