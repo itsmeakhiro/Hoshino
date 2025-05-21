@@ -6,7 +6,10 @@ const manifest: HoshinoLia.CommandManifest = {
   version: "4.2.0",
   category: "Finance",
   cooldown: 5,
-  config: { admin: false, moderator: false },
+  config: { 
+    admin: false, 
+    moderator: false 
+  },
 };
 
 const style: HoshinoLia.Command["style"] = {
