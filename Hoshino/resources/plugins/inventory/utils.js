@@ -407,7 +407,7 @@ class Inventory {
     if (!["weapon", "armor", "utility"].includes(item.type)) {
       throw new Error(`Item "${item.name}" cannot be repaired. Only weapons, armor, or utility items have durability.`);
     }
-    item.durability = Math.min(100, Math.max(0, item.durability + parseInt(amount) || 100));
+    item.durability = Math.min(100, Math.max(0, item.durability + parseInt(String(amount)) || 100));
     this.inv[this.inv.findIndex((i) => i.key === key)] = item;
     return { repaired: true, item: item.name, durability: item.durability };
   }

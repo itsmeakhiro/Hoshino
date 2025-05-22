@@ -69,6 +69,7 @@ export async function deploy(ctx) {
               def?: number;
               stats?: { [key: string]: number };
               durability?: number;
+              [key: string]: any;
             }>
           ).map((item, index) => {
             const effects: string[] = [];
@@ -94,7 +95,8 @@ export async function deploy(ctx) {
             const effectText = effects.length ? ` (${effects.join(", ")})` : "";
             const flavorText = item.flavorText ? `\n   ${item.flavorText}` : "";
             const durabilityText =
-              ["weapon", "armor", "utility"].includes(item.type) && item.durability !== undefined
+              ["weapon", "armor", "utility"].includes(item.type) &&
+              item.durability !== undefined
                 ? ` [Durability: ${item.durability}/100]`
                 : "";
             return `${index + 1}. ${item.icon} ${item.name} [${
@@ -344,7 +346,10 @@ export async function deploy(ctx) {
                 `Item "${item.name}" cannot be unequipped. Only weapons, armor, or utility items can be unequipped.`
               );
             }
-            const stats = item.type === "utility" ? { stats: item.stats || {} } : { atk: item.atk || 0, def: item.def || 0 };
+            const stats =
+              item.type === "utility"
+                ? { stats: item.stats || {} }
+                : { atk: item.atk || 0, def: item.def || 0 };
             const itemData = {
               key: item.key,
               name: item.name,
@@ -354,24 +359,38 @@ export async function deploy(ctx) {
               sellPrice: item.sellPrice,
               cannotToss: item.cannotToss,
               durability: item.durability,
-              ...(item.type === "utility" ? { stats: item.distats } : { atk: item.atk, def: item.def }),
+              ...(item.type === "utility"
+                ? { stats: item.distats }
+                : { atk: item.atk, def: item.def }),
             };
-            const result = inventory.unequipItem(item.type, stats, exp, true, itemData);
+            const result = inventory.unequipItem(
+              item.type,
+              stats,
+              exp,
+              true,
+              itemData
+            );
             let message = "";
             if (item.type === "weapon" || item.type === "armor") {
               const statsDisplay: string[] = [];
-              if (result.stats.atk > 0) statsDisplay.push(`-${result.stats.atk} ATK`);
-              if (result.stats.def > 0) statsDisplay.push(`-${result.stats.def} DEF`);
+              if (result.stats.atk > 0)
+                statsDisplay.push(`-${result.stats.atk} ATK`);
+              if (result.stats.def > 0)
+                statsDisplay.push(`-${result.stats.def} DEF`);
               message = `Unequipped "${item.name}"${
                 statsDisplay.length ? ` (${statsDisplay.join(", ")})` : ""
-              }, returned to inventory with ${itemData.durability}/100 durability!`;
+              }, returned to inventory with ${
+                itemData.durability
+              }/100 durability!`;
             } else if (item.type === "utility") {
               const statsDisplay = Object.entries(result.stats)
                 .map(([stat, value]) => `-${value} ${stat.toUpperCase()}`)
                 .join(", ");
               message = `Unequipped "${item.name}"${
                 statsDisplay ? ` (${statsDisplay})` : ""
-              }, returned to inventory with ${itemData.durability}/100 durability!`;
+              }, returned to inventory with ${
+                itemData.durability
+              }/100 durability!`;
             }
             await hoshinoDB.set(cleanID, {
               ...userData,
@@ -394,7 +413,8 @@ export async function deploy(ctx) {
             ].join("\n");
             await chat.reply(`${message}\nCurrent Stats:\n${statDisplay}`);
           } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : "Unknown error";
+            const errorMessage =
+              error instanceof Error ? error.message : "Unknown error";
             return await chat.reply(`Failed to unequip item: ${errorMessage}`);
           }
         },
@@ -430,7 +450,9 @@ export async function deploy(ctx) {
             );
           }
           if (amount !== "all" && (isNaN(amount) || amount < 1)) {
-            return await chat.reply("Amount must be a positive number or 'all'.");
+            return await chat.reply(
+              "Amount must be a positive number or 'all'."
+            );
           }
           const cleanID = event.senderID;
           const userData = await hoshinoDB.get(cleanID);
@@ -448,7 +470,9 @@ export async function deploy(ctx) {
           }
           const item = inventory.getOne(itemKey);
           if (item.cannotToss && item.durability > 0) {
-            return await chat.reply(`You cannot toss "${item.name}" unless it is broken!`);
+            return await chat.reply(
+              `You cannot toss "${item.name}" unless it is broken!`
+            );
           }
           const availableAmount = inventory.getAmount(itemKey);
           if (amount !== "all" && amount > availableAmount) {
@@ -462,7 +486,9 @@ export async function deploy(ctx) {
             inventoryData: inventory.raw(),
           });
           await chat.reply(
-            `Successfully tossed ${amount === "all" ? availableAmount : amount} "${item.name}"(s) from your inventory.`
+            `Successfully tossed ${
+              amount === "all" ? availableAmount : amount
+            } "${item.name}"(s) from your inventory.`
           );
         },
       },
