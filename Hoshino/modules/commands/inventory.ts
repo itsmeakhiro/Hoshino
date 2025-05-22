@@ -26,6 +26,41 @@ const font: HoshinoLia.Command["font"] = {
   footer: "sans",
 };
 
+const recipe = {
+  "wooden-pickaxe": {
+    key: "wooden-pickaxe",
+    name: "Wooden Pickaxe",
+    flavorText: "A basic tool for mining common ores.",
+    icon: "⛏️",
+    type: "utility",
+    cannotToss: false,
+    sellPrice: 50,
+    durability: 60,
+    stats: {
+      mining: 5,
+    },
+    ingredients: [
+      { key: "stick", quantity: 2 },
+      { key: "wooden-plank", quantity: 3 },
+    ],
+  },
+  shield: {
+    key: "shield",
+    name: "Wooden Shield",
+    flavorText: "A sturdy wooden shield reinforced with iron for basic protection.",
+    icon: "🛡️",
+    type: "armor",
+    cannotToss: false,
+    sellPrice: 100,
+    durability: 80,
+    def: 10, 
+    ingredients: [
+      { key: "wooden-plank", quantity: 6 },
+      { key: "iron-ingot", quantity: 1 },
+    ],
+  },
+};
+
 export async function deploy(ctx) {
   const home = new ctx.HoshinoHM(
     [
@@ -55,7 +90,7 @@ export async function deploy(ctx) {
           }
           const { inventoryData = [] } = userData;
           const inventory = new Inventory(inventoryData);
-          const item = itemKey;
+          const item = recipe[itemKey];
           if (!item) {
             return await chat.reply(
               `No recipe found for item with key "${itemKey}". Available recipes: ${Object.keys(recipes).join(", ")}`
