@@ -49,7 +49,6 @@ class Inventory {
         result.atk = parseFloat(result.atk) || 0;
         result.def = parseFloat(result.def) || 0;
         result.durability = Math.max(0, parseInt(result.durability) || 100);
-        // Validate ingredients for craftable items
         result.ingredients = Array.isArray(result.ingredients)
           ? result.ingredients.map(ing => ({
               key: String(ing.key).replaceAll(" ", ""),
