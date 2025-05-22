@@ -269,38 +269,36 @@ class Inventory {
   }
 
   equipItem(key, user) {
-    const item = this.getOne(key);
-    if (!item) {
-      throw new Error(`Item with key ${key} does not exist in the inventory.`);
-    }
-    if (item.type !== "weapon" && item.type !== "armor") {
-      throw new Error(`Item with key ${key} cannot be equipped. Only weapons or armor can be equipped.`);
-    }
-    if (!user || !user.setAtk || !user.setDef) {
-      throw new Error(
-        "Invalid user object: Must have setAtk and setDef methods."
-      );
-    }
-    if (item.durability <= 0) {
-      throw new Error(`Item "${item.name}" is broken and cannot be equipped.`);
-    }
-    if (item.type === "weapon" && item.atk > 0) {
-      const currentAtk = user.getAtk ? user.getAtk() : 0;
-      const newAtk = currentAtk + item.atk;
-      user.setAtk(newAtk);
-    }
-    if (item.type === "armor" && item.def > 0) {
-      const currentDef = user.getDef ? user.getDef() : 0;
-      const newDef = currentDef + item.def;
-      user.setDef(newDef);
-    }
-    item.durability = Math.max(0, item.durability - 10);
-    if (item.durability === 0) {
-      this.deleteOne(key);
-    } else {
-      this.inv[this.inv.findIndex((i) => i.key === key)] = item;
-    }
-    return { equipped: true, item: item.name, atk: item.atk || 0, def: item.def || 0, durability: item.durability };
+   const item = this.getOne(String(key)); 
+   if (!item) {
+    throw new Error(`Item with key ${key} does not exist in the inventory.`);
+   }
+   if (item.type !== "weapon" && item.type !== "armor") {
+    throw new Error(`Item with key ${key} cannot be equipped. Only weapons or armor can be equipped.`);
+   }
+   if (!user || !user.setAtk || !user.setDef) {
+    throw new Error("Invalid user object: Must have setAtk and setDef methods.");
+   }
+   if (item.durability <= 0) {
+    throw new Error(`Item "${item.name}" is broken and cannot be equipped.`);
+   }
+   if (item.type === "weapon" && item.atk > 0) {
+    const currentAtk = user.getAtk ? user.getAtk() : 0;
+    const newAtk = currentAtk + item.atk;
+    user.setAtk(newAtk);
+   }
+   if (item.type === "armor" && item.def > 0) {
+    const currentDef = user.getDef ? user.getDef() : 0;
+    const newDef = currentDef + item.def;
+    user.setDef(newDef);
+   }
+   item.durability = Math.max(0, item.durability - 10);
+   if (item.durability === 0) {
+    this.deleteOne(String(key)); 
+   } else {
+    this.inv[this.inv.findIndex((i) => i.key === String(key))] = item;
+   }
+  return { equipped: true, item: item.name, atk: item.atk || 0, def: item.def || 0, durability: item.durability };
   }
 
   equipUtility(key, user) {
