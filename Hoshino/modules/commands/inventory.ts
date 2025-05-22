@@ -55,7 +55,7 @@ export async function deploy(ctx) {
           }
           const { inventoryData = [] } = userData;
           const inventory = new Inventory(inventoryData);
-          const item = recipes[itemKey];
+          const item = itemKey;
           if (!item) {
             return await chat.reply(
               `No recipe found for item with key "${itemKey}". Available recipes: ${Object.keys(recipes).join(", ")}`
