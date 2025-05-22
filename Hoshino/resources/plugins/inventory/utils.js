@@ -18,6 +18,7 @@ class Inventory {
         type = "generic",
         cannotToss = false,
         sellPrice = 0,
+        durability = 100,
       } = item;
       if (!key) {
         return;
@@ -30,20 +31,22 @@ class Inventory {
         icon: String(icon),
         type: String(type),
         index: Number(index),
-        sellPrice: parseInt(sellPrice),
+        sellPrice: parseInt(sellPrice) || 0,
         cannotToss: !!cannotToss,
+        durability: parseInt(durability) || 100,
       };
       if (type === "food" || type === "potion") {
         result.heal ??= 0;
         result.mana ??= 0;
-        result.heal = parseInt(result.heal);
-        result.mana = parseInt(result.mana);
+        result.heal = parseInt(result.heal) || 0;
+        result.mana = parseInt(result.mana) || 0;
       }
-      if (type === "weapon" || type === "armor") {
+      if (type === "weapon" || type === "armor" || type === "utility") {
         result.atk ??= 0;
         result.def ??= 0;
-        result.atk = parseFloat(result.atk);
-        result.def = parseFloat(result.def);
+        result.atk = parseFloat(result.atk) || 0;
+        result.def = parseFloat(result.def) || 0;
+        result.durability = Math.max(0, parseInt(result.durability) || 100);
       }
       if (type === "chest") {
         result.contents ??= [];
@@ -160,11 +163,19 @@ class Inventory {
   }
 
   addOne(item) {
-    return this.inv.push(item);
+    if (this.inv.length >= this.limit) {
+      return false;
+    }
+    this.inv.push(this.sanitize([item])[0]);
+    return true;
   }
 
   add(item) {
-    return this.inv.push(...item);
+    if (this.inv.length + item.length > this.limit) {
+      return false;
+    }
+    this.inv.push(...this.sanitize(item));
+    return true;
   }
 
   toss(key, amount) {
@@ -194,9 +205,11 @@ class Inventory {
   }
 
   setAmount(key, amount) {
-    const data = this.get(key);
+    const data = this.getOne(key);
+    if (!data) return;
+    this.delete(key);
     for (let i = 0; i < amount; i++) {
-      this.addOne(data[i]);
+      this.addOne({ ...data });
     }
   }
 
@@ -268,6 +281,9 @@ class Inventory {
         "Invalid user object: Must have setAtk and setDef methods."
       );
     }
+    if (item.durability <= 0) {
+      throw new Error(`Item "${item.name}" is broken and cannot be equipped.`);
+    }
     if (item.type === "weapon" && item.atk > 0) {
       const currentAtk = user.getAtk ? user.getAtk() : 0;
       const newAtk = currentAtk + item.atk;
@@ -278,8 +294,13 @@ class Inventory {
       const newDef = currentDef + item.def;
       user.setDef(newDef);
     }
-    this.deleteOne(key);
-    return { equipped: true, item: item.name, atk: item.atk || 0, def: item.def || 0 };
+    item.durability = Math.max(0, item.durability - 10);
+    if (item.durability === 0) {
+      this.deleteOne(key);
+    } else {
+      this.inv[this.inv.findIndex((i) => i.key === key)] = item;
+    }
+    return { equipped: true, item: item.name, atk: item.atk || 0, def: item.def || 0, durability: item.durability };
   }
 
   equipUtility(key, user) {
@@ -292,6 +313,9 @@ class Inventory {
     }
     if (!user) {
       throw new Error("Invalid user object: Must be provided.");
+    }
+    if (item.durability <= 0) {
+      throw new Error(`Item "${item.name}" is broken and cannot be equipped.`);
     }
     const appliedStats = {};
     for (const [stat, value] of Object.entries(item.stats)) {
@@ -306,8 +330,13 @@ class Inventory {
         appliedStats[stat] = value;
       }
     }
-    this.deleteOne(key);
-    return { equipped: true, item: item.name, stats: appliedStats };
+    item.durability = Math.max(0, item.durability - 10);
+    if (item.durability === 0) {
+      this.deleteOne(key);
+    } else {
+      this.inv[this.inv.findIndex((i) => i.key === key)] = item;
+    }
+    return { equipped: true, item: item.name, stats: appliedStats, durability: item.durability };
   }
 
   unequipItem(type, stats, user, returnToInventory = false, itemData = {}) {
@@ -360,11 +389,29 @@ class Inventory {
       if (!itemData.key || !itemData.name) {
         throw new Error("Invalid itemData: Must provide key and name for returning to inventory.");
       }
-      const newItem = { ...itemData, type, stats: type === "utility" ? stats.stats : { atk: stats.atk || 0, def: stats.def || 0 } };
+      const newItem = {
+        ...itemData,
+        type,
+        stats: type === "utility" ? stats.stats : { atk: stats.atk || 0, def: stats.def || 0 },
+        durability: itemData.durability || 0,
+      };
       this.addOne(newItem);
       returnedItem = newItem;
     }
     return { unequipped: true, type, stats: appliedStats, returnedItem };
+  }
+
+  repairItem(key, amount = 100) {
+    const item = this.getOne(key);
+    if (!item) {
+      throw new Error(`Item with key ${key} does not exist in the inventory.`);
+    }
+    if (!["weapon", "armor", "utility"].includes(item.type)) {
+      throw new Error(`Item "${item.name}" cannot be repaired. Only weapons, armor, or utility items have durability.`);
+    }
+    item.durability = Math.min(100, Math.max(0, item.durability + parseInt(amount) || 100));
+    this.inv[this.inv.findIndex((i) => i.key === key)] = item;
+    return { repaired: true, item: item.name, durability: item.durability };
   }
 }
 
