@@ -19,6 +19,7 @@ class Inventory {
         cannotToss = false,
         sellPrice = 0,
         durability = 100,
+        ingredients = [],
       } = item;
       if (!key) {
         return;
@@ -34,6 +35,7 @@ class Inventory {
         sellPrice: parseInt(sellPrice) || 0,
         cannotToss: !!cannotToss,
         durability: parseInt(durability) || 100,
+        ingredients: Array.isArray(ingredients) ? ingredients : [], // Ensure ingredients is an array
       };
       if (type === "food" || type === "potion") {
         result.heal ??= 0;
@@ -47,6 +49,13 @@ class Inventory {
         result.atk = parseFloat(result.atk) || 0;
         result.def = parseFloat(result.def) || 0;
         result.durability = Math.max(0, parseInt(result.durability) || 100);
+        // Validate ingredients for craftable items
+        result.ingredients = Array.isArray(result.ingredients)
+          ? result.ingredients.map(ing => ({
+              key: String(ing.key).replaceAll(" ", ""),
+              quantity: parseInt(ing.quantity) || 1,
+            })).filter(ing => ing.key && ing.quantity > 0)
+          : [];
       }
       if (type === "chest") {
         result.contents ??= [];
@@ -62,6 +71,32 @@ class Inventory {
       return result;
     });
     return result.filter(Boolean);
+  }
+
+  craft(item) {
+    if (!item || !["weapon", "armor", "utility"].includes(item.type)) {
+      throw new Error("Can only craft weapon, armor, or utility items.");
+    }
+    if (!Array.isArray(item.ingredients) || item.ingredients.length === 0) {
+      throw new Error(`Item "${item.name}" has no valid ingredients to craft.`);
+    }
+
+    for (const { key, quantity } of item.ingredients) {
+      if (!this.hasAmount(key, quantity)) {
+        const itemName = this.getOne(key)?.name || key;
+        throw new Error(`Missing ${quantity} "${itemName}" to craft "${item.name}".`);
+      }
+    }
+
+    for (const { key, quantity } of item.ingredients) {
+      this.toss(key, quantity);
+    }
+
+    if (!this.addOne(item)) {
+      throw new Error("Failed to craft item: Inventory is full.");
+    }
+
+    return { crafted: true, item: item.name };
   }
 
   at(index) {
@@ -269,36 +304,36 @@ class Inventory {
   }
 
   equipItem(key, user) {
-   const item = this.getOne(String(key)); 
-   if (!item) {
-    throw new Error(`Item with key ${key} does not exist in the inventory.`);
-   }
-   if (item.type !== "weapon" && item.type !== "armor") {
-    throw new Error(`Item with key ${key} cannot be equipped. Only weapons or armor can be equipped.`);
-   }
-   if (!user || !user.setAtk || !user.setDef) {
-    throw new Error("Invalid user object: Must have setAtk and setDef methods.");
-   }
-   if (item.durability <= 0) {
-    throw new Error(`Item "${item.name}" is broken and cannot be equipped.`);
-   }
-   if (item.type === "weapon" && item.atk > 0) {
-    const currentAtk = user.getAtk ? user.getAtk() : 0;
-    const newAtk = currentAtk + item.atk;
-    user.setAtk(newAtk);
-   }
-   if (item.type === "armor" && item.def > 0) {
-    const currentDef = user.getDef ? user.getDef() : 0;
-    const newDef = currentDef + item.def;
-    user.setDef(newDef);
-   }
-   item.durability = Math.max(0, item.durability - 10);
-   if (item.durability === 0) {
-    this.deleteOne(String(key)); 
-   } else {
-    this.inv[this.inv.findIndex((i) => i.key === String(key))] = item;
-   }
-  return { equipped: true, item: item.name, atk: item.atk || 0, def: item.def || 0, durability: item.durability };
+    const item = this.getOne(String(key));
+    if (!item) {
+      throw new Error(`Item with key ${key} does not exist in the inventory.`);
+    }
+    if (item.type !== "weapon" && item.type !== "armor") {
+      throw new Error(`Item with key ${key} cannot be equipped. Only weapons or armor can be equipped.`);
+    }
+    if (!user || !user.setAtk || !user.setDef) {
+      throw new Error("Invalid user object: Must have setAtk and setDef methods.");
+    }
+    if (item.durability <= 0) {
+      throw new Error(`Item "${item.name}" is broken and cannot be equipped.`);
+    }
+    if (item.type === "weapon" && item.atk > 0) {
+      const currentAtk = user.getAtk ? user.getAtk() : 0;
+      const newAtk = currentAtk + item.atk;
+      user.setAtk(newAtk);
+    }
+    if (item.type === "armor" && item.def > 0) {
+      const currentDef = user.getDef ? user.getDef() : 0;
+      const newDef = currentDef + item.def;
+      user.setDef(newDef);
+    }
+    item.durability = Math.max(0, item.durability - 10);
+    if (item.durability === 0) {
+      this.deleteOne(String(key));
+    } else {
+      this.inv[this.inv.findIndex((i) => i.key === String(key))] = item;
+    }
+    return { equipped: true, item: item.name, atk: item.atk || 0, def: item.def || 0, durability: item.durability };
   }
 
   equipUtility(key, user) {
