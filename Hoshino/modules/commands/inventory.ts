@@ -292,127 +292,111 @@ export async function deploy(ctx) {
         },
       },
       {
-        subcommand: "unequip",
-        aliases: ["remove-equip", "dequip"],
-        description: "Unequip a weapon, armor, or utility item.",
-        usage: "inventory unequip <type> <stats> [return] [item_data]",
-        async deploy({
+         subcommand: "unequip",
+         aliases: ["remove-equip", "dequip"],
+         description: "Unequip an item and return it to your inventory.",
+         usage: "inventory unequip <item_key>",
+         async deploy({
           chat,
           args,
           event,
           hoshinoDB,
           HoshinoEXP,
           Inventory,
-        }: {
+         }: {
           chat: any;
           args: string[];
           event: any;
           hoshinoDB: any;
           HoshinoEXP: any;
           Inventory: any;
-        }) {
-          if (args.length < 2) {
+         }) {
+          if (args.length < 1) {
+           return await chat.reply(
+            "Please provide an item key. Usage: inventory unequip <item_key>"
+             );
+           }
+          const itemKey = args.join(" ").trim().toLowerCase();
+           if (!itemKey) {
             return await chat.reply(
-              "Please provide item type and stats. Usage: inventory unequip <type> <stats> [return] [item_data]"
-            );
-          }
-          const type = args[0].toLowerCase();
-          let statsArg: any;
-          const returnToInventory = args[2]?.toLowerCase() === "return";
-          try {
-            statsArg = JSON.parse(args[1]);
-          } catch {
-            return await chat.reply(
-              'Invalid stats format. Provide stats as JSON, e.g., \'{"atk": 5}\' or \'{"stats": {"mining": 5}}\'.'
-            );
-          }
+             "Invalid item key. Usage: inventory unequip <item_key>"
+             );
+           }
           const cleanID = event.senderID;
           const userData = await hoshinoDB.get(cleanID);
           if (!userData || !userData.username) {
-            return await chat.reply(
-              "You need to register first! Use: profile register <username>"
-            );
-          }
+           return await chat.reply(
+            "You need to register first! Use: profile register <username>"
+             );
+           }
           const {
-            expData = { exp: 0, mana: 100, health: 100, atk: 0, def: 0 },
-            inventoryData = [],
+           expData = { exp: 0, mana: 100, health: 100, atk: 0, def: 0 },
+           inventoryData = [],
           } = userData;
           const exp = new HoshinoEXP(expData);
           const inventory = new Inventory(inventoryData);
-          let itemData: any = {};
-          if (returnToInventory) {
-            if (args.length < 4) {
-              return await chat.reply(
-                "Please provide item data for returning to inventory. Usage: inventory unequip <type> <stats> return <item_data>"
-              );
-            }
-            try {
-              itemData = JSON.parse(args[3]);
-              if (!itemData.key || !itemData.name) {
-                return await chat.reply(
-                  'Item data must include key and name, e.g., \'{"key": "sword", "name": "Iron Sword"}\'.'
-                );
-              }
-            } catch {
-              return await chat.reply(
-                'Invalid item data format. Provide item data as JSON, e.g., \'{"key": "sword", "name": "Iron Sword"}\'.'
-              );
-            }
-          }
-          try {
-            const result = inventory.unequipItem(
-              type,
-              statsArg,
-              exp,
-              returnToInventory,
-              itemData
-            );
-            let message = "";
-            if (type === "weapon" || type === "armor") {
-              const stats: string[] = [];
-              if (result.stats.atk > 0) stats.push(`-${result.stats.atk} ATK`);
-              if (result.stats.def > 0) stats.push(`-${result.stats.def} DEF`);
-              message = `Unequipped ${type}${
-                stats.length ? ` (${stats.join(", ")})` : ""
-              }${
-                returnToInventory
-                  ? `, returned "${itemData.name}" to inventory`
-                  : ""
-              }!`;
-            } else if (type === "utility") {
-              const stats = Object.entries(result.stats)
-                .map(([stat, value]) => `-${value} ${stat.toUpperCase()}`)
-                .join(", ");
-              message = `Unequipped utility item${stats ? ` (${stats})` : ""}${
-                returnToInventory
-                  ? `, returned "${itemData.name}" to inventory`
-                  : ""
-              }!`;
-            }
-            await hoshinoDB.set(cleanID, {
-              ...userData,
-              expData: exp.raw(),
-              inventoryData: inventory.raw(),
-            });
-            const statDisplay = [
-              `ATK: ${exp.getAtk ? exp.getAtk() : 0}`,
-              `DEF: ${exp.getDef ? exp.getDef() : 0}`,
-              ...Object.entries(exp.raw())
-                .filter(
-                  ([key]) =>
-                    key !== "exp" &&
-                    key !== "mana" &&
-                    key !== "health" &&
-                    key !== "atk" &&
-                    key !== "def"
-                )
-                .map(([key, value]) => `${key.toUpperCase()}: ${value}`),
+           if (!inventory.has(itemKey)) {
+           return await chat.reply(
+            `You don't have an item with key "${itemKey}" in your inventory!`
+           );
+         }
+         try {
+          const item = inventory.getOne(itemKey);
+           if (!item) {
+            return await chat.reply(`Item with key "${itemKey}" not found.`);
+           }
+           if (!["weapon", "armor", "utility"].includes(item.type)) {
+            return await chat.reply(
+             `Item "${item.name}" cannot be unequipped. Only weapons, armor, or utility items can be unequipped.`
+             );
+           }
+          const stats = item.type === "utility" ? { stats: item.stats || {} } : { atk: item.atk || 0, def: item.def || 0 };
+          const itemData = {
+           key: item.key,
+           name: item.name,
+           type: item.type,
+           icon: item.icon,
+           flavorText: item.flavorText,
+           sellPrice: item.sellPrice,
+           cannotToss: item.cannotToss,
+          ...(item.type === "utility" ? { stats: item.stats } : { atk: item.atk, def: item.def }),
+           };
+          const result = inventory.unequipItem(item.type, stats, exp, true, itemData);
+           let message = "";
+            if (item.type === "weapon" || item.type === "armor") {
+            const statsDisplay: string[] = [];
+            if (result.stats.atk > 0) statsDisplay.push(`-${result.stats.atk} ATK`);
+            if (result.stats.def > 0) statsDisplay.push(`-${result.stats.def} DEF`);
+             message = `Unequipped "${item.name}"${statsDisplay.length ? ` (${statsDisplay.join(", ")})` : ""}, returned to inventory!`;
+            } else if (item.type === "utility") {
+            const statsDisplay = Object.entries(result.stats)
+           .map(([stat, value]) => `-${value} ${stat.toUpperCase()}`)
+           .join(", ");
+           message = `Unequipped "${item.name}"${statsDisplay ? ` (${statsDisplay})` : ""}, returned to inventory!`;
+         }
+         await hoshinoDB.set(cleanID, {
+          ...userData,
+          expData: exp.raw(),
+          inventoryData: inventory.raw(),
+         });
+         const statDisplay = [
+          `ATK: ${exp.getAtk ? exp.getAtk() : 0}`,
+          `DEF: ${exp.getDef ? exp.getDef() : 0}`,
+           ...Object.entries(exp.raw())
+            .filter(
+              ([key]) =>
+                key !== "exp" &&
+                key !== "mana" &&
+                key !== "health" &&
+                key !== "atk" &&
+                key !== "def"
+              )
+            .map(([key, value]) => `${key.toUpperCase()}: ${value}`),
             ].join("\n");
-            await chat.reply(`${message}\nCurrent Stats:\n${statDisplay}`);
+           await chat.reply(`${message}\nCurrent Stats:\n${statDisplay}`);
           } catch (error: unknown) {
-            const errorMessage =
-              error instanceof Error ? error.message : "Unknown error";
-            return await chat.reply(`Failed to unequip item: ${errorMessage}`);
+           const errorMessage = error instanceof Error ? error.message : "Unknown error";
+           return await chat.reply(`Failed to unequip item: ${errorMessage}`);
           }
         },
       },
