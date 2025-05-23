@@ -136,7 +136,7 @@ export default async function listener({
   global.bot.emit("message", entryObj);
 
   if (
-    event.type === "message" &&
+    event.type === "message_reply" &&
     event.messageReply &&
     replies.has(event.messageReply.messageID)
   ) {
