@@ -93,7 +93,7 @@ export async function deploy(ctx) {
           const item = recipe[itemKey];
           if (!item) {
             return await chat.reply(
-              `No recipe found for item with key "${itemKey}". Available recipes: ${Object.keys(recipes).join(", ")}`
+              `No recipe found for item with key "${itemKey}". Available recipes: ${Object.keys(recipe).join(", ")}`
             );
           }
           try {
