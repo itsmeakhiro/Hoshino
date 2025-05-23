@@ -164,7 +164,5 @@ export default async function listener({
     case "message_reply":
       commandHandler({ ...entryObj });
       break;
-    default:
-      console.log(`Unhandled event type: ${(event as any).type}`);
   }
 }
