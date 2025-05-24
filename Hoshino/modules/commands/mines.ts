@@ -2,7 +2,7 @@ const manifest: HoshinoLia.CommandManifest = {
   name: "mines",
   aliases: ["mine", "mining"],
   version: "1.0.5",
-  developer: "Francis And Liane",
+  developer: "Francis Loyd Raval",
   description: "Mine ores like in Minecraft, where each pickaxe can only mine specific ores.",
   category: "Simulator",
   usage: "mines buy <pickaxe_type> | mines start | mines status | mines collect",
