@@ -323,6 +323,7 @@ export async function deploy(ctx) {
         },
       },
     ],
+    "◆"
   );
   return home.runInContext(ctx);
 }
