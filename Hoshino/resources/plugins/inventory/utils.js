@@ -18,7 +18,7 @@ class Inventory {
         type = "generic",
         cannotToss = false,
         sellPrice = 0,
-        price: 0,
+        price = 0,
         durability = 100,
         ingredients = [],
       } = item;
