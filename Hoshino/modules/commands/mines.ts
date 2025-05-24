@@ -134,9 +134,11 @@ export async function deploy(ctx) {
             );
           }
           if (args.length < 1) {
-            const pickaxeIndex = PICKAXES.findIndex(pick => pick.key === p.key);
-            const compatibleKeys = PICKAXES.slice(0, pickaxeIndex + 1).map(pick => pick.key);
-            const pickaxeList = PICKAXES.map(p => `${p.name} [${p.key}] (${p.price} coins, can mine: ${ORES.filter(o => compatibleKeys.includes(o.pickaxe)).map(o => o.name).join(", ")})`).join("\n");
+            const pickaxeList = PICKAXES.map(p => {
+              const pickaxeIndex = PICKAXES.findIndex(pick => pick.key === p.key);
+              const compatibleKeys = PICKAXES.slice(0, pickaxeIndex + 1).map(pick => pick.key);
+              return `${p.name} [${p.key}] (${p.price} coins, can mine: ${ORES.filter(o => compatibleKeys.includes(o.pickaxe)).map(o => o.name).join(", ")})`
+            }).join("\n");
             return await chat.reply(
               `Please specify a pickaxe type. Available pickaxes:\n${pickaxeList}\nUsage: mines buy <pickaxe_type>`
             );
