@@ -6,80 +6,72 @@ class Inventory {
   }
 
   sanitize(inv = this.inv) {
-  if (!Array.isArray(inv)) {
-    throw new Error("Inventory must be an array.");
-  }
-  let result = inv.slice(0, this.limit).map((item, index) => {
-    const {
-      name = "Unknown Item",
-      key = "",
-      flavorText = "Mysteriously not known to anyone.",
-      icon = "❓",
-      type = "generic",
-      cannotToss = false,
-      sellPrice = 0,
-      price = 0,
-      durability = 100,
-      ingredients = [],
-      rarity = "common", // New for fish
-      weight = 1, // New for fish
-      luck = 0, // New for rods
-      strength = 0, // New for rods
-    } = item;
-    if (!key) {
-      return;
+    if (!Array.isArray(inv)) {
+      throw new Error("Inventory must be an array.");
     }
-    let result = {
-      ...item,
-      name: String(name),
-      key: String(key).replaceAll(" ", "").toLowerCase(),
-      flavorText: String(flavorText),
-      icon: String(icon),
-      type: String(type),
-      index: Number(index),
-      sellPrice: parseInt(sellPrice) || 0,
-      price: parseInt(price) || 0,
-      cannotToss: !!cannotToss,
-      durability: parseInt(durability) || 100,
-      ingredients: Array.isArray(ingredients) ? ingredients : [],
-      rarity: ["common", "uncommon", "rare", "legendary", "mythic"].includes(rarity) ? rarity : "common",
-      weight: Math.max(1, parseFloat(weight) || 1),
-      luck: parseFloat(luck) || 0,
-      strength: parseFloat(strength) || 0,
-    };
-    if (type === "food" || type === "potion") {
-      result.heal ??= 0;
-      result.mana ??= 0;
-      result.heal = parseInt(result.heal) || 0;
-      result.mana = parseInt(result.mana) || 0;
-    }
-    if (type === "weapon" || type === "armor" || type === "utility") {
-      result.atk ??= 0;
-      result.def ??= 0;
-      result.atk = parseFloat(result.atk) || 0;
-      result.def = parseFloat(result.def) || 0;
-      result.durability = Math.max(0, parseInt(result.durability) || 100);
-      result.ingredients = Array.isArray(result.ingredients)
-        ? result.ingredients.map(ing => ({
-            key: String(ing.key).replaceAll(" ", "").toLowerCase(),
-            quantity: parseInt(ing.quantity) || 1,
-          })).filter(ing => ing.key && ing.quantity > 0)
-        : [];
-    }
-    if (type === "chest") {
-      result.contents ??= [];
-      result.contents = Array.isArray(result.contents) ? result.contents : [];
-    }
-    if (type === "utility") {
-      result.stats ??= {};
-      result.stats = typeof result.stats === "object" && !Array.isArray(result.stats) ? result.stats : {};
-      for (const [key, value] of Object.entries(result.stats)) {
-        result.stats[key] = parseFloat(value) || 0;
+    let result = inv.slice(0, this.limit).map((item, index) => {
+      const {
+        name = "Unknown Item",
+        key = "",
+        flavorText = "Mysteriously not known to anyone.",
+        icon = "❓",
+        type = "generic",
+        cannotToss = false,
+        sellPrice = 0,
+        price: 0,
+        durability = 100,
+        ingredients = [],
+      } = item;
+      if (!key) {
+        return;
       }
-    }
-    return result;
-  });
-  return result.filter(Boolean);
+      let result = {
+        ...item,
+        name: String(name),
+        key: String(key).replaceAll(" ", ""),
+        flavorText: String(flavorText),
+        icon: String(icon),
+        type: String(type),
+        index: Number(index),
+        sellPrice: parseInt(sellPrice) || 0,
+        price: parseInt(price) || 0,
+        cannotToss: !!cannotToss,
+        durability: parseInt(durability) || 100,
+        ingredients: Array.isArray(ingredients) ? ingredients : [], 
+      };
+      if (type === "food" || type === "potion") {
+        result.heal ??= 0;
+        result.mana ??= 0;
+        result.heal = parseInt(result.heal) || 0;
+        result.mana = parseInt(result.mana) || 0;
+      }
+      if (type === "weapon" || type === "armor" || type === "utility") {
+        result.atk ??= 0;
+        result.def ??= 0;
+        result.atk = parseFloat(result.atk) || 0;
+        result.def = parseFloat(result.def) || 0;
+        result.durability = Math.max(0, parseInt(result.durability) || 100);
+        result.ingredients = Array.isArray(result.ingredients)
+          ? result.ingredients.map(ing => ({
+              key: String(ing.key).replaceAll(" ", ""),
+              quantity: parseInt(ing.quantity) || 1,
+            })).filter(ing => ing.key && ing.quantity > 0)
+          : [];
+      }
+      if (type === "chest") {
+        result.contents ??= [];
+        result.contents = Array.isArray(result.contents) ? result.contents : [];
+      }
+      if (type === "utility") {
+        result.stats ??= {};
+        result.stats = typeof result.stats === "object" && !Array.isArray(result.stats) ? result.stats : {};
+        for (const [key, value] of Object.entries(result.stats)) {
+          result.stats[key] = parseFloat(value) || 0;
+        }
+      }
+      return result;
+    });
+    return result.filter(Boolean);
   }
 
   craft(item) {
