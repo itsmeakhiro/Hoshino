@@ -53,7 +53,7 @@ const recipe = {
     cannotToss: false,
     sellPrice: 100,
     durability: 80,
-    def: 10, 
+    def: 10,
     ingredients: [
       { key: "wooden-plank", quantity: 6 },
       { key: "iron-ingot", quantity: 1 },
@@ -299,7 +299,7 @@ export async function deploy(ctx) {
               "Please provide an item key. Usage: inventory equip <item_key>"
             );
           }
-          const itemKey = args.join(" ").trim().toLowerCase();
+          const itemKey = args.slice(1).join(" ").trim().toLowerCase();
           if (!itemKey) {
             return await chat.reply(
               "Invalid item key. Usage: inventory equip <item_key>"
@@ -400,7 +400,7 @@ export async function deploy(ctx) {
               "Please provide an item key. Usage: inventory unequip <item_key>"
             );
           }
-          const itemKey = args.join(" ").trim().toLowerCase();
+          const itemKey = args.slice(1).join(" ").trim().toLowerCase();
           if (!itemKey) {
             return await chat.reply(
               "Invalid item key. Usage: inventory unequip <item_key>"
@@ -445,7 +445,7 @@ export async function deploy(ctx) {
               cannotToss: item.cannotToss,
               durability: item.durability,
               ...(item.type === "utility"
-                ? { stats: item.distats }
+                ? { stats: item.stats }
                 : { atk: item.atk, def: item.def }),
             };
             const result = inventory.unequipItem(
