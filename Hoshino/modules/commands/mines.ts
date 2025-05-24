@@ -3,7 +3,7 @@ const manifest: HoshinoLia.CommandManifest = {
   aliases: ["mine", "mining"],
   version: "1.0.5",
   developer: "Francis And Liane",
-  description: "Mine ores like in Minecraft, where each pickaxe can only mine specific ores based on its tier.",
+  description: "Mine ores like in Minecraft, where each pickaxe can only mine specific ores.",
   category: "Simulator",
   usage: "mines buy <pickaxe_type> | mines start | mines status | mines collect",
   config: {
@@ -28,62 +28,62 @@ const PICKAXES = [
   {
     name: "Wooden Pickaxe",
     key: "wooden_pickaxe",
-    tier: 1,
     mining: 0.5,
     price: 100,
     icon: "🪓",
     flavorText: "A basic tool for mining coal, stone, and copper.",
     sellPrice: 50,
+    durability: 60,
   },
   {
     name: "Stone Pickaxe",
     key: "stone_pickaxe",
-    tier: 2,
     mining: 1,
     price: 300,
     icon: "⛏️",
     flavorText: "A sturdy tool for mining iron, lapis, and below.",
     sellPrice: 150,
+    durability: 130,
   },
   {
     name: "Iron Pickaxe",
     key: "iron_pickaxe",
-    tier: 3,
     mining: 2,
     price: 800,
     icon: "⛏️",
     flavorText: "A reliable tool for mining gold, redstone, and below.",
     sellPrice: 400,
+    durability: 250,
   },
   {
     name: "Gold Pickaxe",
     key: "gold_pickaxe",
-    tier: 4,
     mining: 3,
     price: 2000,
     icon: "⛏️",
     flavorText: "A shiny tool for mining diamond, emerald, and below.",
     sellPrice: 1000,
+    durability: 30,
   },
   {
     name: "Diamond Pickaxe",
     key: "diamond_pickaxe",
-    tier: 5,
     mining: 5,
     price: 5000,
     icon: "⛏️",
     flavorText: "The ultimate tool for mining all ores efficiently.",
     sellPrice: 2500,
+    durability: 1560,
   },
   {
     name: "Netherite Pickaxe",
     key: "netherite_pickaxe",
-    tier: 5,
     mining: 7,
     price: 12000,
     icon: "⛏️",
     flavorText: "An indestructible tool forged from netherite, unmatched in mining speed.",
     sellPrice: 6000,
+    durability: 2030,
   },
 ];
 
@@ -134,7 +134,9 @@ export async function deploy(ctx) {
             );
           }
           if (args.length < 1) {
-            const pickaxeList = PICKAXES.map(p => `${p.name} [${p.key}] (${p.price} coins, can mine: ${ORES.filter(o => o.tier <= p.tier).map(o => o.name).join(", ")})`).join("\n");
+            const pickaxeIndex = PICKAXES.findIndex(pick => pick.key === p.key);
+            const compatibleKeys = PICKAXES.slice(0, pickaxeIndex + 1).map(pick => pick.key);
+            const pickaxeList = PICKAXES.map(p => `${p.name} [${p.key}] (${p.price} coins, can mine: ${ORES.filter(o => compatibleKeys.includes(o.pickaxe)).map(o => o.name).join(", ")})`).join("\n");
             return await chat.reply(
               `Please specify a pickaxe type. Available pickaxes:\n${pickaxeList}\nUsage: mines buy <pickaxe_type>`
             );
@@ -142,7 +144,11 @@ export async function deploy(ctx) {
           const pickaxeType = args[1]?.toLowerCase();
           const pickaxe = PICKAXES.find(p => p.key === pickaxeType);
           if (!pickaxe) {
-            const pickaxeList = PICKAXES.map(p => `${p.name} [${p.key}] (${p.price} coins, can mine: ${ORES.filter(o => o.tier <= p.tier).map(o => o.name).join(", ")})`).join("\n");
+            const pickaxeList = PICKAXES.map(p => {
+              const pickaxeIndex = PICKAXES.findIndex(pick => pick.key === p.key);
+              const compatibleKeys = PICKAXES.slice(0, pickaxeIndex + 1).map(pick => pick.key);
+              return `${p.name} [${p.key}] (${p.price} coins, can mine: ${ORES.filter(o => compatibleKeys.includes(o.pickaxe)).map(o => o.name).join(", ")})`
+            }).join("\n");
             return await chat.reply(
               `Invalid pickaxe type. Available pickaxes:\n${pickaxeList}`
             );
@@ -169,7 +175,7 @@ export async function deploy(ctx) {
             sellPrice: pickaxe.sellPrice,
             cannotToss: false,
             stats: { mining: pickaxe.mining },
-            tier: pickaxe.tier,
+            durability: pickaxe.durability,
           };
           inventory.addOne(pickaxeItem);
           await hoshinoDB.set(cleanID, {
@@ -177,15 +183,17 @@ export async function deploy(ctx) {
             balance: balance - pickaxe.price,
             inventoryData: inventory.raw(),
           });
+          const pickaxeIndex = PICKAXES.findIndex(pick => pick.key === pickaxe.key);
+          const compatibleKeys = PICKAXES.slice(0, pickaxeIndex + 1).map(pick => pick.key);
           await chat.reply(
-            `You purchased a "${pickaxe.name}" for ${pickaxe.price} coins! Equip it with: inventory equip ${pickaxe.key}\nCan mine: ${ORES.filter(o => o.tier <= pickaxe.tier).map(o => o.name).join(", ")}`
+            `You purchased a "${pickaxe.name}" for ${pickaxe.price} coins! Equip it with: inventory equip ${pickaxe.key}\nCan mine: ${ORES.filter(o => compatibleKeys.includes(o.pickaxe)).map(o => o.name).join(", ")}`
           );
         },
       },
       {
         subcommand: "start",
         aliases: ["begin", "mine"],
-        description: "Start mining a random ore compatible with your equipped pickaxe's tier.",
+        description: "Start mining a random ore compatible with your equipped pickaxe.",
         usage: "mines start",
         icon: "⛏️",
         async deploy({ chat, event, hoshinoDB, HoshinoEXP, Inventory }) {
@@ -207,8 +215,13 @@ export async function deploy(ctx) {
           const equippedPickaxe = inventory.getAll().find(
             (item: any) => item.type === "utility" && item.stats?.mining === exp.getMining()
           );
-          if (!equippedPickaxe || !equippedPickaxe.tier) {
-            return await chat.reply("Your equipped pickaxe is invalid or missing tier information.");
+          if (!equippedPickaxe) {
+            return await chat.reply("Your equipped pickaxe is invalid.");
+          }
+          if (equippedPickaxe.durability <= 0) {
+            return await chat.reply(
+              `Your ${equippedPickaxe.name} is broken! Buy a new one with: mines buy <pickaxe_type>`
+            );
           }
           if (miningData.active) {
             return await chat.reply("You are already mining! Check progress with: mines status");
@@ -228,7 +241,7 @@ export async function deploy(ctx) {
               miningRate,
               oreName: ore.name,
               oreCost: ore.cost,
-              pickaxeTier: equippedPickaxe.tier,
+              pickaxeKey: equippedPickaxe.key,
             },
           });
           await chat.reply(
@@ -258,21 +271,22 @@ export async function deploy(ctx) {
               "You are not currently mining! Start with: mines start"
             );
           }
-          const { startTime, miningRate, oreName, oreCost, pickaxeTier } = miningData;
+          const { startTime, miningRate, oreName, oreCost, pickaxeKey } = miningData;
           const equippedPickaxe = inventory.getAll().find(
             (item: any) => item.type === "utility" && item.stats?.mining === exp.getMining()
           );
           const pickaxeName = equippedPickaxe ? equippedPickaxe.name : "Unknown Pickaxe";
+          const pickaxeDurability = equippedPickaxe ? equippedPickaxe.durability : 0;
           const elapsedMinutes = (Date.now() - startTime) / (1000 * 60);
           const earned = Math.floor(elapsedMinutes * miningRate * oreCost);
-          const pickaxeIndex = PICKAXES.findIndex(p => p.tier === pickaxeTier);
+          const pickaxeIndex = PICKAXES.findIndex(p => p.key === pickaxeKey);
           const compatiblePickaxeKeys = PICKAXES.slice(0, pickaxeIndex + 1).map(p => p.key);
           const availableOres = ORES.filter(ore => compatiblePickaxeKeys.includes(ore.pickaxe))
             .map(ore => `${ore.name} (${ore.cost} coins/unit)`)
             .join(", ");
           const statusMessage = [
             `**Mining Status**`,
-            `Pickaxe: ${pickaxeName} (Tier ${pickaxeTier})`,
+            `Pickaxe: ${pickaxeName} (Durability: ${pickaxeDurability})`,
             `Ore: ${oreName} (${oreCost} coins/unit)`,
             `Mining Rate: ${(miningRate * oreCost).toFixed(1)} coins/min`,
             `Time Elapsed: ${elapsedMinutes.toFixed(1)} minutes`,
@@ -305,20 +319,29 @@ export async function deploy(ctx) {
               "You are not currently mining! Start with: mines start"
             );
           }
-          const { startTime, miningRate, oreName, oreCost, pickaxeTier } = miningData;
+          const { startTime, miningRate, oreName, oreCost, pickaxeKey } = miningData;
           const equippedPickaxe = inventory.getAll().find(
             (item: any) => item.type === "utility" && item.stats?.mining === exp.getMining()
           );
           const pickaxeName = equippedPickaxe ? equippedPickaxe.name : "Unknown Pickaxe";
           const elapsedMinutes = (Date.now() - startTime) / (1000 * 60);
           const earned = Math.floor(elapsedMinutes * miningRate * oreCost);
+          equippedPickaxe.durability -= 1;
+          let breakMessage = "";
+          if (equippedPickaxe.durability <= 0) {
+            inventory.removeOne(equippedPickaxe.key);
+            exp.setMining(0);
+            breakMessage = `Your ${pickaxeName} broke! Buy a new one with: mines buy <pickaxe_type>`;
+          }
           await hoshinoDB.set(cleanID, {
             ...userData,
             balance: balance + earned,
-            miningData: { active: false, startTime: 0, miningRate: 0, oreName: "", oreCost: 0, pickaxeTier: 0 },
+            expData: exp.raw(),
+            inventoryData: inventory.raw(),
+            miningData: equippedPickaxe.durability <= 0 ? { active: false, startTime: 0, miningRate: 0, oreName: "", oreCost: 0, pickaxeKey: "" } : { active: false, startTime: 0, miningRate: 0, oreName: "", oreCost: 0, pickaxeKey: pickaxeKey },
           });
           await chat.reply(
-            `You collected ${earned} coins from mining ${oreName} with your ${pickaxeName}! Start a new cycle with: mines start`
+            `You collected ${earned} coins from mining ${oreName} with your ${pickaxeName}! Start a new cycle with: mines start${breakMessage ? "\n" + breakMessage : ""}`
           );
         },
       },
