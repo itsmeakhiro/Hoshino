@@ -88,19 +88,23 @@ const PICKAXES = [
 ];
 
 const ORES = [
-  { name: "Coal Ore", cost: 1, tier: 1, probability: 0.20 },
-  { name: "Stone", cost: 0.5, tier: 1, probability: 0.20 },
-  { name: "Copper Ore", cost: 1.5, tier: 1, probability: 0.20 },
-  { name: "Iron Ore", cost: 3, tier: 2, probability: 0.15 },
-  { name: "Lapis Lazuli Ore", cost: 4, tier: 2, probability: 0.10 },
-  { name: "Gold Ore", cost: 6, tier: 3, probability: 0.05 },
-  { name: "Redstone Ore", cost: 5, tier: 3, probability: 0.08 },
-  { name: "Diamond Ore", cost: 10, tier: 4, probability: 0.02 },
-  { name: "Emerald Ore", cost: 12, tier: 4, probability: 0.02 },
+  { name: "Dirt", price: 0.3, probability: 0.25, pickaxe: "wooden_pickaxe" },
+  { name: "Stone", price: 0.5, probability: 0.25, pickaxe: "wooden_pickaxe" },
+  { name: "Coal Ore", price: 1, probability: 0.20, pickaxe: "wooden_pickaxe" },
+  { name: "Iron Ore", price: 3, probability: 0.15, pickaxe: "stone_pickaxe" },
+  { name: "Lapis Lazuli Ore", price: 4, probability: 0.10, pickaxe: "stone_pickaxe" },
+  { name: "Gold Ore", price: 6, probability: 0.05, pickaxe: "iron_pickaxe" },
+  { name: "Redstone Ore", price: 5, probability: 0.08, pickaxe: "iron_pickaxe" },
+  { name: "Diamond Ore", price: 10, probability: 0.03, pickaxe: "iron_pickaxe" },
+  { name: "Emerald Ore", price: 12, probability: 0.02, pickaxe: "iron_pickaxe" },
 ];
 
-function getRandomOre(pickaxeTier: number) {
-  const availableOres = ORES.filter(ore => ore.tier <= pickaxeTier);
+function getRandomOre(pickaxeKey: string) {
+  const pickaxe = PICKAXES.find(p => p.key === pickaxeKey);
+  if (!pickaxe) return null;
+  const pickaxeIndex = PICKAXES.findIndex(p => p.key === pickaxeKey);
+  const compatiblePickaxeKeys = PICKAXES.slice(0, pickaxeIndex + 1).map(p => p.key);
+  const availableOres = ORES.filter(ore => compatiblePickaxeKeys.includes(ore.pickaxe));
   if (availableOres.length === 0) return null;
   const totalProbability = availableOres.reduce((sum, ore) => sum + ore.probability, 0);
   const rand = Math.random() * totalProbability;
@@ -121,19 +125,7 @@ export async function deploy(ctx) {
         description: "Buy a pickaxe to mine specific ores (wooden, stone, iron, gold, diamond, netherite).",
         usage: "mines buy <pickaxe_type>",
         icon: "🛒",
-        async deploy({
-          chat,
-          args,
-          event,
-          hoshinoDB,
-          Inventory,
-        }: {
-          chat: any;
-          args: string[];
-          event: any;
-          hoshinoDB: any;
-          Inventory: any;
-        }) {
+        async deploy({ chat, args, event, hoshinoDB, Inventory }) {
           const cleanID = event.senderID;
           const userData = await hoshinoDB.get(cleanID);
           if (!userData || !userData.username) {
@@ -147,7 +139,7 @@ export async function deploy(ctx) {
               `Please specify a pickaxe type. Available pickaxes:\n${pickaxeList}\nUsage: mines buy <pickaxe_type>`
             );
           }
-          const pickaxeType = args.join("_").toLowerCase();
+          const pickaxeType = args[1]?.toLowerCase();
           const pickaxe = PICKAXES.find(p => p.key === pickaxeType);
           if (!pickaxe) {
             const pickaxeList = PICKAXES.map(p => `${p.name} [${p.key}] (${p.cost} coins, can mine: ${ORES.filter(o => o.tier <= p.tier).map(o => o.name).join(", ")})`).join("\n");
@@ -196,19 +188,7 @@ export async function deploy(ctx) {
         description: "Start mining a random ore compatible with your equipped pickaxe's tier.",
         usage: "mines start",
         icon: "⛏️",
-        async deploy({
-          chat,
-          event,
-          hoshinoDB,
-          HoshinoEXP,
-          Inventory,
-        }: {
-          chat: any;
-          event: any;
-          hoshinoDB: any;
-          HoshinoEXP: any;
-          Inventory: any;
-        }) {
+        async deploy({ chat, event, hoshinoDB, HoshinoEXP, Inventory }) {
           const cleanID = event.senderID;
           const userData = await hoshinoDB.get(cleanID);
           if (!userData || !userData.username) {
@@ -233,10 +213,10 @@ export async function deploy(ctx) {
           if (miningData.active) {
             return await chat.reply("You are already mining! Check progress with: mines status");
           }
-          const ore = getRandomOre(equippedPickaxe.tier);
+          const ore = getRandomOre(equippedPickaxe.key);
           if (!ore) {
             return await chat.reply(
-              `No ores are available for your ${equippedPickaxe.name} (Tier ${equippedPickaxe.tier})! Upgrade your pickaxe with: mines buy <pickaxe_type>`
+              `No ores are available for your ${equippedPickaxe.name}! Upgrade your pickaxe with: mines buy <pickaxe_type>`
             );
           }
           const miningRate = exp.getMining();
@@ -247,12 +227,12 @@ export async function deploy(ctx) {
               startTime: Date.now(),
               miningRate,
               oreName: ore.name,
-              oreCost: ore.cost,
+              orePrice: ore.price,
               pickaxeTier: equippedPickaxe.tier,
             },
           });
           await chat.reply(
-            `You started mining ${ore.name} (rate: ${(miningRate * ore.cost).toFixed(1)} coins/min) with your ${equippedPickaxe.name}! Check progress with: mines status`
+            `You started mining ${ore.name} (rate: ${(miningRate * ore.price).toFixed(1)} coins/min) with your ${equippedPickaxe.name}! Check progress with: mines status`
           );
         },
       },
@@ -262,19 +242,7 @@ export async function deploy(ctx) {
         description: "Check your mining progress, ore type, and estimated earnings.",
         usage: "mines status",
         icon: "📊",
-        async deploy({
-          chat,
-          event,
-          hoshinoDB,
-          HoshinoEXP,
-          Inventory,
-        }: {
-          chat: any;
-          event: any;
-          hoshinoDB: any;
-          HoshinoEXP: any;
-          Inventory: any;
-        }) {
+        async deploy({ chat, event, hoshinoDB, HoshinoEXP, Inventory }) {
           const cleanID = event.senderID;
           const userData = await hoshinoDB.get(cleanID);
           if (!userData || !userData.username) {
@@ -290,21 +258,23 @@ export async function deploy(ctx) {
               "You are not currently mining! Start with: mines start"
             );
           }
-          const { startTime, miningRate, oreName, oreCost, pickaxeTier } = miningData;
+          const { startTime, miningRate, oreName, orePrice, pickaxeTier } = miningData;
           const equippedPickaxe = inventory.getAll().find(
             (item: any) => item.type === "utility" && item.stats?.mining === exp.getMining()
           );
           const pickaxeName = equippedPickaxe ? equippedPickaxe.name : "Unknown Pickaxe";
           const elapsedMinutes = (Date.now() - startTime) / (1000 * 60);
-          const earned = Math.floor(elapsedMinutes * miningRate * oreCost);
-          const availableOres = ORES.filter(ore => ore.tier <= pickaxeTier)
-            .map(ore => `${ore.name} (${ore.cost} coins/unit)`)
+          const earned = Math.floor(elapsedMinutes * miningRate * orePrice);
+          const pickaxeIndex = PICKAXES.findIndex(p => p.tier === pickaxeTier);
+          const compatiblePickaxeKeys = PICKAXES.slice(0, pickaxeIndex + 1).map(p => p.key);
+          const availableOres = ORES.filter(ore => compatiblePickaxeKeys.includes(ore.pickaxe))
+            .map(ore => `${ore.name} (${ore.price} coins/unit)`)
             .join(", ");
           const statusMessage = [
             `**Mining Status**`,
             `Pickaxe: ${pickaxeName} (Tier ${pickaxeTier})`,
-            `Ore: ${oreName} (${oreCost} coins/unit)`,
-            `Mining Rate: ${(miningRate * oreCost).toFixed(1)} coins/min`,
+            `Ore: ${oreName} (${orePrice} coins/unit)`,
+            `Mining Rate: ${(miningRate * orePrice).toFixed(1)} coins/min`,
             `Time Elapsed: ${elapsedMinutes.toFixed(1)} minutes`,
             `Estimated Earnings: ${earned} coins`,
             `Available Ores: ${availableOres}`,
@@ -319,19 +289,7 @@ export async function deploy(ctx) {
         description: "Collect your mining earnings and reset the cycle.",
         usage: "mines collect",
         icon: "💰",
-        async deploy({
-          chat,
-          event,
-          hoshinoDB,
-          HoshinoEXP,
-          Inventory,
-        }: {
-          chat: any;
-          event: any;
-          hoshinoDB: any;
-          HoshinoEXP: any;
-          Inventory: any;
-        }) {
+        async deploy({ chat, event, hoshinoDB, HoshinoEXP, Inventory }) {
           const cleanID = event.senderID;
           const userData = await hoshinoDB.get(cleanID);
           if (!userData || !userData.username) {
@@ -347,17 +305,17 @@ export async function deploy(ctx) {
               "You are not currently mining! Start with: mines start"
             );
           }
-          const { startTime, miningRate, oreName, oreCost, pickaxeTier } = miningData;
+          const { startTime, miningRate, oreName, orePrice, pickaxeTier } = miningData;
           const equippedPickaxe = inventory.getAll().find(
             (item: any) => item.type === "utility" && item.stats?.mining === exp.getMining()
           );
           const pickaxeName = equippedPickaxe ? equippedPickaxe.name : "Unknown Pickaxe";
           const elapsedMinutes = (Date.now() - startTime) / (1000 * 60);
-          const earned = Math.floor(elapsedMinutes * miningRate * oreCost);
+          const earned = Math.floor(elapsedMinutes * miningRate * orePrice);
           await hoshinoDB.set(cleanID, {
             ...userData,
             balance: balance + earned,
-            miningData: { active: false, startTime: 0, miningRate: 0, oreName: "", oreCost: 0, pickaxeTier: 0 },
+            miningData: { active: false, startTime: 0, miningRate: 0, oreName: "", orePrice: 0, pickaxeTier: 0 },
           });
           await chat.reply(
             `You collected ${earned} coins from mining ${oreName} with your ${pickaxeName}! Start a new cycle with: mines start`
@@ -365,7 +323,6 @@ export async function deploy(ctx) {
         },
       },
     ],
-    "◆"
   );
   return home.runInContext(ctx);
 }
