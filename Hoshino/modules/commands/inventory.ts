@@ -26,94 +26,9 @@ const font: HoshinoLia.Command["font"] = {
   footer: "sans",
 };
 
-const recipe = {
-  "wooden-pickaxe": {
-    key: "wooden-pickaxe",
-    name: "Wooden Pickaxe",
-    flavorText: "A basic tool for mining common ores.",
-    icon: "⛏️",
-    type: "utility",
-    cannotToss: false,
-    sellPrice: 50,
-    durability: 60,
-    stats: {
-      mining: 5,
-    },
-    ingredients: [
-      { key: "stick", quantity: 2 },
-      { key: "wooden-plank", quantity: 3 },
-    ],
-  },
-  shield: {
-    key: "shield",
-    name: "Wooden Shield",
-    flavorText: "A sturdy wooden shield reinforced with iron for basic protection.",
-    icon: "🛡️",
-    type: "armor",
-    cannotToss: false,
-    sellPrice: 100,
-    durability: 80,
-    def: 10,
-    ingredients: [
-      { key: "wooden-plank", quantity: 6 },
-      { key: "iron-ingot", quantity: 1 },
-    ],
-  },
-};
-
 export async function deploy(ctx) {
   const home = new ctx.HoshinoHM(
     [
-      {
-        subcommand: "craft",
-        aliases: ["make", "forge"],
-        description: "Craft a weapon, armor, or utility item using ingredients.",
-        usage: "inventory craft <item_key>",
-        async deploy({ chat, args, event, hoshinoDB, Inventory }) {
-          if (args.length < 1) {
-            return await chat.reply(
-              "Please provide an item key. Usage: inventory craft <item_key>"
-            );
-          }
-          const itemKey = args.join(" ").trim().toLowerCase();
-          if (!itemKey) {
-            return await chat.reply(
-              "Invalid item key. Usage: inventory craft <item_key>"
-            );
-          }
-          const cleanID = event.senderID;
-          const userData = await hoshinoDB.get(cleanID);
-          if (!userData || !userData.username) {
-            return await chat.reply(
-              "You need to register first! Use: profile register <username>"
-            );
-          }
-          const { inventoryData = [] } = userData;
-          const inventory = new Inventory(inventoryData);
-          const item = recipe[itemKey];
-          if (!item) {
-            return await chat.reply(
-              `No recipe found for item with key "${itemKey}". Available recipes: ${Object.keys(recipe).join(", ")}`
-            );
-          }
-          try {
-            const result = inventory.craft(item);
-            await hoshinoDB.set(cleanID, {
-              ...userData,
-              inventoryData: inventory.raw(),
-            });
-            await chat.reply(
-              `Successfully crafted "${result.item}" using ${item.ingredients
-                .map(ing => `${ing.quantity} ${inventory.getOne(ing.key)?.name || ing.key}`)
-                .join(", ")}!`
-            );
-          } catch (error: unknown) {
-            const errorMessage =
-              error instanceof Error ? error.message : "Unknown error";
-            return await chat.reply(`Failed to craft item: ${errorMessage}`);
-          }
-        },
-      },
       {
         subcommand: "list",
         aliases: ["check", "view"],
@@ -204,7 +119,7 @@ export async function deploy(ctx) {
           args,
           event,
           hoshinoDB,
-          HoshinoEXP,
+          Hoshinoantiago,
           Inventory,
         }: {
           chat: any;
