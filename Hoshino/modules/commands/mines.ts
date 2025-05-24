@@ -30,7 +30,7 @@ const PICKAXES = [
     key: "wooden_pickaxe",
     tier: 1,
     mining: 0.5,
-    cost: 100,
+    price: 100,
     icon: "🪓",
     flavorText: "A basic tool for mining coal, stone, and copper.",
     sellPrice: 50,
@@ -40,7 +40,7 @@ const PICKAXES = [
     key: "stone_pickaxe",
     tier: 2,
     mining: 1,
-    cost: 300,
+    price: 300,
     icon: "⛏️",
     flavorText: "A sturdy tool for mining iron, lapis, and below.",
     sellPrice: 150,
@@ -50,7 +50,7 @@ const PICKAXES = [
     key: "iron_pickaxe",
     tier: 3,
     mining: 2,
-    cost: 800,
+    price: 800,
     icon: "⛏️",
     flavorText: "A reliable tool for mining gold, redstone, and below.",
     sellPrice: 400,
@@ -60,7 +60,7 @@ const PICKAXES = [
     key: "gold_pickaxe",
     tier: 4,
     mining: 3,
-    cost: 2000,
+    price: 2000,
     icon: "⛏️",
     flavorText: "A shiny tool for mining diamond, emerald, and below.",
     sellPrice: 1000,
@@ -70,7 +70,7 @@ const PICKAXES = [
     key: "diamond_pickaxe",
     tier: 5,
     mining: 5,
-    cost: 5000,
+    price: 5000,
     icon: "⛏️",
     flavorText: "The ultimate tool for mining all ores efficiently.",
     sellPrice: 2500,
@@ -80,7 +80,7 @@ const PICKAXES = [
     key: "netherite_pickaxe",
     tier: 5,
     mining: 7,
-    cost: 12000,
+    price: 12000,
     icon: "⛏️",
     flavorText: "An indestructible tool forged from netherite, unmatched in mining speed.",
     sellPrice: 6000,
@@ -88,15 +88,15 @@ const PICKAXES = [
 ];
 
 const ORES = [
-  { name: "Dirt", price: 0.3, probability: 0.25, pickaxe: "wooden_pickaxe" },
-  { name: "Stone", price: 0.5, probability: 0.25, pickaxe: "wooden_pickaxe" },
-  { name: "Coal Ore", price: 1, probability: 0.20, pickaxe: "wooden_pickaxe" },
-  { name: "Iron Ore", price: 3, probability: 0.15, pickaxe: "stone_pickaxe" },
-  { name: "Lapis Lazuli Ore", price: 4, probability: 0.10, pickaxe: "stone_pickaxe" },
-  { name: "Gold Ore", price: 6, probability: 0.05, pickaxe: "iron_pickaxe" },
-  { name: "Redstone Ore", price: 5, probability: 0.08, pickaxe: "iron_pickaxe" },
-  { name: "Diamond Ore", price: 10, probability: 0.03, pickaxe: "iron_pickaxe" },
-  { name: "Emerald Ore", price: 12, probability: 0.02, pickaxe: "iron_pickaxe" },
+  { name: "Dirt", cost: 0.3, probability: 0.25, pickaxe: "wooden_pickaxe" },
+  { name: "Stone", cost: 0.5, probability: 0.25, pickaxe: "wooden_pickaxe" },
+  { name: "Coal Ore", cost: 1, probability: 0.20, pickaxe: "wooden_pickaxe" },
+  { name: "Iron Ore", cost: 3, probability: 0.15, pickaxe: "stone_pickaxe" },
+  { name: "Lapis Lazuli Ore", cost: 4, probability: 0.10, pickaxe: "stone_pickaxe" },
+  { name: "Gold Ore", cost: 6, probability: 0.05, pickaxe: "iron_pickaxe" },
+  { name: "Redstone Ore", cost: 5, probability: 0.08, pickaxe: "iron_pickaxe" },
+  { name: "Diamond Ore", cost: 10, probability: 0.03, pickaxe: "iron_pickaxe" },
+  { name: "Emerald Ore", cost: 12, probability: 0.02, pickaxe: "iron_pickaxe" },
 ];
 
 function getRandomOre(pickaxeKey: string) {
@@ -134,7 +134,7 @@ export async function deploy(ctx) {
             );
           }
           if (args.length < 1) {
-            const pickaxeList = PICKAXES.map(p => `${p.name} [${p.key}] (${p.cost} coins, can mine: ${ORES.filter(o => o.tier <= p.tier).map(o => o.name).join(", ")})`).join("\n");
+            const pickaxeList = PICKAXES.map(p => `${p.name} [${p.key}] (${p.price} coins, can mine: ${ORES.filter(o => o.tier <= p.tier).map(o => o.name).join(", ")})`).join("\n");
             return await chat.reply(
               `Please specify a pickaxe type. Available pickaxes:\n${pickaxeList}\nUsage: mines buy <pickaxe_type>`
             );
@@ -142,7 +142,7 @@ export async function deploy(ctx) {
           const pickaxeType = args[1]?.toLowerCase();
           const pickaxe = PICKAXES.find(p => p.key === pickaxeType);
           if (!pickaxe) {
-            const pickaxeList = PICKAXES.map(p => `${p.name} [${p.key}] (${p.cost} coins, can mine: ${ORES.filter(o => o.tier <= p.tier).map(o => o.name).join(", ")})`).join("\n");
+            const pickaxeList = PICKAXES.map(p => `${p.name} [${p.key}] (${p.price} coins, can mine: ${ORES.filter(o => o.tier <= p.tier).map(o => o.name).join(", ")})`).join("\n");
             return await chat.reply(
               `Invalid pickaxe type. Available pickaxes:\n${pickaxeList}`
             );
@@ -155,9 +155,9 @@ export async function deploy(ctx) {
           if (inventory.getAll().some((item: any) => item.key === pickaxe.key)) {
             return await chat.reply(`You already own a "${pickaxe.name}"!`);
           }
-          if (balance < pickaxe.cost) {
+          if (balance < pickaxe.price) {
             return await chat.reply(
-              `You need ${pickaxe.cost} coins to buy a ${pickaxe.name}, but you only have ${balance}!`
+              `You need ${pickaxe.price} coins to buy a ${pickaxe.name}, but you only have ${balance}!`
             );
           }
           const pickaxeItem = {
@@ -174,11 +174,11 @@ export async function deploy(ctx) {
           inventory.addOne(pickaxeItem);
           await hoshinoDB.set(cleanID, {
             ...userData,
-            balance: balance - pickaxe.cost,
+            balance: balance - pickaxe.price,
             inventoryData: inventory.raw(),
           });
           await chat.reply(
-            `You purchased a "${pickaxe.name}" for ${pickaxe.cost} coins! Equip it with: inventory equip ${pickaxe.key}\nCan mine: ${ORES.filter(o => o.tier <= pickaxe.tier).map(o => o.name).join(", ")}`
+            `You purchased a "${pickaxe.name}" for ${pickaxe.price} coins! Equip it with: inventory equip ${pickaxe.key}\nCan mine: ${ORES.filter(o => o.tier <= pickaxe.tier).map(o => o.name).join(", ")}`
           );
         },
       },
@@ -227,12 +227,12 @@ export async function deploy(ctx) {
               startTime: Date.now(),
               miningRate,
               oreName: ore.name,
-              orePrice: ore.price,
+              oreCost: ore.cost,
               pickaxeTier: equippedPickaxe.tier,
             },
           });
           await chat.reply(
-            `You started mining ${ore.name} (rate: ${(miningRate * ore.price).toFixed(1)} coins/min) with your ${equippedPickaxe.name}! Check progress with: mines status`
+            `You started mining ${ore.name} (rate: ${(miningRate * ore.cost).toFixed(1)} coins/min) with your ${equippedPickaxe.name}! Check progress with: mines status`
           );
         },
       },
@@ -258,23 +258,23 @@ export async function deploy(ctx) {
               "You are not currently mining! Start with: mines start"
             );
           }
-          const { startTime, miningRate, oreName, orePrice, pickaxeTier } = miningData;
+          const { startTime, miningRate, oreName, oreCost, pickaxeTier } = miningData;
           const equippedPickaxe = inventory.getAll().find(
             (item: any) => item.type === "utility" && item.stats?.mining === exp.getMining()
           );
           const pickaxeName = equippedPickaxe ? equippedPickaxe.name : "Unknown Pickaxe";
           const elapsedMinutes = (Date.now() - startTime) / (1000 * 60);
-          const earned = Math.floor(elapsedMinutes * miningRate * orePrice);
+          const earned = Math.floor(elapsedMinutes * miningRate * oreCost);
           const pickaxeIndex = PICKAXES.findIndex(p => p.tier === pickaxeTier);
           const compatiblePickaxeKeys = PICKAXES.slice(0, pickaxeIndex + 1).map(p => p.key);
           const availableOres = ORES.filter(ore => compatiblePickaxeKeys.includes(ore.pickaxe))
-            .map(ore => `${ore.name} (${ore.price} coins/unit)`)
+            .map(ore => `${ore.name} (${ore.cost} coins/unit)`)
             .join(", ");
           const statusMessage = [
             `**Mining Status**`,
             `Pickaxe: ${pickaxeName} (Tier ${pickaxeTier})`,
-            `Ore: ${oreName} (${orePrice} coins/unit)`,
-            `Mining Rate: ${(miningRate * orePrice).toFixed(1)} coins/min`,
+            `Ore: ${oreName} (${oreCost} coins/unit)`,
+            `Mining Rate: ${(miningRate * oreCost).toFixed(1)} coins/min`,
             `Time Elapsed: ${elapsedMinutes.toFixed(1)} minutes`,
             `Estimated Earnings: ${earned} coins`,
             `Available Ores: ${availableOres}`,
@@ -305,17 +305,17 @@ export async function deploy(ctx) {
               "You are not currently mining! Start with: mines start"
             );
           }
-          const { startTime, miningRate, oreName, orePrice, pickaxeTier } = miningData;
+          const { startTime, miningRate, oreName, oreCost, pickaxeTier } = miningData;
           const equippedPickaxe = inventory.getAll().find(
             (item: any) => item.type === "utility" && item.stats?.mining === exp.getMining()
           );
           const pickaxeName = equippedPickaxe ? equippedPickaxe.name : "Unknown Pickaxe";
           const elapsedMinutes = (Date.now() - startTime) / (1000 * 60);
-          const earned = Math.floor(elapsedMinutes * miningRate * orePrice);
+          const earned = Math.floor(elapsedMinutes * miningRate * oreCost);
           await hoshinoDB.set(cleanID, {
             ...userData,
             balance: balance + earned,
-            miningData: { active: false, startTime: 0, miningRate: 0, oreName: "", orePrice: 0, pickaxeTier: 0 },
+            miningData: { active: false, startTime: 0, miningRate: 0, oreName: "", oreCost: 0, pickaxeTier: 0 },
           });
           await chat.reply(
             `You collected ${earned} coins from mining ${oreName} with your ${pickaxeName}! Start a new cycle with: mines start`
