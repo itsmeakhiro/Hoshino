@@ -142,19 +142,31 @@ export async function deploy(ctx) {
             );
           }
           const fishingStat = rod.stats.fishing;
-          const roll = Math.random() * 100;
+          const totalInverseWeight = Object.values(fishTypes).reduce(
+            (sum, fish) => sum + (1 / fish.weight),
+            0
+          );
+          let randomWeight = Math.random() * totalInverseWeight;
           let fishCaught = null;
-          if (roll < 50 + fishingStat) { 
-            const fishKeys = Object.keys(fishTypes);
-            const rarityRoll = Math.random() * 100;
-            let fishKey;
-            if (rarityRoll < 60) fishKey = fishKeys[0];
-            else if (rarityRoll < 85) fishKey = fishKeys[1];
-            else if (rarityRoll < 95) fishKey = fishKeys[2]; 
-            else fishKey = fishKeys[3]; 
-            fishCaught = fishTypes[fishKey];
-            inventory.addOne({ ...fishCaught, durability: undefined });
-            exp.exp += 10; 
+          for (const fish of Object.values(fishTypes)) {
+            randomWeight -= 1 / fish.weight;
+            if (randomWeight <= 0) {
+              fishCaught = fish;
+              break;
+            }
+          }
+          if (fishCaught) {
+            const catchChance = Math.max(
+              10,
+              Math.min(90, 50 + fishingStat * 5 - fishCaught.weight * 2)
+            ); 
+            const roll = Math.random() * 100;
+            if (roll < catchChance) {
+              inventory.addOne({ ...fishCaught, durability: undefined });
+              exp.exp += 10;
+            } else {
+              fishCaught = null;
+            }
           }
           await hoshinoDB.set(cleanID, {
             ...userData,
@@ -163,8 +175,8 @@ export async function deploy(ctx) {
           });
           await chat.reply(
             fishCaught
-              ? `You cast your line with ${rod.name} and caught a ${fishCaught.name}! 🎣`
-              : `You cast your line with ${rod.name}, but the fish got away...`
+              ? `You cast your line with ${rod.name} and caught a ${fishCaught.name || 'unknown fish'}! 🎣`
+              : `You cast your line with ${rod.name}, but the fish was too heavy to reel in...`
           );
         },
       },
@@ -284,7 +296,6 @@ export async function deploy(ctx) {
           }
           exp.setStat("currency", currency - rod.price);
           inventory.addOne(rod);
-          // Equip the rod automatically
           inventory.equipUtility(rodKey, exp);
           await hoshinoDB.set(cleanID, {
             ...userData,
